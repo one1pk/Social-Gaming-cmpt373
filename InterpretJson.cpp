@@ -1,12 +1,12 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
-#include "Interpret.h"
+#include "Interpret.cpp"
 
 using namespace std;
 using json = nlohmann::json;
 
-class InterpretJson{
+class InterpretJson : public Interpret{
     public:
     Interpret(string path){
         ifstream f(path);
@@ -14,6 +14,7 @@ class InterpretJson{
         this.data = jData;
     }
 
+    @override
     T& interpret(T& obj);
 
 }
