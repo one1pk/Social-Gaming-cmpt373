@@ -8,20 +8,20 @@ using std::vector;
 using std::map;
 
 template <typename T>
-class ForEach : public ControlStructure {
+class Switch : public ControlStructure {
 public:
-    ForEach();
-    ~ForEach();
+    Switch();
+    virtual ~Switch();
     void setList(const vector<T>& newList);
     vector<T>& getList() const;
-    void setElement(const T& newElement);
-    T getElement() const;
+    void setValue(const T& newElement);
+    T getValue() const;
     void addNewRuleToCase(const T& value, const vector<Rule*> rules);
     void setMapping(const vector<T> values); // Note: this utilizes the set of rules in the parent class
 
-    virtual void execute() const;
+    virtual void execute();
 private:
+    T value;
     vector<T> list;
-    T element;
     map<T, vector<Rule*>> caseToRulesMap;
 };

@@ -8,7 +8,8 @@ using std::vector;
 class ControlStructure : public Rule {
 public:
 	ControlStructure() : Rule(RuleType::ControlStructure) {}
-	void addNewExecutedRule(const Rule* newRule);
+	virtual ~ControlStructure();
+	void addNewExecutedRule(Rule* const newRule);
 private:
 	vector<Rule*> rules;
 };

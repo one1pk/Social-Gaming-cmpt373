@@ -9,13 +9,13 @@ template <typename T>
 class ParallelFor : public ControlStructure {
 public:
     ParallelFor();
-    ~ParallelFor();
+    virtual ~ParallelFor();
     void setList(const vector<T>& newList);
     vector<T>& getList() const;
     void setElement(const T& newElement);
     T getElement() const;
 
-    virtual void execute() const;
+    virtual void execute();
 private:
     vector<T> list;
     T element;

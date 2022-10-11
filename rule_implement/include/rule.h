@@ -10,12 +10,13 @@ public:
 	};
 
 	Rule(const RuleType& newType) {	name = newType;	}
+	virtual ~Rule() = 0;
 
 	void setRuleName(const string& newName);
 	string getRuleName() const;
 	void setRuleType(const RuleType& newType);
 	RuleType getRuleType() const;
-	virtual void execute() const = 0;
+	virtual void execute() = 0;
 private:
 	string name;
 	RuleType type;

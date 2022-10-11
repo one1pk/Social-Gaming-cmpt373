@@ -5,7 +5,7 @@ template <typename T>
 class BooleanExpression {
 public:
 	enum OperatorType {
-		&&, ||, !, ==, !=, >, <, >=, <=
+		N/a, &&, ||, !, ==, !=, >, <, >=, <=
 	};
 	void setOperatorType(OperatorType opType);
 	OperatorType getOperatorType() const;

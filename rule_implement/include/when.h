@@ -10,11 +10,11 @@ template <typename T>
 class When : public ControlStructure {
 public:
     When();
-    ~When();
+    virtual ~When();
     void setCondition(BooleanExpression::OperatorType opType, const T& left, const T& right);
     bool getConditionValue() const;
 
-    virtual void execute() const;
+    virtual void execute();
 private:
     BooleanExpression condition;
 };

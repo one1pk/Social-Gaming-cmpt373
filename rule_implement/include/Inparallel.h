@@ -7,5 +7,5 @@ using std::vector;
 
 class Inparallel : public ControlStructure {
 public:
-	virtual void execute() const;
+	virtual void execute();
 };

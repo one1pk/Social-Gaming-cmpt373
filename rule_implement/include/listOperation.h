@@ -9,16 +9,17 @@ template <typename T>
 class ListOperation : public Rule {
 public:
 	ListOperation() : Rule(RuleType::ListOperation) {}
-
-	virtual void execute() const;
-private:
+	virtual ~ListOperation();
+	virtual void execute() = 0;
+protected:
 	vector<T> list;
 };
 
 template <typename T>
 class Extend : public ListOperation {
 public: 
-	virtual void execute() const;
+	virtual ~Extend();
+	virtual void execute();
 private:
 	vector<T> target;
 };
@@ -26,19 +27,25 @@ private:
 template <typename T>
 class Reverse : public ListOperation {
 public:
-	virtual void execute() const;
+	virtual ~Reverse();
+	virtual void execute();
 };
 
 template <typename T>
 class Shuffle : public ListOperation {
 public: 
-	virtual void execute() const;
+	virtual ~Shuffle();
+	virtual void execute();
 };
 
 template <typename T, typename T1>
 class Sort : public ListOperation {
 public: 
-	virtual void execute() const;
+	Sort() { key = NULL; }
+	virtual ~Sort();
+	void setKey(T1 newKey);
+	T1 getKey() const;
+	virtual void execute();
 private: 
 	T1 key;
 };
@@ -46,7 +53,8 @@ private:
 template <typename T>
 class Deal : public ListOperation {
 public: 
-	virtual void execute() const;
+	virtual ~Deal();
+	virtual void execute();
 private:
 	//vector<T> from;
 	vector<T> to; // Note: This utilizes the list in the parent class as from
@@ -56,7 +64,8 @@ private:
 template <typename T>
 class Discard : public ListOperation {
 public: 
-	virtual void execute() const;
+	virtual ~Discard();
+	virtual void execute();
 private:
 	//vector<T> from;
 	//Note : This utilizes the list in the parent class as from

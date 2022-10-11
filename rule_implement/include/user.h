@@ -17,4 +17,5 @@ public:
 private: 
 	string name;
 	Role role; 
+	//Note: We should add a Client member variable for networking
 };
