@@ -7,11 +7,13 @@ using namespace std;
 using json = nlohmann::json;
 
 class InterpretJson{
+    public:
     Interpret(string path){
         ifstream f(path);
-        json data = json::parse(f);
-        this.data = data;
+        json jData = json::parse(f);
+        this.data = jData;
     }
 
-    T interpret(T obj);
+    T& interpret(T& obj);
+
 }
