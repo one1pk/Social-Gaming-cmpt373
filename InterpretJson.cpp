@@ -1,7 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
-#include "Interpret.cpp"
+#include "Interpret.h"
 
 using namespace std;
 using json = nlohmann::json;
