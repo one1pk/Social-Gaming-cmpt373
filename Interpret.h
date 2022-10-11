@@ -2,15 +2,15 @@
 
 #include <nlohmann/json.hpp>
 
-template <typname T>
-class Interpreter{
+template <typname T, I>
+class Interpret{
     public:
 
-        Interpreter(string path);
+        Interpret(string path);
 
         //maps json data to game object
-        virtual T interpret(T obj ) = 0;
+        virtual T& interpret(T& obj ) = 0;
 
     private:
-        T data;
+        I data;
 }
