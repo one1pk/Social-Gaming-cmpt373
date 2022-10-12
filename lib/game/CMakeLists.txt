@@ -18,6 +18,10 @@ set_target_properties(game
                     CXX_STANDARD 17
 )
 
+target_link_libraries(game
+    networking
+)
+
 install(TARGETS game
     ARCHIVE DESTINATION lib
 )

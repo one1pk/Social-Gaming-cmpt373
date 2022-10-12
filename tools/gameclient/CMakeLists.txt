@@ -1,5 +1,6 @@
 add_executable(gameclient
     gameclient.cpp
+    ChatWindow.cpp
 )
 
 set_target_properties(gameclient
@@ -9,12 +10,15 @@ set_target_properties(gameclient
                     PREFIX ""
 )
 
+find_package(Curses REQUIRED)
+find_package(Threads REQUIRED)
+
 target_link_libraries(gameclient
-    game
     networking
+    ${CURSES_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 install(TARGETS gameclient
     RUNTIME DESTINATION bin
 )
-

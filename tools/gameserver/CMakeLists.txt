@@ -9,10 +9,13 @@ set_target_properties(gameserver
                     PREFIX ""
 )
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(gameserver
     game
     networking
     interpreter
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 install(TARGETS gameserver
