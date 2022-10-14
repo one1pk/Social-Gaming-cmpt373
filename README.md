@@ -14,7 +14,7 @@
 3) Move to the build directory
 `cd social_gaming_build`
 4) Run CMake with the path to the project
-`cmake ../social_gaming`
+`cmake ../social-gaming`
 5) Make the build
 `make`
 
