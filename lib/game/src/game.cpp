@@ -19,6 +19,11 @@ void Game::addPlayer(Connection playerID) {
     _players.push_back(playerID);
 }
 
+void Game::removePlayer(Connection playerID) {
+    auto eraseBegin = std::remove(_players.begin(), _players.end(), playerID);
+    _players.erase(eraseBegin, _players.end());
+}
+
 // checks if a player is in the game
 bool Game::hasPlayer(Connection playerID) {
     return std::find(_players.begin(), _players.end(), playerID) != _players.end();

@@ -1,25 +1,25 @@
-#include "server.h"
 #include "game.h"
 #include "interpreter.h"
+#include "server.h"
 
 #include <algorithm>
-#include <unistd.h>
+#include <chrono>
+#include <fstream>
 #include <iostream>
 #include <sstream>
-#include <fstream>
-#include <vector>
-#include <chrono>
-#include <thread>
 #include <string>
+#include <thread>
+#include <unistd.h>
+#include <vector>
 
 /*
-game server that can be configured by the person running it 
-to allow games to be played. 
+game server that can be configured by the person running it
+to allow games to be played.
 The configuration of the server will be specified in JSON.
 Similarly, the specification for a single game will be in JSON.
-A game specification will define the state that a game must maintain 
-as well as the rules of the game. 
-You may think of the specifications as being written in a domain specific 
+A game specification will define the state that a game must maintain
+as well as the rules of the game.
+You may think of the specifications as being written in a domain specific
 programming language that your game server will interpret.
 */
 
@@ -29,12 +29,16 @@ std::vector<Connection> clients_in_lobby;
 std::vector<std::string> game_names;
 std::vector<Game> game_instances;
 
+std::string HELP_INFORMATION = ("\n\n                       Displaying Help Information\n"
+                                "  * To view the available games enter: games\n"
+                                "  * To start a new game from the options enter: start <game_index>\n"
+                                "  * To join a game with an invitation code enter: join <invitation_code>\n"
+                                "  * To exit the server enter: exit\n\n");
 
 void removeConnectionFromList(Connection c, std::vector<Connection> &list) {
     auto eraseBegin = std::remove(std::begin(list), std::end(list), c);
     list.erase(eraseBegin, std::end(list));
 }
-
 
 // called when a client connects
 void onConnect(Connection c) {
@@ -43,7 +47,6 @@ void onConnect(Connection c) {
     clients_in_lobby.push_back(c);
 }
 
-
 // called when a client disconnects
 void onDisconnect(Connection c) {
     std::cout << "Connection lost: " << c.id << "\n";
@@ -51,13 +54,11 @@ void onDisconnect(Connection c) {
     removeConnectionFromList(c, clients_in_lobby);
 }
 
-
 // extracts the port number from ./serverconfig.json
 unsigned short getPort() {
     /** STUB **/
     return 4040;
 }
-
 
 // compiles all the game names in ./gameconfigs into a list
 // all games defined in ./gameconfigs can be "served" to users
@@ -74,9 +75,8 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
     game_instances.emplace_back(game_name, ownerID);
 }
 
-
 // returns a pointer to the game instance with the given gameID
-Game* getGameInstance(uintptr_t gameID) {
+Game *getGameInstance(uintptr_t gameID) {
     auto game_it = std::find_if(std::begin(game_instances), std::end(game_instances), [=](auto &game) {
         return game.id() == gameID;
     });
@@ -87,9 +87,8 @@ Game* getGameInstance(uintptr_t gameID) {
         return &*game_it;
 }
 
-
 // returns a list of game names and indexes in string form
-// of the format: 
+// of the format:
 // [0] rock, paper, scissors
 // [1] another game ...
 // the game indicies will match their index in the game_names vector
@@ -102,7 +101,6 @@ std::string gamesList() {
     return list.str();
 }
 
-
 struct ProcessedMessages {
     std::deque<Message> outgoing;
     bool shouldShutdown;
@@ -111,13 +109,81 @@ struct ProcessedMessages {
 // processes all incoming messages received from clients since the last Server::update()
 // distinguishes control signals and commands and responds appropriately
 // returns a list of Message objects to be sent by the server and a shutdown signal (if any was received)
-ProcessedMessages processMessages(Server& server) {
+ProcessedMessages processMessages(Server &server);
+
+std::deque<Message> buildOutgoing(const std::string &log) {
+    std::deque<Message> outgoing;
+    for (auto client : clients) {
+        outgoing.push_back({client, log, false, 0});
+    }
+    return outgoing;
+}
+
+std::string
+getHTTPMessage(const char *htmlLocation) {
+    if (access(htmlLocation, R_OK) != -1) {
+        std::ifstream infile{htmlLocation};
+        return std::string{std::istreambuf_iterator<char>(infile),
+                           std::istreambuf_iterator<char>()};
+
+    } else {
+        std::cerr << "Unable to open HTML index file:\n"
+                  << htmlLocation << "\n";
+        std::exit(-1);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
+                  << "  e.g. " << argv[0] << " 4002 ./webchat.html\n";
+        return 1;
+    }
+    std::cout << "Setting up the server...\n";
+
+    // extract the server configuration parameters from ./serverconfig.json
+    // start a new session based on the configuration
+    // (for now we take them as cmdline args)
+
+    unsigned short port = std::stoi(argv[1]);
+    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
+
+    std::cout << "Game server is up!\n";
+
+    createAvailableGamesList();
+
+    // start listening for messages and serving content as appropriate
+    while (true) {
+        bool errorWhileUpdating = false;
+        try {
+            server.update();
+        } catch (std::exception &e) {
+            std::cerr << "Exception from Server update:\n"
+                      << " " << e.what() << "\n\n";
+            errorWhileUpdating = true;
+        }
+
+        auto [outgoing, shutdownSignal] = processMessages(server);
+        server.send(outgoing);
+
+        if (shutdownSignal || errorWhileUpdating) {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    return 0;
+}
+
+ProcessedMessages processMessages(Server &server) {
     bool shutdown = false;
     std::deque<Message> outgoing;
     std::ostringstream lobbyMsgStream;
-    const std::deque<Message>& incoming = server.receive();
+    const std::deque<Message> &incoming = server.receive();
 
-    for (auto& message : incoming) {
+    for (auto &message : incoming) {
+
         if (message.in_game) { // an in-game message //
 
             if (message.text == "leave") {
@@ -126,28 +192,47 @@ ProcessedMessages processMessages(Server& server) {
 
                 if (message.connection.id == getGameInstance(message.gameID)->ownerID()) {
                     // reply "owners can't leave the game they create, to end the game enter: end"
+                    outgoing.push_back({message.connection, "Owners cannot leave the game they create. To end the game, please enter: end\n"});
 
                 } else {
                     // remove player from game
                     // reply with a confirmation
+                    getGameInstance(message.gameID)->removePlayer(message.connection);
+                    outgoing.push_back({message.connection, "You have successfully left the game!\n"});
                 }
+
             } else if (message.text == "end") {
                 // end current game (all players go back to the lobby)
                 // owners only
 
                 if (message.connection.id == getGameInstance(message.gameID)->ownerID()) {
                     // end game session
-                    // broadcast to all players that the owner has ended the game
+                    // broadcast to all players that the owner has ended the
+                    // TODO
+                    std::string player_notification = "The game owner has ended the game. You will be transferred to the lobby.\n";
+
+                    outgoing.push_back({message.connection, "Game successfully ended! Entering the lobby now!\n"});
+
+                    Game *game_instance = getGameInstance(message.gameID);
+
+                    // return a notification message to each game player
+                    for (auto &player : game_instance->players()) {
+                        if (player == message.connection)
+                            continue;
+                        outgoing.push_back({player, player_notification});
+                    }
 
                 } else {
                     // reply "only the game owner can end the game, to leave enter: leave"
+                    outgoing.push_back({message.connection, "Only the game owner can end the game. To leave the game, please enter: leave\n"});
                 }
+
             } else {
                 // anything else is either game input or in-game chat messages (perhaps we don't need the latter)
                 // game inputs are tied to the game rules (still need to integrate)
                 // in-game chat is broadcasted to all game players
-
             }
+        
         } else { // a lobby message //
 
             if (message.text == "exit") {
@@ -166,136 +251,88 @@ ProcessedMessages processMessages(Server& server) {
 
             } else if (message.text.substr(0, 6) == "start ") {
                 //** needs error checking **//
+                std::string game_index_string = message.text.substr(6, message.text.size() - 6);
+                if (!game_index_string.empty()) {
 
-                // start a new game
-                int game_index = std::stoi(message.text.substr(6, message.text.size()-6));
-                constructGame(game_names[game_index], message.connection.id);
-                removeConnectionFromList(message.connection, clients_in_lobby);
+                    // start a new game
+                    int game_index = std::stoi(game_index_string);
+                    if (game_index < (int)game_names.size()) {
 
-                // return a confirmation and an invitation code to the game owner
-                std::stringstream confirmation;
-                confirmation << "Game " << game_names[game_index] << " created successfully\n"
-                             << "Invitation code: " << game_instances.back().id() << "\n\n";
+                        // BUG: After start, owner is still in lobby
+                        constructGame(game_names[game_index], message.connection.id);
+                        removeConnectionFromList(message.connection, clients_in_lobby);
 
-                outgoing.push_back({message.connection, confirmation.str()});
+                        // return a confirmation and an invitation code to the game owner
+                        std::stringstream confirmation;
+                        confirmation << "Game " << game_names[game_index] << " created successfully\n"
+                                     << "Invitation code: " << game_instances.back().id() << "\n\n";
 
+                        outgoing.push_back({message.connection, confirmation.str()});
+                    } else {
+                        outgoing.push_back({message.connection, "Please enter a valid game index. To list all games, enter: games\n"});
+                    }
+
+                } else {
+                    outgoing.push_back({message.connection, "Incorrect Format! To start a game, please enter: start <game index>\n"});
+                }
 
                 // allow user to configure any configurable fields for the game
 
-            
             } else if (message.text.substr(0, 5) == "join ") {
                 //** needs error checking **//
-
+                std::string game_index_string = message.text.substr(5, message.text.size() - 5);
                 // join an existing game
-                int game_id = std::stoi(message.text.substr(5, message.text.size()-5));
-                Game* game_instance = getGameInstance(game_id);
+                if (!game_index_string.empty()) {
+                    int game_id = std::stoi(message.text.substr(5, message.text.size() - 5));
+                    Game *game_instance = getGameInstance(game_id);
 
-                // validate invitation code
-                if (game_instance) {
-                    game_instance->addPlayer(message.connection);
-                    removeConnectionFromList(message.connection, clients_in_lobby);
+                    // validate invitation code
+                    if (game_instance) {
+                        game_instance->addPlayer(message.connection);
+                        removeConnectionFromList(message.connection, clients_in_lobby);
 
-                    // return a confirmation message to the player
-                    std::stringstream confirmation;
-                    confirmation << "You have joined a " << game_instance->name() << " game!\n"
-                                 << "there are currently " << game_instance->numPlayers() << " players\n"
-                                 << "waiting for the game owner to start the game...\n"
-                                 << "meanwhile, you can chat in the game lobby\n\n";
+                        // return a confirmation message to the player
+                        std::stringstream confirmation;
+                        confirmation << "You have joined a " << game_instance->name() << " game!\n"
+                                     << "there are currently " << game_instance->numPlayers() << " players\n"
+                                     << "waiting for the game owner to start the game...\n"
+                                     << "meanwhile, you can chat in the game lobby\n\n";
 
-                    outgoing.push_back({message.connection, confirmation.str()});
-                    
-                    // return a notification message to the game owner
-                    std::stringstream notification;
-                    notification << "User " << message.connection.id << " joined the game\n"
-                                 << "there are currently " << game_instance->numPlayers() << " players\n\n";
+                        outgoing.push_back({message.connection, confirmation.str()});
 
-                    outgoing.push_back({game_instance->ownerID(), notification.str()});
+                        // return a notification message to the game owner
+                        std::stringstream notification;
+                        notification << "User " << message.connection.id << " joined the game\n"
+                                     << "there are currently " << game_instance->numPlayers() << " players.\n\n";
 
-                    // return a notification message to each game player
-                    for (auto &player: game_instance->players()) {
-                        if (player == message.connection)
-                            continue;
-                        outgoing.push_back({player, notification.str()});
+                        outgoing.push_back({game_instance->ownerID(), notification.str()});
+
+                        // return a notification message to each game player
+                        for (auto &player : game_instance->players()) {
+                            if (player == message.connection)
+                                continue;
+                            outgoing.push_back({player, notification.str()});
+                        }
+                    } else {
+                        outgoing.push_back({message.connection, "Please enter a valid invitation code\n"});
                     }
+                } else {
+                    outgoing.push_back({message.connection, "Incorrect format. To join a game, please enter: join <invitation code>\n"});
                 }
 
+            } else if (message.text == "help") {
+                // display list of existing commands
+                outgoing.push_back({message.connection, HELP_INFORMATION});
             } else {
                 // anything else is a regular lobby message that is broadcasted to everyone
                 lobbyMsgStream << message.connection.id << "> " << message.text << "\n";
             }
         }
     }
-    
+
     // broadcast the lobby messages to everyone in the lobby
     for (auto client : clients_in_lobby) {
         outgoing.push_back({client, lobbyMsgStream.str()});
     }
     return ProcessedMessages{outgoing, shutdown};
-}
-
-
-std::deque<Message> buildOutgoing(const std::string& log) {
-    std::deque<Message> outgoing;
-    for (auto client : clients) {
-        outgoing.push_back({client, log, false, 0});
-    }
-    return outgoing;
-}
-
-std::string
-getHTTPMessage(const char* htmlLocation) {
-  if (access(htmlLocation, R_OK ) != -1) {
-    std::ifstream infile{htmlLocation};
-    return std::string{std::istreambuf_iterator<char>(infile),
-                       std::istreambuf_iterator<char>()};
-
-  } else {
-    std::cerr << "Unable to open HTML index file:\n"
-              << htmlLocation << "\n";
-    std::exit(-1);
-  }
-}
-
-
-int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
-                << "  e.g. " << argv[0] << " 4002 ./webchat.html\n";
-        return 1;
-    }
-    std::cout << "Setting up the server...\n";
-    
-    // extract the server configuration parameters from ./serverconfig.json
-    // start a new session based on the configuration 
-    // (for now we take them as cmdline args)
-
-    unsigned short port = std::stoi(argv[1]);
-    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
-   
-    std::cout << "Game server is up!\n";
-
-    createAvailableGamesList();
-
-    // start listening for messages and serving content as appropriate
-    while (true) {
-        bool errorWhileUpdating = false;
-        try {
-            server.update();
-        } catch (std::exception& e) {
-            std::cerr << "Exception from Server update:\n"
-                      << " " << e.what() << "\n\n";
-            errorWhileUpdating = true;
-        }
-
-        auto [outgoing, shutdownSignal] = processMessages(server);
-        server.send(outgoing);
-
-        if (shutdownSignal || errorWhileUpdating) {
-            break;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    return 0;
 }

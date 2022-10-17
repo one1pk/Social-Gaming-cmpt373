@@ -13,6 +13,7 @@ public:
     void start();
 
     void addPlayer(Connection playerID);
+    void removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
     size_t numPlayers();
