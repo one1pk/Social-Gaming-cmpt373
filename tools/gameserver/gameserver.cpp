@@ -186,16 +186,10 @@ ProcessedMessages processMessages(Server &server) {
     for (auto &message : incoming) {
         if (message.connection.in_game) { // an in-game message //
             if (message.text == "leave") {
-                // leave current game (go back to the lobby)
-                // non-owners only
-
+                // non-owners can leave
                 if (message.connection.id == getGameInstance(message.connection.gameID)->ownerID()) {
-                    // reply "owners can't leave the game they create, to end the game enter: end"
                     outgoing.push_back({message.connection, "Owners cannot leave the game they create. To end the game, please enter: end\n"});
-
                 } else {
-                    // remove player from game
-                    // reply with a confirmation
                     getGameInstance(message.connection.gameID)->removePlayer(message.connection);
                     server.setGameIdentity(message.connection, 0);
                     outgoing.push_back({message.connection, "You have successfully left the game!\n"});
@@ -203,20 +197,16 @@ ProcessedMessages processMessages(Server &server) {
                 }
 
             } else if (message.text == "end") {
-                // end current game (all players go back to the lobby)
-                // owners only
-
+                // owner ends game session
                 if (message.connection.id == getGameInstance(message.connection.gameID)->ownerID()) {
-                    // end game session
-                    // broadcast to all players that the owner has ended the
-                    std::string player_notification = "The game owner has ended the game. You will be transferred to the lobby.\n";
-                    server.setGameIdentity(message.connection, 0);
                     outgoing.push_back({message.connection, "Game successfully ended! Entering the lobby now!\n"});
+                    // Adds owner back to lobby
+                    server.setGameIdentity(message.connection, 0);
                     clients_in_lobby.push_back(message.connection);
-
-                    Game *game_instance = getGameInstance(message.connection.gameID);
-
+                    // TODO: Send other players to lobby
                     // return a notification message to each game player
+                    Game *game_instance = getGameInstance(message.connection.gameID);
+                    std::string player_notification = "The game owner has ended the game. You will be transferred to the lobby.\n";
                     for (auto &player : game_instance->players()) {
                         if (player == message.connection)
                             continue;
@@ -224,16 +214,13 @@ ProcessedMessages processMessages(Server &server) {
                     }
 
                 } else {
-                    // reply "only the game owner can end the game, to leave enter: leave"
                     outgoing.push_back({message.connection, "Only the game owner can end the game. To leave the game, please enter: leave\n"});
                 }
 
             } else {
                 // FIX: BETTER WAY TO PUT THE STRING HERE
-                // anything else is either game input or in-game chat messages (perhaps we don't need the latter)
-                // game inputs are tied to the game rules (still need to integrate)
-                // in-game chat is broadcasted to all game players
-                // std::string outgoing_message = message.connection.id + " : " + message.text + "\n";
+                // TODO: Handle input and output for a game
+                // right now these messages echo back to the sender rather than in game lobby
                 std::stringstream outgoing_message;
                 outgoing_message << message.connection.id << "> " << message.text << "\n";
                 outgoing.push_back({message.connection, outgoing_message.str()});
@@ -241,82 +228,72 @@ ProcessedMessages processMessages(Server &server) {
         } else { // a lobby message //
 
             if (message.text == "exit") {
-                // exit the server
                 server.disconnect(message.connection);
-
             } else if (message.text == "shutdown") {
                 // shutdown the server (currently any user can shutdown the server)
+                // TODO: Remove this command
                 std::cout << "Shutting down.\n";
                 shutdown = true;
 
             } else if (message.text == "games") {
-                // games list request, respond with a list of game names
-                // this is a private response - goes only to the client that requested it
+                // games list request, respond with a list of game names to requestor
                 outgoing.push_back({message.connection, gamesList()});
-
             } else if (message.text.substr(0, 6) == "start ") {
-                //** needs error checking **//
+                // Validate game index
                 std::string game_index_string = message.text.substr(6, message.text.size() - 6);
                 if (!game_index_string.empty()) {
-
-                    // start a new game
                     int game_index = std::stoi(game_index_string);
                     if (game_index < (int)game_names.size()) {
-
+                        // start a new game, remove owner from lobby, change owner's connection info
+                        // and return confirmation and invitation code to owner
                         constructGame(game_names[game_index], message.connection.id);
                         removeConnectionFromList(message.connection, clients_in_lobby);
-
-                        // return a confirmation and an invitation code to the game owner
+                        server.setGameIdentity(message.connection, game_instances.back().id());
                         std::stringstream confirmation;
                         confirmation << "Game " << game_names[game_index] << " created successfully\n"
                                      << "Invitation code: " << game_instances.back().id() << "\n\n";
-                        server.setGameIdentity(message.connection, game_instances.back().id());
                         outgoing.push_back({message.connection, confirmation.str()});
                     } else {
                         outgoing.push_back({message.connection, "Please enter a valid game index. To list all games, enter: games\n"});
                     }
-
                 } else {
                     outgoing.push_back({message.connection, "Incorrect Format! To start a game, please enter: start <game index>\n"});
                 }
-
-                // allow user to configure any configurable fields for the game
-
             } else if (message.text.substr(0, 5) == "join ") {
-                //** needs error checking **//
+                // validate invitation code
                 std::string game_index_string = message.text.substr(5, message.text.size() - 5);
-                // join an existing game
                 if (!game_index_string.empty()) {
+
                     int game_id = std::stoi(message.text.substr(5, message.text.size() - 5));
                     Game *game_instance = getGameInstance(game_id);
-
-                    // validate invitation code
+                    
                     if (game_instance) {
+                        // join the game, remove player from lobby, change player's connection info
                         game_instance->addPlayer(message.connection);
                         removeConnectionFromList(message.connection, clients_in_lobby);
+                        server.setGameIdentity(message.connection, game_instance->id());
 
                         // return a confirmation message to the player
                         std::stringstream confirmation;
                         confirmation << "You have joined a " << game_instance->name() << " game!\n"
-                                     << "there are currently " << game_instance->numPlayers() << " players\n"
+                                     << "There are currently " << game_instance->numPlayers() << " players\n"
                                      << "waiting for the game owner to start the game...\n"
-                                     << "meanwhile, you can chat in the game lobby\n\n";
-                        server.setGameIdentity(message.connection, game_instance->id());
+                                     << "Meanwhile, you can chat in the game lobby\n\n";
                         outgoing.push_back({message.connection, confirmation.str()});
 
                         // return a notification message to the game owner
+                        // WARNING: Check errors here for non-valid owner id
                         std::stringstream notification;
                         notification << "User " << message.connection.id << " joined the game\n"
-                                     << "there are currently " << game_instance->numPlayers() << " players.\n\n";
+                                     << "Player Count: " << game_instance->numPlayers() << "\n\n";
 
-                        // WARNING: Check errors here
                         auto owner_ID = game_instance->ownerID();
                         auto ownerConnection = std::find_if(clients.begin(), clients.end(), [owner_ID](auto client){return client.id == owner_ID;});
                         outgoing.push_back({*ownerConnection, notification.str()});
 
                         // return a notification message to each game player
                         for (auto &player : game_instance->players()) {
-                            if (player == message.connection)
+                            if (player == message.connection || player == *ownerConnection)
                                 continue;
                             outgoing.push_back({player, notification.str()});
                         }
