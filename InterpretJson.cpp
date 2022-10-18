@@ -1,20 +1,22 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
-#include "Interpret.h"
+#include "InterpretJson.h"
+#include "game.h"
 
 using namespace std;
 using json = nlohmann::json;
 
-class InterpretJson : public Interpret{
-    public:
-    Interpret(string path){
-        ifstream f(path);
-        json jData = json::parse(f);
-        this.data = jData;
-    }
 
-    @override
-    T& interpret(T& obj);
+Interpret(string path){
+    this->path = path;
+    ifstream f(path);
+    json jData = json::parse(f);
+    f.close();
+    this->data = jData;
+}
+
+
+Game interpret(Game& game){}
 
 }
