@@ -28,12 +28,12 @@ int main(int argc, char* argv[]) {
     // verify that the cmdline arguments provided describe a game server
     // and connect to the server
 
-    if (argc < 4) {
+    if (argc < 3) {
         std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port> <your game name>\n"
                 << "  e.g. " << argv[0] << " localhost 4002 John\n";
         return 1;
     }
-    Client client{argv[1], argv[2], argv[3]};
+    Client client{argv[1], argv[2]};
 
     bool done = false;
     auto onTextEntry = [&done, &client] (std::string text) {
