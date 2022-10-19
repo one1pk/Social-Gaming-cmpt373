@@ -15,6 +15,13 @@ Other players connecting to the game server may join the game by specifying the 
 Note, the owner of the game is not a player.
 If they wish to play the game, they must also join.
 */
+std::string WELCOME_MESSAGE = (
+    "                          Welcome to Social Gaming!\n\n"
+        "You are now in the main lobby, here you can chat with other players in the lobby\n"   
+        "  * To view the available games enter: games\n" 
+        "  * To create a new game from the options enter: create <game_index>\n"
+        "  * To join a game with an invitation code enter: join <invitation_code>\n"
+        "  * To exit the server enter: exit\n\n");
 
 int main(int argc, char* argv[]) {
     
@@ -22,8 +29,8 @@ int main(int argc, char* argv[]) {
     // and connect to the server
 
     if (argc < 3) {
-        std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port>\n"
-                << "  e.g. " << argv[0] << " localhost 4002\n";
+        std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port> <your game name>\n"
+                << "  e.g. " << argv[0] << " localhost 4002 John\n";
         return 1;
     }
     Client client{argv[1], argv[2]};
@@ -38,14 +45,7 @@ int main(int argc, char* argv[]) {
     };
     ChatWindow chatWindow(onTextEntry);
 
-    chatWindow.displayText(
-        "                          Welcome to Social Gaming!\n\n"
-        "You are now in the main lobby, here you can chat with other players in the lobby\n"   
-        "  * To view the available games enter: games\n" 
-        "  * To start a new game from the options enter: start <game_index>\n"
-        "  * To join a game with an invitation code enter: join <invitation_code>\n"
-        "  * To exit the server enter: exit\n\n"
-    );
+    chatWindow.displayText(WELCOME_MESSAGE);
 
     while (!done && !client.isDisconnected()) {
         try {
