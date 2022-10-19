@@ -11,6 +11,7 @@ public:
     Game(std::string name, uintptr_t ownerID);
 
     void start();
+    bool isOngoing();
 
     void addPlayer(Connection playerID);
     void removePlayer(Connection playerID);
@@ -28,4 +29,5 @@ private:
     std::string _name;
     uintptr_t _ownerID;
     std::vector<Connection> _players;
+    bool _started;
 };

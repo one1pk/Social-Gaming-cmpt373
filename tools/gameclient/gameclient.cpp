@@ -20,7 +20,6 @@ std::string WELCOME_MESSAGE = (
         "You are now in the main lobby, here you can chat with other players in the lobby\n"   
         "  * To view the available games enter: games\n" 
         "  * To create a new game from the options enter: create <game_index>\n"
-        "  * To start a game enter: start <invitation_code>\n"
         "  * To join a game with an invitation code enter: join <invitation_code>\n"
         "  * To exit the server enter: exit\n\n");
 

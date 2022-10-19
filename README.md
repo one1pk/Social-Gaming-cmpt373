@@ -28,7 +28,6 @@ and `<html>` the html that will be served on that port in response to an index.h
     and `<port>` is the port number the server is listening to
     * In a browser: `http://localhost:<port>/index.html`
     where `<port>` is the port number the server is listening to
-    * Temporarily, port = 4040
 
 ### Terminate
 * To terminate a client

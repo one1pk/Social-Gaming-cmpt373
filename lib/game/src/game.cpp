@@ -4,14 +4,19 @@
 #include <algorithm>
 
 Game::Game(std::string name, uintptr_t ownerID) 
-    : _name(name), _ownerID(ownerID) {
+    : _name(name), _ownerID(ownerID), _started(false) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
 
 // starts the game execution
 void Game::start() {
-    /** STUB **/
+    _started = true;
+}
+
+// starts the game execution
+bool Game::isOngoing() {
+    return _started;
 }
 
 // adds a player to the game

@@ -33,7 +33,6 @@ std::string HELP_INFORMATION = ("\n\n                       Displaying Help Info
                                 "  * To view the available games enter: games\n"
                                 "  * To create a new game from the options enter: create <game_index>\n"
                                 "  * To join a game with an invitation code enter: join <invitation_code>\n"
-                                "  * To start a game, enter: start <invitation_code>\n"
                                 "  * To exit the server enter: exit\n\n");
 
 void removeConnectionFromList(Connection c, std::vector<Connection> &list) {
@@ -103,31 +102,17 @@ std::string gamesList() {
     return list.str();
 }
 
-struct ProcessedMessages {
-    std::deque<Message> outgoing;
-    bool shouldShutdown;
-};
-
 // processes all incoming messages received from clients since the last Server::update()
-// distinguishes control signals and commands and responds appropriately
-// returns a list of Message objects to be sent by the server and a shutdown signal (if any was received)
-ProcessedMessages processMessages(Server &server);
+// responds to control messages and commands and broadcasts chat messages
+// invokes the Server::send() to send the appropriate messages back to the clients
+// returns a shutdown signal (if any was received)
+bool processMessages(Server &server);
 
-std::deque<Message> buildOutgoing(const std::string &log) {
-    std::deque<Message> outgoing;
-    for (auto client : clients) {
-        outgoing.push_back({client, log});
-    }
-    return outgoing;
-}
-
-std::string
-getHTTPMessage(const char *htmlLocation) {
+std::string getHTTPMessage(const char *htmlLocation) {
     if (access(htmlLocation, R_OK) != -1) {
         std::ifstream infile{htmlLocation};
         return std::string{std::istreambuf_iterator<char>(infile),
                            std::istreambuf_iterator<char>()};
-
     } else {
         std::cerr << "Unable to open HTML index file:\n"
                   << htmlLocation << "\n";
@@ -165,10 +150,7 @@ int main(int argc, char *argv[]) {
             errorWhileUpdating = true;
         }
 
-        auto [outgoing, shutdownSignal] = processMessages(server);
-        server.send(outgoing);
-        // TODO: Implement this method to handle game input output
-        // server.send(OutgoingGameMessages(server));
+        bool shutdownSignal = processMessages(server);
 
         if (shutdownSignal || errorWhileUpdating) {
             break;
@@ -181,12 +163,13 @@ int main(int argc, char *argv[]) {
 }
 
 void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server);
+void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server);
 void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server);
 void HandleStart(Message message, std::deque<Message> &outgoing, Server &server);
 void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server);
 void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server);
 
-ProcessedMessages processMessages(Server &server) {
+bool processMessages(Server &server) {
     bool shutdown = false;
     std::deque<Message> outgoing;
     std::ostringstream lobbyMsgStream;
@@ -194,22 +177,32 @@ ProcessedMessages processMessages(Server &server) {
 
     for (auto &message : incoming) {
         if (message.connection.in_game) { // an in-game message //
+            Game* game_instance = getGameInstance(message.connection.gameID);
+
             if (message.text == "leave") {
                 HandleLeave(message, outgoing, server);
             } else if (message.text == "end") {
                 HandleEnd(message, outgoing, server);
-            } else if (message.text.substr(0, 5) == "join " && message.connection.id == getGameInstance(message.connection.gameID)->ownerID()) {
-                HandleJoin(message, outgoing, server);
-            } else if (message.text.substr(0, 6) == "start " && message.connection.id == getGameInstance(message.connection.gameID)->ownerID()){
+            } else if (message.text == "join" && message.connection.id == game_instance->ownerID()) {
+                HandleOwnerJoin(message, outgoing, server);
+            } else if (message.text == "start" && message.connection.id == game_instance->ownerID()){
                 HandleStart(message, outgoing, server);
-            }else {
+            } else {
+                // currently all in-game messages are broadcasted to all players
                 // TODO: Handle input and output for a game
-                // right now these messages echo back to the sender rather than in game lobby
-                // FIX: Check if right place to put it here
-                // ProcessIncomingGameMessage(server);
-                std::stringstream outgoing_message;
-                outgoing_message << message.connection.id << "> " << message.text << "\n";
-                outgoing.push_back({message.connection, outgoing_message.str()});
+                // will need to integrate with the Game object and the input/output game rules
+                
+                if (message.connection.id == game_instance->ownerID() && !game_instance->hasPlayer(message.connection)) {
+                    // if owner hasnt joined, don't broadcast their message
+                    continue;
+                }
+                
+                std::ostringstream ingame_message;
+                ingame_message << message.connection.id << "> " << message.text << "\n";
+
+                for (auto &player : game_instance->players()) {
+                    outgoing.push_back({player, ingame_message.str()});
+                }
             }
         } else { // a lobby message //
 
@@ -241,7 +234,10 @@ ProcessedMessages processMessages(Server &server) {
     for (auto client : clients_in_lobby) {
         outgoing.push_back({client, lobbyMsgStream.str()});
     }
-    return ProcessedMessages{outgoing, shutdown};
+
+    server.send(outgoing);
+
+    return shutdown;
 }
 
 void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) {
@@ -290,6 +286,29 @@ void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) 
     }
 }
 
+void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server) {
+    Game *game_instance = getGameInstance(message.connection.gameID);
+
+    // add the owner to their game if not already in it 
+    if (!game_instance->hasPlayer(message.connection)) {
+        game_instance->addPlayer(message.connection);
+
+        // return a confirmation message
+        std::stringstream confirmation;
+        confirmation << "You have joined your own game!\n"
+                        << "Start the game when you are ready\n"
+                        << "Meanwhile, you can chat in the game lobby\n\n";
+        outgoing.push_back({message.connection, confirmation.str()});
+
+        // return a notification message to each game player
+        for (auto &player : game_instance->players()) {
+            if (player == message.connection)
+                continue;
+            outgoing.push_back({player, "The game owner has joined the game!\n"});
+        }
+    }
+}
+
 void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server) {
     // Validate game index
     std::string game_index_string = message.text.substr(7, message.text.size() - 7);
@@ -303,18 +322,32 @@ void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server
             server.setGameIdentity(message.connection, game_instances.back().id());
             std::stringstream confirmation;
             confirmation << "Game " << game_names[game_index] << " created successfully\n"
-                         << "Invitation code: " << game_instances.back().id() << "\n\n";
+                         << "Invitation code: " << game_instances.back().id() << "\n"
+                         << "Enter \"start\" when you are ready to start the game\n\n";
             outgoing.push_back({message.connection, confirmation.str()});
         } else {
             outgoing.push_back({message.connection, "Please enter a valid game index. To list all games, enter: games\n"});
         }
     } else {
-        outgoing.push_back({message.connection, "Incorrect Format! To start a game, please enter: create <game index>\n"});
+        outgoing.push_back({message.connection, "Incorrect Format! To create a game, please enter: create <game index>\n"});
     }
 }
 
-void HandleStart(Message message, std::deque<Message> &outgoing, Server &server){
+void HandleStart(Message message, std::deque<Message> &outgoing, Server &server) {
+    auto game_instance = getGameInstance(message.connection.gameID);
+    if (game_instance->isOngoing()) return;
+
+    // reply with confirmation to game owner
     outgoing.push_back({message.connection, "Game Started\n"});
+
+    // send notification to game players
+    for (auto &player : game_instance->players()) {
+        if (player.id == game_instance->ownerID())
+            continue;
+        outgoing.push_back({player, "The owner has started the game!\n\n"});
+    }
+
+    game_instance->start();
 }
 
 void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server) {
