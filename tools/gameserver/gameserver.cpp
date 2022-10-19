@@ -88,6 +88,14 @@ Game *getGameInstance(uintptr_t gameID) {
         return &*game_it;
 }
 
+void removeGameInstance(uintptr_t gameID){
+    auto end_it = std::remove_if(game_instances.begin(), game_instances.end(), [gameID](auto &game){
+        return game.id() == gameID;
+    });
+
+    game_instances.erase(end_it, game_instances.end());
+}
+
 // returns a list of game names and indexes in string form
 // of the format:
 // [0] rock, paper, scissors
@@ -163,11 +171,11 @@ int main(int argc, char *argv[]) {
 }
 
 void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server);
-void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server);
+void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance);
 void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server);
-void HandleStart(Message message, std::deque<Message> &outgoing, Server &server);
-void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server);
-void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server);
+void HandleStart(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance);
+void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance);
+void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance);
 
 bool processMessages(Server &server) {
     bool shutdown = false;
@@ -180,13 +188,13 @@ bool processMessages(Server &server) {
             Game* game_instance = getGameInstance(message.connection.gameID);
 
             if (message.text == "leave") {
-                HandleLeave(message, outgoing, server);
+                HandleLeave(message, outgoing, server, game_instance);
             } else if (message.text == "end") {
-                HandleEnd(message, outgoing, server);
+                HandleEnd(message, outgoing, server, game_instance);
             } else if (message.text == "join" && message.connection.id == game_instance->ownerID()) {
-                HandleOwnerJoin(message, outgoing, server);
+                HandleOwnerJoin(message, outgoing, server, game_instance);
             } else if (message.text == "start" && message.connection.id == game_instance->ownerID()){
-                HandleStart(message, outgoing, server);
+                HandleStart(message, outgoing, server, game_instance);
             } else {
                 // currently all in-game messages are broadcasted to all players
                 // TODO: Handle input and output for a game
@@ -286,8 +294,7 @@ void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) 
     }
 }
 
-void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server) {
-    Game *game_instance = getGameInstance(message.connection.gameID);
+void HandleOwnerJoin(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
 
     // add the owner to their game if not already in it 
     if (!game_instance->hasPlayer(message.connection)) {
@@ -333,8 +340,7 @@ void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server
     }
 }
 
-void HandleStart(Message message, std::deque<Message> &outgoing, Server &server) {
-    auto game_instance = getGameInstance(message.connection.gameID);
+void HandleStart(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
     if (game_instance->isOngoing()) return;
 
     // reply with confirmation to game owner
@@ -350,9 +356,8 @@ void HandleStart(Message message, std::deque<Message> &outgoing, Server &server)
     game_instance->start();
 }
 
-void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server) {
+void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
     // non-owners can leave
-    auto game_instance = getGameInstance(message.connection.gameID);
     if (message.connection.id == game_instance->ownerID()) {
         outgoing.push_back({message.connection, "Owners cannot leave the game they create. To end the game, please enter: end\n"});
     } else {
@@ -376,16 +381,15 @@ void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server)
     }
 }
 
-void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server) {
+void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
     // owner ends game session
-    if (message.connection.id == getGameInstance(message.connection.gameID)->ownerID()) {
+    if (message.connection.id == game_instance->ownerID()) {
         outgoing.push_back({message.connection, "Game successfully ended! Entering the lobby now!\n\n"});
         // Adds owner back to lobby
         server.setGameIdentity(message.connection, 0);
         clients_in_lobby.push_back(message.connection);
         
         // return a notification message to each game player and send them to lobby
-        Game *game_instance = getGameInstance(message.connection.gameID);
         std::string player_notification = "The game owner has ended the game. You will be transferred to the lobby.\n\n";
         for (auto &player : game_instance->players()) {
             if (player == message.connection)
@@ -395,7 +399,8 @@ void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server) {
             server.setGameIdentity(player, 0);
         }
 
-        // TODO: DELETE GAME INSTANCE
+        // TODO: CHECK FOR MEMORY LEAKS IN GAME
+        removeGameInstance(game_instance->id());
 
     } else {
         outgoing.push_back({message.connection, "Only the game owner can end the game. To leave the game, please enter: leave\n"});
