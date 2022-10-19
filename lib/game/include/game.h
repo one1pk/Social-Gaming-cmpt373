@@ -36,6 +36,7 @@ private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
     uintptr_t _ownerID;
+    bool _started;
     std::vector<Connection> _players;
 
     //Bounds of player given in json file
