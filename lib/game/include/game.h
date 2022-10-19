@@ -18,8 +18,10 @@ public:
         std::vector<Rule> _rules);
 
     void start();
+    bool isOngoing();
 
     void addPlayer(Connection playerID);
+    void removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
     //number of players in vector above

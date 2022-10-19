@@ -63,6 +63,7 @@ public:
     void start(boost::beast::http::request<boost::beast::http::string_body>& request);
     void send(std::string outgoing);
     void disconnect();
+    void setGameIdentity(uintptr_t gameID);
 
     [[nodiscard]] Connection getConnection() const noexcept { return connection; }
 
@@ -103,6 +104,10 @@ void Channel::disconnect() {
     websocket.close(boost::beast::websocket::close_reason{}, ec);
 }
 
+void Channel::setGameIdentity(uintptr_t gameID){
+    gameID > 0 ? connection.in_game = true : connection.in_game = false;
+    connection.gameID = gameID;
+}
 
 void Channel::send(std::string outgoing) {
     if (outgoing.empty()) {
@@ -369,6 +374,13 @@ void Server::disconnect(Connection connection) {
         connectionHandler->handleDisconnect(connection);
         found->second->disconnect();
         impl->channels.erase(found);
+    }
+}
+
+void Server::setGameIdentity(Connection connection, uintptr_t gameID) {
+    auto found = impl->channels.find(connection);
+    if (impl->channels.end() != found){
+        found->second->setGameIdentity(gameID);
     }
 }
 
