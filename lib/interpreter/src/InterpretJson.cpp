@@ -2,9 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include "InterpretJson.h"
+#include "game.h"
 
 using namespace std;
 using json = nlohmann::json;
+using namespace ns;
 
 
     InterpretJson::InterpretJson(string path){
@@ -13,7 +15,10 @@ using json = nlohmann::json;
         data = jData;
     }
 
-    template<class T>
-    T& interpret(T& obj){}
+   
+    void InterpretJson::interpret(Game& obj){
+        //obj.from_json(data, obj);
+        obj = data["configuration"].get<ns::Game>();
+    }
 
 

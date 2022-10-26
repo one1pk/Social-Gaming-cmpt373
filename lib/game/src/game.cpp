@@ -2,9 +2,11 @@
 
 #include <iostream>
 #include <algorithm>
+using namespace ns;
 
-Game::Game(std::string name, uintptr_t ownerID) 
-    : _name(name), _ownerID(ownerID), _started(false) {
+Game::Game(){}
+Game::Game(std::string _name, uintptr_t ownerID) 
+    : name(_name), _ownerID(ownerID), _started(false) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
@@ -45,8 +47,8 @@ size_t Game::numPlayers() {
 }
 
 // returns the name of the game
-std::string Game::name() {
-    return _name;
+std::string Game::getName() {
+    return name;
 }
 
 // returns the ownerID of the game

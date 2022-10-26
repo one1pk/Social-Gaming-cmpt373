@@ -1,5 +1,5 @@
 #include "game.h"
-#include "interpreter.h"
+#include "InterpretJson.h"
 #include "server.h"
 
 #include <algorithm>
@@ -11,6 +11,8 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+using namespace ns;
+using namespace std;
 
 /*
 game server that can be configured by the person running it
@@ -128,7 +130,7 @@ std::string getHTTPMessage(const char *htmlLocation) {
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {    
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
@@ -264,7 +266,7 @@ void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) 
 
             // return a confirmation message to the player
             std::stringstream confirmation;
-            confirmation << "You have joined a " << game_instance->name() << " game!\n"
+            confirmation << "You have joined a " << game_instance->getName() << " game!\n"
                          << "There are currently " << game_instance->numPlayers() << " players\n"
                          << "waiting for the game owner to start the game...\n"
                          << "Meanwhile, you can chat in the game lobby\n\n";
