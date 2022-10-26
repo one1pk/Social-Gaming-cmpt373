@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <algorithm>
+using namespace ns;
 
+<<<<<<< HEAD
 Game::Game(
     std::string name, Connection owner, 
     unsigned min_players, unsigned max_players, bool has_audience,
@@ -23,6 +25,11 @@ Game::Game(
     _rules(rules),
     _player_msgs(player_msgs), _global_msgs(global_msgs),
     _player_input(player_input)  {
+=======
+Game::Game(){}
+Game::Game(std::string _name, uintptr_t ownerID) 
+    : name(_name), _ownerID(ownerID), _started(false) {
+>>>>>>> 19b7927 (Interpret part of json and add test)
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
@@ -89,8 +96,14 @@ size_t Game::numPlayers() {
     return _players->size();
 }
 
+<<<<<<< HEAD
 std::string Game::name() {
     return _name;
+=======
+// returns the name of the game
+std::string Game::getName() {
+    return name;
+>>>>>>> 19b7927 (Interpret part of json and add test)
 }
 
 Connection Game::owner() {
