@@ -1,6 +1,7 @@
 add_executable(gameserver
     gameserver.cpp
 )
+add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/gameconfigs")
 
 set_target_properties(gameserver
                     PROPERTIES
