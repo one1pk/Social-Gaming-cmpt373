@@ -12,6 +12,7 @@ using namespace ns;
     InterpretJson::InterpretJson(string path){
         ifstream f(path);
         json jData = json::parse(f);
+        f.close();
         data = jData;
     }
 

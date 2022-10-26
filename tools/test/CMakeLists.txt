@@ -1,7 +1,7 @@
 add_executable(test
     test.cpp
 )
-
+add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
 set_target_properties(test
                     PROPERTIES
                     LINKER_LANGUAGE CXX

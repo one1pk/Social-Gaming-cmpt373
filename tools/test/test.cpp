@@ -8,22 +8,13 @@ using namespace ns;
 using namespace std;
 int main(){
     Game g;
-        //string path = "/CMPT373/gamingplatform/social-gaming/tools/gameserver/test.json";
-        //InterpretJson j(path);
-        auto j = R"(
-        {
-            "configuration": {
-                "name": "Rock, Paper, Scissors",
-                "player_count": {"min": 2, "max": 4},
-                "audience": false,
-                "setup": {
-                    "Rounds": 10
-                }
-            }
-        }
-        )"_json;
+        
+        string path = PATH_TO_JSON;
+        
+        InterpretJson j(path);
+        
         cout << "Full json object: " << endl;
-        cout << j << endl << endl;
+        cout << j.getData() << endl << endl;
         
         InterpretJson data(j);
         data.interpret(g);

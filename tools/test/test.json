@@ -1,8 +1,10 @@
 {
-    "name": "Rock, Paper, Scissors",
-    "player count": {"min": 2, "max": 4},
-    "audience": false,
-    "setup": {
-        "Rounds": 10
+    "configuration": {
+        "name": "Rock, Paper, Scissors",
+        "player_count": {"min": 2, "max": 4},
+        "audience": false,
+        "setup": {
+            "Rounds": 10
+        }
     }
 }
