@@ -1,6 +1,7 @@
 #pragma once
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "server.h"
 #include "rules.h"
 #include "list.h"
@@ -35,6 +36,9 @@ public:
     );
 =======
 #include "../../networking/include/server.h"
+=======
+#include "server.h"
+>>>>>>> 3100b26 (Fix server include path)
 #include  "rules.h"
 #include <string>
 #include <vector>
