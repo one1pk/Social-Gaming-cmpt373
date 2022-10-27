@@ -1,6 +1,7 @@
 #include "game.h"
 #include "InterpretJson.h"
 #include "server.h"
+#include "list.h"
 
 #include <algorithm>
 #include <chrono>
@@ -74,8 +75,102 @@ void createAvailableGamesList() {
 // creates a game object corresponding to the game configuration in ./gameconfigs called <game_name>.json
 void constructGame(std::string game_name, uintptr_t ownerID) {
     /** STUB **/
-    // use the interpreter to generate the game object from the json configurations
-    game_instances.emplace_back(game_name, ownerID);
+    // TODO: use the interpreter to generate the game object from the json configurations
+    
+    // Currently manually creating Rock Paper Scissors game object
+    
+
+    // "constants": {
+    //     "weapons": [
+    //         { "name": "Rock",     "beats": "Scissors"},
+    //         { "name": "Paper",    "beats": "Rock"},
+    //         { "name": "Scissors", "beats": "Paper"}
+    //     ]
+    // },
+
+    ElementSptr constants = std::make_shared<Element<ElementMap>>(
+        ElementMap{ 
+            {"weapons", std::make_shared<Element<ElementVector>>(
+                    ElementVector{
+                        std::make_shared<Element<ElementMap>>(
+                            ElementMap{
+                                {"name", std::make_shared<Element<std::string>>("Rock")}, 
+                                {"beats", std::make_shared<Element<std::string>>("Scissors")}
+                            }
+                        ),
+                        std::make_shared<Element<ElementMap>>(
+                            ElementMap{
+                                {"name", std::make_shared<Element<std::string>>("Paper")}, 
+                                {"beats", std::make_shared<Element<std::string>>("Rock")}
+                            }
+                        ),
+                        std::make_shared<Element<ElementMap>>(
+                            ElementMap{
+                                {"name", std::make_shared<Element<std::string>>("Scissors")}, 
+                                {"beats", std::make_shared<Element<std::string>>("Paper")}
+                            }
+                        )
+                    }
+                )
+            } 
+        }
+    );
+
+    // "variables": {
+    //     "winners": []
+    // },
+    
+    ElementSptr variables = std::make_shared<Element<ElementMap>>(
+        ElementMap{
+            {"winners", std::make_shared<Element<ElementVector>>(ElementVector{})}
+        }
+    );
+
+    // "per-player": {
+    //     "wins": 0
+    // },
+
+    ElementVector per_player;
+    // create a list for each potential player (max_players = 4)
+    for (size_t i = 0; i < 4; i++) { 
+        per_player.emplace_back(std::make_shared<Element<ElementMap>>(
+            ElementMap{
+                {"wins", std::make_shared<Element<int>>(0)}
+            }
+        ));
+    }
+
+    // "per-audience": {},
+
+    ElementVector per_audience = { std::make_shared<Element<ElementMap>>(ElementMap{}) };
+
+    // "setup": {
+    //   "Rounds": 10
+    // }
+
+    ElementSptr setup = std::make_shared<Element<ElementMap>>(
+        ElementMap{
+            {"Rounds", std::make_shared<Element<int>>(10)}
+        }
+    );
+
+    std::vector<RuleUptr> foreach_rules;
+
+    std::vector<RuleUptr> rules;
+    rules.emplace_back(
+        std::make_unique<Foreach>(
+            setup->getMapElement("Rounds")->upfrom(1),
+            std::move(foreach_rules)
+        )
+    );
+
+    game_instances.emplace_back(
+        game_name, ownerID,
+        /*min_players*/ 2, /*max_players*/ 4, /*audience*/ false,
+        setup,
+        constants, variables, per_player, per_audience,
+        std::move(rules)
+    );
 }
 
 // returns a pointer to the game instance with the given gameID
@@ -130,44 +225,47 @@ std::string getHTTPMessage(const char *htmlLocation) {
     }
 }
 
-int main(int argc, char *argv[]) {    
-    if (argc < 3) {
-        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
-                  << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
-        return 1;
-    }
-    std::cout << "Setting up the server...\n";
+int main(int argc, char *argv[]) {
+    constructGame("rock_paper_scissors", 0);
+    game_instances.back().start();
 
-    // extract the server configuration parameters from ./serverconfig.json
-    // start a new session based on the configuration
-    // (for now we take them as cmdline args)
+    // if (argc < 3) {
+    //     std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
+    //               << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
+    //     return 1;
+    // }
+    // std::cout << "Setting up the server...\n";
 
-    unsigned short port = std::stoi(argv[1]);
-    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
+    // // extract the server configuration parameters from ./serverconfig.json
+    // // start a new session based on the configuration
+    // // (for now we take them as cmdline args)
 
-    std::cout << "Game server is up!\n";
+    // unsigned short port = std::stoi(argv[1]);
+    // Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
 
-    createAvailableGamesList();
+    // std::cout << "Game server is up!\n";
 
-    // start listening for messages and serving content as appropriate
-    while (true) {
-        bool errorWhileUpdating = false;
-        try {
-            server.update();
-        } catch (std::exception &e) {
-            std::cerr << "Exception from Server update:\n"
-                      << " " << e.what() << "\n\n";
-            errorWhileUpdating = true;
-        }
+    // createAvailableGamesList();
 
-        bool shutdownSignal = processMessages(server);
+    // // start listening for messages and serving content as appropriate
+    // while (true) {
+    //     bool errorWhileUpdating = false;
+    //     try {
+    //         server.update();
+    //     } catch (std::exception &e) {
+    //         std::cerr << "Exception from Server update:\n"
+    //                   << " " << e.what() << "\n\n";
+    //         errorWhileUpdating = true;
+    //     }
 
-        if (shutdownSignal || errorWhileUpdating) {
-            break;
-        }
+    //     bool shutdownSignal = processMessages(server);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    //     if (shutdownSignal || errorWhileUpdating) {
+    //         break;
+    //     }
+
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // }
 
     return 0;
 }

@@ -7,6 +7,19 @@ using namespace ns;
 Game::Game(){}
 Game::Game(std::string _name, uintptr_t ownerID) 
     : name(_name), _ownerID(ownerID), _started(false) {
+Game::Game(
+    std::string name, uintptr_t ownerID, 
+    int min_players, int max_players, bool audience,
+    ElementSptr setup,
+    ElementSptr constants, ElementSptr variables,
+    ElementVector per_player, ElementVector per_audience, 
+    std::vector<RuleUptr> rules
+) : _name(name), _ownerID(ownerID), _started(false),
+    _player_count{ min_players, max_players }, _audience(audience),
+    _setup(setup),
+    _constants{constants}, _variables(variables),
+    _per_player(per_player), _per_audience(per_audience),
+    _rules(std::move(rules))  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
@@ -14,14 +27,20 @@ Game::Game(std::string _name, uintptr_t ownerID)
 // starts the game execution
 void Game::start() {
     _started = true;
+        std::cout << "Game Started\n";
+
+    for (auto&& rule: _rules) {
+        std::cout << "Rule Loop\n";
+
+        rule->execute();
+    }
 }
 
-// starts the game execution
+// returns game status
 bool Game::isOngoing() {
     return _started;
 }
 
-// adds a player to the game
 void Game::addPlayer(Connection playerID) {
     _players.push_back(playerID);
 }
@@ -31,7 +50,6 @@ void Game::removePlayer(Connection playerID) {
     _players.erase(eraseBegin, _players.end());
 }
 
-// checks if a player is in the game
 bool Game::hasPlayer(Connection playerID) {
     return std::find(_players.begin(), _players.end(), playerID) != _players.end();
 }
@@ -49,14 +67,14 @@ size_t Game::numPlayers() {
 // returns the name of the game
 std::string Game::getName() {
     return name;
+std::string Game::name() {
+    return _name;
 }
 
-// returns the ownerID of the game
 uintptr_t Game::ownerID() {
     return _ownerID;
 }
 
-// returns the gameID
 uintptr_t Game::id() {
     return _id;
 }
