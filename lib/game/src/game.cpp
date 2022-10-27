@@ -5,8 +5,7 @@
 using namespace ns;
 
 Game::Game(){}
-Game::Game(std::string _name, uintptr_t ownerID) 
-    : name(_name), _ownerID(ownerID), _started(false) {
+
 Game::Game(
     std::string name, uintptr_t ownerID, 
     int min_players, int max_players, bool audience,
@@ -65,8 +64,6 @@ size_t Game::numPlayers() {
 }
 
 // returns the name of the game
-std::string Game::getName() {
-    return name;
 std::string Game::name() {
     return _name;
 }
