@@ -41,6 +41,11 @@ public:
 #include <map>
 #include <any>
 #include <nlohmann/json.hpp>
+<<<<<<< HEAD
+=======
+#include <memory>
+#include <iostream>
+>>>>>>> d5888b9 (Fix naming inconsistencies)
 
 using json = nlohmann::json;
 using namespace std;
@@ -120,17 +125,15 @@ private:
 =======
     std::string getName();
     void printInfo(){
-        cout << name << " " << audience << " " << player_count.min << " " << player_count.max << endl;
+        cout << _name << " " << audience << " " << _player_count.min << " " << _player_count.max << endl;
     }
 
-    uintptr_t ownerID();
-    uintptr_t id();
     
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, name, audience, player_count)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, _name, audience, _player_count)
     
 private:
     uintptr_t _id; // unique id can act as an invitation code
-    std::string name;
+    std::string _name;
     bool audience;
     uintptr_t _ownerID;
     bool _started;
@@ -141,7 +144,7 @@ private:
         int min;
         int max;
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlayerCount, min, max)
-    } player_count;
+    } _player_count;
 
     
     // map of { name_string -> { configurable_value , prompt_text } }

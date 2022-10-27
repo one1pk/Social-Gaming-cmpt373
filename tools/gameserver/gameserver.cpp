@@ -198,7 +198,7 @@ void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) 
 
             // return a confirmation message to the player
             std::stringstream confirmation;
-            confirmation << "You have joined a " << game_instance->getName() << " game!\n"
+            confirmation << "You have joined a " << game_instance->name() << " game!\n"
                          << "There are currently " << game_instance->numPlayers() << " players\n"
                          << "waiting for the game owner to start the game...\n"
                          << "Meanwhile, you can chat in the game lobby\n\n";

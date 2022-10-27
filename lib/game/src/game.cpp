@@ -5,6 +5,11 @@
 using namespace ns;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+Game::Game(){}
+
+>>>>>>> d5888b9 (Fix naming inconsistencies)
 Game::Game(
     std::string name, Connection owner, 
     unsigned min_players, unsigned max_players, bool has_audience,
@@ -101,9 +106,14 @@ std::string Game::name() {
     return _name;
 =======
 // returns the name of the game
+<<<<<<< HEAD
 std::string Game::getName() {
     return name;
 >>>>>>> 19b7927 (Interpret part of json and add test)
+=======
+std::string Game::name() {
+    return _name;
+>>>>>>> d5888b9 (Fix naming inconsistencies)
 }
 
 Connection Game::owner() {
