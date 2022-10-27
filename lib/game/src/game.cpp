@@ -8,14 +8,14 @@ Game::Game(
     int min_players, int max_players, bool audience,
     ElementSptr setup,
     ElementSptr constants, ElementSptr variables,
-    ElementVector per_player, ElementVector per_audience, 
-    std::vector<RuleUptr> rules
+    ElementSptr per_player, ElementSptr per_audience, 
+    RuleVector rules
 ) : _name(name), _ownerID(ownerID), _started(false),
     _player_count{ min_players, max_players }, _audience(audience),
     _setup(setup),
     _constants{constants}, _variables(variables),
     _per_player(per_player), _per_audience(per_audience),
-    _rules(std::move(rules))  {
+    _rules(rules)  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
@@ -23,11 +23,10 @@ Game::Game(
 // starts the game execution
 void Game::start() {
     _started = true;
-        std::cout << "Game Started\n";
+    std::cout << "Game Started\n";
 
-    for (auto&& rule: _rules) {
+    for (auto rule: _rules) {
         std::cout << "Rule Loop\n";
-
         rule->execute();
     }
 }

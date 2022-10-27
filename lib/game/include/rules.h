@@ -1,44 +1,47 @@
 #pragma once
 
 #include "list.h"
+#include "server.h"
 
 #include <vector>
+#include <functional>
+
+class Rule;
+typedef std::shared_ptr<Rule> RuleSptr; // shared pointer to a rule object
+typedef std::vector<std::shared_ptr<Rule>> RuleVector; // a vector of shared pointers to rule objects
 
 // Rule Interface //
 
 class Rule {
 public:
     virtual ~Rule() {}
-    virtual void execute() const = 0;
+    virtual void execute(ElementSptr element = nullptr) const = 0;
 };
-
-typedef std::unique_ptr<Rule> RuleUptr;
 
 // Control Structures//
 
 class Foreach : public Rule {
 private:
-    const ElementSptr _list;
-    const std::vector<RuleUptr> _rules;
+    ElementSptr _list;
+    RuleVector _rules;
 public:
-    Foreach(ElementSptr list, std::vector<RuleUptr> rules);
-    void execute() const final;
+    Foreach(ElementSptr list, RuleVector rules);
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 class ParallelFor : public Rule {
-    const ElementSptr _list;
-    const std::vector<RuleUptr> _rules;
+    std::vector<Connection> _list;
+    RuleVector _rules;
 public:
-    ParallelFor(ElementSptr list, std::vector<RuleUptr> rules);
-    void execute() const final;
+    ParallelFor(std::vector<Connection> list, RuleVector rules);
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 class When : public Rule {
-    // const std::any value;
-    // const std::vector<std::pair<std::any,std::vector<Rule>>> case_rules; // a rule list for every case
+    const std::vector<std::pair<std::function<bool()>,RuleVector>> _case_rules; // a rule list for every case
 public: 
-    When(/*std::any _value, std::vector<std::pair<std::any,std::vector<Rule>>> _case_rules*/);
-    void execute() const final;
+    When(std::vector<std::pair<std::function<bool()>,RuleVector>> case_rules);
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 // List Operations //
@@ -48,7 +51,7 @@ class Extend : public Rule {
     ElementSptr _extension;
 public:
     Extend(ElementSptr target, ElementSptr extension);
-    void execute() const final;
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 class Discard : public Rule {
@@ -56,7 +59,7 @@ class Discard : public Rule {
     unsigned _count;
 public:
     Discard(ElementSptr list, unsigned count);
-    void execute() const final;
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 // Arithmetic //
@@ -66,33 +69,33 @@ class Add : public Rule {
     int* _value;
 public: 
     Add(int* to, int* value);
-    void execute() const final;
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 // Input/ Output //
 
 class InputChoice : public Rule {
-    uintptr_t _to;
     std::string _prompt;
-    ElementSptr _choices;
-    ElementSptr _result;
-    unsigned _timeout_s; // in seconds
+    ElementVector _choices;
+    // ElementSptr _result;
+    // unsigned _timeout_s; // in seconds
 public:
-    InputChoice(uintptr_t to, std::string prompt, ElementSptr choices, ElementSptr result, unsigned timeout_s);
-    void execute() const final;
+    InputChoice(std::string prompt, ElementVector choices/*, ElementSptr result, unsigned timeout_s*/);
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 class GlobalMsg : public Rule {
-    // std::string _msg;
+    std::string _msg;
 public:
-    GlobalMsg();
-    void execute() const final;
+    GlobalMsg(std::string msg);
+    void execute(ElementSptr element = nullptr) const final;
 };
 
 class Scores : public Rule {
-    // std::vector<Element*> _score;
+    ElementSptr _player_maps;
+    std::string _attribute_key;
     bool _ascending;
 public:
-    Scores(bool ascending);
-    void execute() const final;
+    Scores(ElementSptr player_maps, std::string attribute_key, bool ascending);
+    void execute(ElementSptr element = nullptr) const final;
 };

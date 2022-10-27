@@ -15,8 +15,8 @@ public:
         int min_players, int max_players, bool audience,
         ElementSptr setup,
         ElementSptr constants, ElementSptr variables,
-        ElementVector per_player, ElementVector per_audience, 
-        std::vector<RuleUptr> rules
+        ElementSptr per_player, ElementSptr per_audience, 
+        RuleVector rules
     );
 
     void start();
@@ -52,8 +52,8 @@ private:
 
     ElementSptr _constants;
     ElementSptr _variables;
-    ElementVector _per_player; // a list for each player
-    ElementVector _per_audience; // a list for each audience member
+    ElementSptr _per_player; // a vector of lists for each player
+    ElementSptr _per_audience; // a vector of lists for each audience member
 
-    std::vector<RuleUptr> _rules;
+    RuleVector _rules;
 };
