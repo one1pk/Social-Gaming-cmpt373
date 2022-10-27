@@ -9,7 +9,7 @@ using namespace std;
 int main(){
     Game g;
         
-        string path = PATH_TO_JSON;
+        string path = PATH_TO_JSON_TEST;
         
         InterpretJson j(path);
         

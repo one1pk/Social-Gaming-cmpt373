@@ -39,10 +39,7 @@ public:
 
     uintptr_t ownerID();
     uintptr_t id();
-    /*void from_json(const json& j, Game& g){
-        j.at("name").get_to(g._name);
-        j.at("audience").get_to(g.audience);
-    }*/
+    
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, name, audience, player_count)
     
 private:
