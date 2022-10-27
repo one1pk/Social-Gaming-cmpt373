@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../networking/include/server.h"
+#include "server.h"
 #include  "rules.h"
 #include <string>
 #include <vector>

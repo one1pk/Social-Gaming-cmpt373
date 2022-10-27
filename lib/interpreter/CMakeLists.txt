@@ -17,6 +17,7 @@ target_include_directories(interpreter
 target_link_libraries(interpreter
     PRIVATE 
         ${nlohmann_json_LIBRARIES}
+        networking
 )
 
 set_target_properties(interpreter
