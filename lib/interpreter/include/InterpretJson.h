@@ -18,7 +18,6 @@ class InterpretJson{
         
 
         //maps json data to game object
-        
         void interpret(Game& obj );
 
         json getData(){

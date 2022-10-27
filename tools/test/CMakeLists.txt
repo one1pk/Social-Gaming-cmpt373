@@ -1,15 +1,13 @@
 add_executable(test
     test.cpp
 )
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
 set_target_properties(test
                     PROPERTIES
                     LINKER_LANGUAGE CXX
                     CXX_STANDARD 17
                     PREFIX ""
 )
-
-
 
 target_link_libraries(test
     game

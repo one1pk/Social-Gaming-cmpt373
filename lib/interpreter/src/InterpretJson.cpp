@@ -18,7 +18,6 @@ using namespace ns;
 
    
     void InterpretJson::interpret(Game& obj){
-        //obj.from_json(data, obj);
         obj = data["configuration"].get<ns::Game>();
     }
 
