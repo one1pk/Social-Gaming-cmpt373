@@ -44,16 +44,15 @@ public:
 
     std::string getName();
     void printInfo(){
-        cout << _name << " " << audience << " " << _player_count.min << " " << _player_count.max << endl;
+        cout << _name << " " << _audience << " " << _player_count.min << " " << _player_count.max << endl;
     }
 
     
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, _name, audience, _player_count)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, _name, _audience, _player_count)
     
 private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
-    bool audience;
     uintptr_t _ownerID;
     bool _started;
     std::vector<Connection> _players;
