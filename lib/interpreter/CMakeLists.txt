@@ -14,7 +14,6 @@ target_include_directories(interpreter
 )
 
 target_link_libraries(interpreter
-    PRIVATE 
         nlohmann_json::nlohmann_json
         networking
 )
