@@ -1,7 +1,10 @@
 add_executable(test
     test.cpp
 )
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
 add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+
 set_target_properties(test
                     PROPERTIES
                     LINKER_LANGUAGE CXX
@@ -10,9 +13,11 @@ set_target_properties(test
 )
 
 target_link_libraries(test
+    PRIVATE
     game
     networking
     interpreter
+    nlohmann_json::nlohmann_json
     ${CMAKE_THREAD_LIBS_INIT}
 )
 

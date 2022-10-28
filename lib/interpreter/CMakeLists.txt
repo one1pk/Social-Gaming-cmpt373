@@ -11,12 +11,11 @@ target_include_directories(interpreter
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../game/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${nlohmann_json_INCLUDE_DIR}
 )
 
 target_link_libraries(interpreter
     PRIVATE 
-        ${nlohmann_json_LIBRARIES}
+        nlohmann_json::nlohmann_json
         networking
 )
 
