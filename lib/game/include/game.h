@@ -153,6 +153,7 @@ private:
     // map of { name_string -> { configurable_value , prompt_text } }
     std::map<std::string, std::pair<std::any, std::string>> setup;
 
+<<<<<<< HEAD
     std::map<std::string, List> constants;
     std::map<std::string, List> variables;
     std::map<std::string, List> per_player;
@@ -163,3 +164,16 @@ private:
 
 }
 >>>>>>> 19b7927 (Interpret part of json and add test)
+=======
+    // Goal: map of { name_string -> { configurable_value , prompt_text } }
+    ElementSptr _setup;
+
+    ElementSptr _constants;
+    ElementSptr _variables;
+    ElementSptr _per_player; // a vector of lists for each player
+    ElementSptr _per_audience; // a vector of lists for each audience member
+
+    RuleVector _rules;
+};
+}
+>>>>>>> cf6b5f2 (Add brace)
