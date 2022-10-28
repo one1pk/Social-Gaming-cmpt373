@@ -74,11 +74,6 @@ private:
     ElementSptr _per_player; // a vector of lists for each player
     ElementSptr _per_audience; // a vector of lists for each audience member
 
-<<<<<<< HEAD
-    std::vector<RuleUptr> _rules;
-};
-}
-=======
     RuleVector _rules;
 };
->>>>>>> origin/7-game-infrastructure-v2-skeleton
+}
