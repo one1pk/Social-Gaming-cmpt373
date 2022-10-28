@@ -79,6 +79,12 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
     
     // Currently manually creating Rock Paper Scissors game object
     
+    clients.push_back({0});
+    clients.push_back({1});
+    clients.push_back({2});
+
+
+    //---------------LISTS--------------//
 
     // "constants": {
     //     "weapons": [
@@ -130,19 +136,21 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
     //     "wins": 0
     // },
 
-    ElementVector per_player;
+
+    ElementVector player;
     // create a list for each potential player (max_players = 4)
     for (size_t i = 0; i < 4; i++) { 
-        per_player.emplace_back(std::make_shared<Element<ElementMap>>(
+        player.emplace_back(std::make_shared<Element<ElementMap>>(
             ElementMap{
                 {"wins", std::make_shared<Element<int>>(0)}
             }
         ));
     }
+    ElementSptr per_player = std::make_shared<Element<ElementVector>>(player);
 
     // "per-audience": {},
 
-    ElementVector per_audience = { std::make_shared<Element<ElementMap>>(ElementMap{}) };
+    ElementSptr per_audience = std::make_shared<Element<ElementVector>>(ElementVector{});
 
     // "setup": {
     //   "Rounds": 10
@@ -154,22 +162,83 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
         }
     );
 
-    std::vector<RuleUptr> foreach_rules;
 
-    std::vector<RuleUptr> rules;
-    rules.emplace_back(
-        std::make_unique<Foreach>(
+    //---------------RULES--------------//
+
+    RuleVector rules{
+        std::make_shared<Foreach>(
             setup->getMapElement("Rounds")->upfrom(1),
-            std::move(foreach_rules)
+            RuleVector{
+                std::make_shared<GlobalMsg>("Round %p. Choose your weapon!"),
+                std::make_shared<ParallelFor>(
+                    clients, 
+                    RuleVector{ 
+                        std::make_shared<InputChoice>(
+                            "%p, choose your weapon!",
+                            constants->getMapElement("weapons")->getSubList("name")
+                        ) 
+                    }
+                ),
+                std::make_shared<Discard>(
+                    variables->getMapElement("winners"),
+                    variables->getMapElement("winners")->getSize()
+                ),
+                std::make_shared<Foreach>(
+                    constants->getMapElement("weapons"),
+                    RuleVector{
+                        std::make_shared<When>(
+                            std::vector<std::pair<std::function<bool()>,RuleVector>>{
+                                std::pair<std::function<bool()>,RuleVector>{
+                                    [](){ return true; },
+                                    RuleVector{
+                                        std::make_shared<Extend>(
+                                            variables->getMapElement("winners"),
+                                            std::make_shared<Element<ElementVector>>(ElementVector{})
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+                ),
+                std::make_shared<When>(
+                    std::vector<std::pair<std::function<bool()>,RuleVector>>{
+                        std::pair<std::function<bool()>,RuleVector>(
+                            [](){ return false; },
+                            RuleVector{
+                                std::make_shared<GlobalMsg>("tie game")
+                            }
+                        ),
+                        std::pair<std::function<bool()>,RuleVector>(
+                            [](){ return false; },
+                            RuleVector{
+                                std::make_shared<GlobalMsg>("tie game")
+                            }
+                        ), 
+                        std::pair<std::function<bool()>,RuleVector>(
+                            [](){ return true; },
+                            RuleVector{
+                                std::make_shared<GlobalMsg>("tie game")
+                            }
+                        ),
+                    }
+                )
+            }
+        ),
+        std::make_shared<Scores>(
+            per_player,
+            "wins",
+            false
         )
-    );
+    };
+
 
     game_instances.emplace_back(
         game_name, ownerID,
         /*min_players*/ 2, /*max_players*/ 4, /*audience*/ false,
         setup,
         constants, variables, per_player, per_audience,
-        std::move(rules)
+        rules
     );
 }
 

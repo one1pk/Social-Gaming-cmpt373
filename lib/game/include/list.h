@@ -33,7 +33,10 @@ public:
 
     // Getters //
     virtual ElementSptr getMapElement(std::string key) = 0;
+    virtual ElementVector getSubList(std::string key) = 0;
+    virtual std::string getString() = 0;
     virtual int getInt() = 0;
+    virtual size_t getSize() = 0;
 
     // List Operations //
     virtual void extend(ElementSptr element) = 0;
@@ -44,18 +47,18 @@ public:
 
 template <typename T>
 class Element : public ListElement {
-    T _value;
+    T _data;
 
 public:
-    Element(int value)              : _value(value) { type = Type::INT; }
-    Element(std::string value)      : _value(value) { type = Type::STRING; }
-    Element(ElementVector value)    : _value(value) { type = Type::VECTOR; }
-    Element(ElementMap value)       : _value(value) { type = Type::MAP; }
+    Element(int data)              : _data(data) { type = Type::INT; }
+    Element(std::string data)      : _data(data) { type = Type::STRING; }
+    Element(ElementVector data)    : _data(data) { type = Type::VECTOR; }
+    Element(ElementMap data)       : _data(data) { type = Type::MAP; }
 
     bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) final {
         if constexpr (std::is_same_v<T, ElementVector>) {
-            begin = _value.begin();
-            end = _value.end();
+            begin = _data.begin();
+            end = _data.end();
             return true;
         } else {
             return false;
@@ -64,8 +67,8 @@ public:
         
     bool getIterator(ElementMap::iterator& begin, ElementMap::iterator& end) final {
         if constexpr (std::is_same_v<T, ElementMap>) {
-            begin = _value.begin();
-            end = _value.end();
+            begin = _data.begin();
+            end = _data.end();
             return true;
         } else {
             return false;
@@ -76,12 +79,48 @@ public:
     ElementSptr getMapElement(std::string key) final {
         // static_assert(std::is_same_v<T, ElementMap>, "getMapElement() must be called on a map");
         
-        // TODO: check if key exists in map
         if constexpr (std::is_same_v<T, ElementMap>) {
-            return _value[key];
+            if (_data.find(key) == _data.end()) {
+                // not found
+                return nullptr;
+            } else {
+                return _data[key];
+            }
         } else {
             // throw error //
             return nullptr;
+        }
+    }
+
+    ElementVector getSubList(std::string key) final {
+        // static_assert(std::is_same_v<T, ElementVector>, "getSubList() must be called on a vector of maps");
+        ElementVector sublist;
+
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            for (auto element: _data) { 
+                ElementSptr v = element->getMapElement(key);   
+                if (v) {
+                    sublist.push_back(v);
+                } else {
+                    // throw error //
+                    // key not found in maps, return empty vector
+                    return sublist;
+                }
+            }
+        } else {
+            // throw error //
+        }
+        return sublist;
+    }
+
+    std::string getString() final {
+        // static_assert(std::is_same_v<T, std::string>, "getString() must be called on an string element");
+
+        if constexpr (std::is_same_v<T, std::string>) {
+            return _data;
+        } else {
+            // throw error //
+            return "";
         }
     }
 
@@ -89,10 +128,21 @@ public:
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
         
         if constexpr (std::is_integral_v<T>) {
-            return _value;
+            return _data;
         } else {
             // throw error //
             return 0;
+        }
+    }
+
+    size_t getSize() final {
+        // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
+        
+        if constexpr (std::is_integral_v<T>) {
+            // throw error //
+            return 0;
+        } else {
+            return _data.size();
         }
     }
 
@@ -124,27 +174,26 @@ public:
     }
 
     void discard(unsigned count) final {
-        // static_assert(std::is_same_v<T, ElementVector> || std::is_same_v<T, ElementMap>,
-        //     "discard() must be called on an map or a vector"
-        // );
+        // static_assert(std::is_same_v<T, ElementVector>, "discard() must be called on a vector");
 
-        if constexpr (std::is_same_v<T, ElementVector> || std::is_same_v<T, ElementMap>) {
+        if constexpr (std::is_same_v<T, ElementVector>) {
             // discard <count> elements//
+            for (unsigned i = 0; i < count; i++) _data.pop_back();
         } else {
             // throw error //
         }
     }
 
-    // returns a list of the form { start, start+1, ... , value }
-    // if start > value, returns an empty list
-    // throws an error if the underlying value is not an int
+    // returns a list of the form { start, start+1, ... , data }
+    // if start > data, returns an empty list
+    // throws an error if the underlying data is not an int
     ElementSptr upfrom(int start) {
         // static_assert(std::is_integral_v<T>, "upfrom() must be called on an int");
 
         ElementVector list;
         if constexpr (std::is_integral_v<T>) {
-            if (start <= _value) {
-                for (int i = start; i <= _value; i++) {
+            if (start <= _data) {
+                for (int i = start; i <= _data; i++) {
                     list.emplace_back(std::make_shared<Element<int>>(i));
                 }
             }
