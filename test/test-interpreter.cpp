@@ -22,5 +22,5 @@ TEST(Interpreter, MinimumGameConfig) {
     cout << "Data from game object: name, audience, player count min and max: " << endl;
     // g.printInfo();
 
-    EXPECT_EQ(g.getConfigInfo(), "name: Rock, Paper, Scissors, audience: false, min. players: 2, max. players: 4");
+    EXPECT_EQ(g.getConfigInfo(), "name: Rock, Paper, Scissors, audience: 0, min. players: 2, max. players: 4");
 }
