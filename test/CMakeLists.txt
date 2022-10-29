@@ -1,13 +1,19 @@
 add_subdirectory(gtest)
 enable_testing()
 
+add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+
 add_executable(runAllTests
-  testgameserver.cpp
+  test-interpreter.cpp
 )
 
 target_link_libraries(runAllTests
-  gmock gtest gtest_main
-  simple
+  gmock gtest 
+
+  game
+  networking
+  interpreter
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 add_test(NAME AllTests COMMAND runAllTests)
