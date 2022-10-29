@@ -43,6 +43,12 @@ public:
 
 
     std::string getName();
+
+    // TODO move to better location
+    std::string getConfigInfo() {
+        return "name: " + _name + ", audience: " + std::to_string(_audience) + ", min. players: " + std::to_string(_player_count.min) + ", max. players: " + std::to_string(_player_count.min);
+    }
+    
     void printInfo(){
         cout << _name << " " << _audience << " " << _player_count.min << " " << _player_count.max << endl;
     }
