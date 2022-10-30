@@ -25,10 +25,10 @@ Game::Game(
 // starts the game execution
 void Game::start() {
     _started = true;
-    std::cout << "Game Started\n";
+    std::cout << "Game Started\n"
+              << "Starting Rule Loop\n";
 
     for (auto rule: _rules) {
-        std::cout << "Rule Loop\n";
         rule->execute();
     }
 }

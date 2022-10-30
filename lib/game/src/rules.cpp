@@ -156,7 +156,7 @@ void GlobalMsg::execute(ElementSptr element) const {
 
 // Scores //
 
-Scores::Scores(ElementSptr player_maps, std::string attribute_key, bool ascending)
+Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, bool ascending)
     : _player_maps(player_maps), _attribute_key(attribute_key), _ascending(ascending) {
 }
 
@@ -165,13 +165,10 @@ void Scores::execute(ElementSptr element) const {
     std::cout << "Scores are " << (_ascending? "(in ascedning order)\n" : "(in descedning order)\n");
 
     std::vector<int> scores;
-    ElementVector::iterator begin, end;
-    if (_player_maps->getIterator(begin, end)) {
-        for (auto map = begin; map != end; map++) {
-            scores.push_back((*map)->getMapElement(_attribute_key)->getInt());
-        }
+    for (auto player_map = _player_maps->begin(); player_map != _player_maps->end(); player_map++) {
+        scores.push_back(player_map->second->getMapElement(_attribute_key)->getInt());
     }
-
+    
     std::sort(scores.begin(), scores.end(), [=](int a, int b){ return (a<b && _ascending); });
     for (auto score: scores) {
         std::cout << score << "\n";

@@ -91,10 +91,10 @@ public:
 };
 
 class Scores : public Rule {
-    ElementSptr _player_maps;
+    std::shared_ptr<PlayerMap> _player_maps;
     std::string _attribute_key;
     bool _ascending;
 public:
-    Scores(ElementSptr player_maps, std::string attribute_key, bool ascending);
+    Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, bool ascending);
     void execute(ElementSptr element = nullptr) const final;
 };

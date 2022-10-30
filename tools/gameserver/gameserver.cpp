@@ -235,7 +235,7 @@ void constructGame(std::string game_name, Connection owner) {
             }
         ),
         std::make_shared<Scores>(
-            per_player,
+            players,
             "wins",
             false
         )
