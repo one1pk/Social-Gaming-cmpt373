@@ -71,7 +71,7 @@ void createAvailableGamesList() {
 }
 
 // creates a game object corresponding to the game configuration in ./gameconfigs called <game_name>.json
-void constructGame(std::string game_name, uintptr_t ownerID) {
+void constructGame(std::string game_name, Connection owner) {
     /** STUB **/
     // TODO: use the interpreter to generate the game object from the json configurations
     
@@ -134,21 +134,18 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
     //     "wins": 0
     // },
 
-
-    ElementVector player;
-    // create a list for each potential player (max_players = 4)
-    for (size_t i = 0; i < 4; i++) { 
-        player.emplace_back(std::make_shared<Element<ElementMap>>(
-            ElementMap{
-                {"wins", std::make_shared<Element<int>>(0)}
-            }
-        ));
-    }
-    ElementSptr per_player = std::make_shared<Element<ElementVector>>(player);
+    ElementSptr per_player = std::make_shared<Element<ElementMap>>(
+        ElementMap{
+            {"wins", std::make_shared<Element<int>>(0)},
+            {"weapon", std::make_shared<Element<std::string>>("null")}
+        }
+    );
+    std::shared_ptr<PlayerMap> players = std::make_shared<PlayerMap>(PlayerMap{});
 
     // "per-audience": {},
 
-    ElementSptr per_audience = std::make_shared<Element<ElementVector>>(ElementVector{});
+    ElementSptr per_audience = std::make_shared<Element<ElementMap>>(ElementMap{});
+    std::shared_ptr<PlayerMap> audience = std::make_shared<PlayerMap>(PlayerMap{});
 
     // "setup": {
     //   "Rounds": 10
@@ -167,14 +164,15 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
         std::make_shared<Foreach>(
             setup->getMapElement("Rounds")->upfrom(1),
             RuleVector{
-                std::make_shared<GlobalMsg>("Round %p. Choose your weapon!"),
+                std::make_shared<GlobalMsg>("Round {}. Choose your weapon!"),
                 std::make_shared<ParallelFor>(
-                    clients, 
+                    players,
                     RuleVector{ 
                         std::make_shared<InputChoice>(
-                            "%p, choose your weapon!",
-                            constants->getMapElement("weapons")->getSubList("name")
-                        ) 
+                            "{id}, choose your weapon!",
+                            constants->getMapElement("weapons")->getSubList("name"),
+                            "weapon"
+                        )
                     }
                 ),
                 std::make_shared<Discard>(
@@ -232,10 +230,12 @@ void constructGame(std::string game_name, uintptr_t ownerID) {
 
 
     game_instances.emplace_back(
-        game_name, ownerID,
+        game_name, owner,
         /*min_players*/ 2, /*max_players*/ 4, /*audience*/ false,
         setup,
-        constants, variables, per_player, per_audience,
+        constants, variables,
+        per_player, per_audience,
+        players, audience,
         rules
     );
 }
@@ -293,7 +293,12 @@ std::string getHTTPMessage(const char *htmlLocation) {
 }
 
 int main(int argc, char *argv[]) {
-    constructGame("rock_paper_scissors", 0);
+    constructGame("rock_paper_scissors", {0});
+    game_instances.back().addPlayer({111});
+    game_instances.back().addPlayer({222});
+    game_instances.back().addPlayer({333});
+    game_instances.back().addPlayer({444});
+    game_instances.back().addPlayer({555});
     game_instances.back().start();
 
     // if (argc < 3) {
@@ -358,16 +363,16 @@ bool processMessages(Server &server) {
                 HandleLeave(message, outgoing, server, game_instance);
             } else if (message.text == "end") {
                 HandleEnd(message, outgoing, server, game_instance);
-            } else if (message.text == "join" && message.connection.id == game_instance->ownerID()) {
+            } else if (message.text == "join" && message.connection == game_instance->owner()) {
                 HandleOwnerJoin(message, outgoing, server, game_instance);
-            } else if (message.text == "start" && message.connection.id == game_instance->ownerID()){
+            } else if (message.text == "start" && message.connection == game_instance->owner()){
                 HandleStart(message, outgoing, server, game_instance);
             } else {
                 // currently all in-game messages are broadcasted to all players
                 // TODO: Handle input and output for a game
                 // will need to integrate with the Game object and the input/output game rules
                 
-                if (message.connection.id == game_instance->ownerID() && !game_instance->hasPlayer(message.connection)) {
+                if (message.connection == game_instance->owner() && !game_instance->hasPlayer(message.connection)) {
                     // if owner hasnt joined, don't broadcast their message
                     continue;
                 }
@@ -443,13 +448,12 @@ void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server) 
             notification << "\nUser " << message.connection.id << " joined the game\n"
                          << "Player Count: " << game_instance->numPlayers() << "\n\n";
 
-            auto owner_ID = game_instance->ownerID();
-            auto ownerConnection = std::find_if(clients.begin(), clients.end(), [owner_ID](auto client) { return client.id == owner_ID; });
-            outgoing.push_back({*ownerConnection, notification.str()});
+            auto ownerConnection = game_instance->owner();
+            outgoing.push_back({ownerConnection, notification.str()});
 
             // return a notification message to each game player
             for (auto &player : game_instance->players()) {
-                if (player == message.connection || player == *ownerConnection)
+                if (player == message.connection || player == ownerConnection)
                     continue;
                 outgoing.push_back({player, notification.str()});
             }
@@ -491,7 +495,7 @@ void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server
         if (game_index < (int)game_names.size()) {
             // start a new game, remove owner from lobby, change owner's connection info
             // and return confirmation and invitation code to owner
-            constructGame(game_names[game_index], message.connection.id);
+            constructGame(game_names[game_index], message.connection);
             removeConnectionFromList(message.connection, clients_in_lobby);
             server.setGameIdentity(message.connection, game_instances.back().id());
             std::stringstream confirmation;
@@ -515,7 +519,7 @@ void HandleStart(Message message, std::deque<Message> &outgoing, Server &server,
 
     // send notification to game players
     for (auto &player : game_instance->players()) {
-        if (player.id == game_instance->ownerID())
+        if (player == game_instance->owner())
             continue;
         outgoing.push_back({player, "The owner has started the game!\n\n"});
     }
@@ -525,7 +529,7 @@ void HandleStart(Message message, std::deque<Message> &outgoing, Server &server,
 
 void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
     // non-owners can leave
-    if (message.connection.id == game_instance->ownerID()) {
+    if (message.connection == game_instance->owner()) {
         outgoing.push_back({message.connection, "Owners cannot leave the game they create. To end the game, please enter: end\n"});
     } else {
         game_instance->removePlayer(message.connection);
@@ -538,19 +542,18 @@ void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server,
             notification << "\nUser " << message.connection.id << " left the game\n"
                          << "Player Count: " << game_instance->numPlayers() << "\n\n";
         for (auto &player : game_instance->players()) {
-            if (player == message.connection || player.id == game_instance->ownerID())
+            if (player == message.connection || player == game_instance->owner())
                 continue;
             outgoing.push_back({player, notification.str()});
         }
-        auto owner_ID = game_instance->ownerID();
-        auto ownerConnection = std::find_if(clients.begin(), clients.end(), [owner_ID](auto client) { return client.id == owner_ID; });
-        outgoing.push_back({*ownerConnection, notification.str()});
+        auto ownerConnection = game_instance->owner();
+        outgoing.push_back({ownerConnection, notification.str()});
     }
 }
 
 void HandleEnd(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
     // owner ends game session
-    if (message.connection.id == game_instance->ownerID()) {
+    if (message.connection == game_instance->owner()) {
         outgoing.push_back({message.connection, "Game successfully ended! Entering the lobby now!\n\n"});
         // Adds owner back to lobby
         server.setGameIdentity(message.connection, 0);

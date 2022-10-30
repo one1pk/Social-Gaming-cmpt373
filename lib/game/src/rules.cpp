@@ -27,16 +27,16 @@ void Foreach::execute(ElementSptr element) const {
 
 // ParallelFor //
 
-ParallelFor::ParallelFor(std::vector<Connection> list, RuleVector rules) 
-    : _list(list), _rules(rules) {
+ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> players, RuleVector rules) 
+    : _players(players), _rules(rules) {
 }
 
 void ParallelFor::execute(ElementSptr element) const {
     std::cout << "* ParallelFor Rule *\n";
 
-    for (auto player: _list) {
+    for(auto player = _players->begin(); player != _players->end(); player++) {
         for (auto rule: _rules) {
-            rule->execute(std::make_shared<Element<int>>((int)player.id));
+            rule->execute(player->second);
         }
     }
 }
@@ -99,27 +99,44 @@ void Add::execute(ElementSptr element) const {
 
 // InputChoice //
 
-InputChoice::InputChoice(std::string prompt, ElementVector choices/*, ElementSptr result, unsigned timeout_s*/)
-    : _prompt(prompt), _choices(choices)/*, _result(result), _timeout_s(timeout_s) */ {
+void formatString(std::string& str, ElementSptr element) {
+    if (element) {
+        size_t open_brace = 0; 
+        while ((open_brace = str.find("{", open_brace)) != std::string::npos) {
+            size_t close_brace = str.find("}", open_brace);
+
+            if (close_brace == open_brace+1) {
+                str.replace(open_brace, 2, std::to_string(element->getInt()));
+            } else {
+                std::string value_str = std::to_string(
+                    element->getMapElement(str.substr(open_brace+1, close_brace-open_brace-1))->getInt()
+                );
+                str.replace(open_brace, close_brace-open_brace+1, value_str);
+            }
+        }
+    }
+}
+
+InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string result/*, unsigned timeout_s*/)
+    : _prompt(prompt), _choices(choices), _result(result)/*, _timeout_s(timeout_s) */ {
 }
 
 void InputChoice::execute(ElementSptr element) const {
     std::cout << "* InputChoice Rule *\n";
 
     std::string tmp = _prompt;
-    if (element) {
-        size_t replace_index = 0;
-        std::string value_str = std::to_string(element->getInt());
-        while ((replace_index = tmp.find("%p", replace_index)) != std::string::npos) {
-            tmp.replace(replace_index, 2, value_str);
-        }
-    }
+    formatString(tmp, element);
     std::cout << "prompt: " << tmp << "\n";
 
     std::cout << "Enter an index to select:\n";
     for (size_t i = 0; i < _choices.size(); i++) {
         std::cout << "["<<i<<"] " << _choices[i]->getString() << "\n";
     }
+
+    // must get user response somehow //
+    int chosen_index = 0;
+
+    element->setMapElement(_result, _choices[chosen_index]);
 }
 
 // GlobalMsg //
@@ -132,13 +149,7 @@ void GlobalMsg::execute(ElementSptr element) const {
     std::cout << "* GlobalMsg Rule *\n";
 
     std::string tmp = _msg;
-    if (element) {
-        size_t replace_index = 0;
-        std::string value_str = std::to_string(element->getInt());
-        while ((replace_index = tmp.find("%p", replace_index)) != std::string::npos) {
-            tmp.replace(replace_index, 2, value_str);
-        }
-    }
+    formatString(tmp, element);
     std::cout << "message: " << tmp << "\n";
 }
 

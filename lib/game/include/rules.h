@@ -1,7 +1,6 @@
 #pragma once
 
 #include "list.h"
-#include "server.h"
 
 #include <vector>
 #include <functional>
@@ -30,10 +29,10 @@ public:
 };
 
 class ParallelFor : public Rule {
-    std::vector<Connection> _list;
+    std::shared_ptr<PlayerMap> _players;
     RuleVector _rules;
 public:
-    ParallelFor(std::vector<Connection> list, RuleVector rules);
+    ParallelFor(std::shared_ptr<PlayerMap> players, RuleVector rules);
     void execute(ElementSptr element = nullptr) const final;
 };
 
@@ -77,10 +76,10 @@ public:
 class InputChoice : public Rule {
     std::string _prompt;
     ElementVector _choices;
-    // ElementSptr _result;
+    std::string _result;
     // unsigned _timeout_s; // in seconds
 public:
-    InputChoice(std::string prompt, ElementVector choices/*, ElementSptr result, unsigned timeout_s*/);
+    InputChoice(std::string prompt, ElementVector choices, std::string result/*, unsigned timeout_s*/);
     void execute(ElementSptr element = nullptr) const final;
 };
 

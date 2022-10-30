@@ -4,17 +4,19 @@
 #include <algorithm>
 
 Game::Game(
-    std::string name, uintptr_t ownerID, 
-    int min_players, int max_players, bool audience,
+    std::string name, Connection owner, 
+    unsigned min_players, unsigned max_players, bool has_audience,
     ElementSptr setup,
     ElementSptr constants, ElementSptr variables,
     ElementSptr per_player, ElementSptr per_audience, 
+    std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
     RuleVector rules
-) : _name(name), _ownerID(ownerID), _started(false),
-    _player_count{ min_players, max_players }, _audience(audience),
+) : _name(name), _owner(owner), _started(false),
+    _player_count{ min_players, max_players }, _has_audience(has_audience),
     _setup(setup),
     _constants{constants}, _variables(variables),
     _per_player(per_player), _per_audience(per_audience),
+    _players(players), _audience(audience),
     _rules(rules)  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
@@ -36,35 +38,50 @@ bool Game::isOngoing() {
     return _started;
 }
 
-void Game::addPlayer(Connection playerID) {
-    _players.push_back(playerID);
+bool Game::addPlayer(Connection player_connection) {
+    if (_players->size() < _player_count.max) {
+        _players->insert({ player_connection,  _per_player->clone() });
+        _players->at(player_connection)->setMapElement("id", std::make_shared<Element<int>>(player_connection.id));
+        return true;
+    } else {
+        // game is full
+        return false;
+    }
 }
 
-void Game::removePlayer(Connection playerID) {
-    auto eraseBegin = std::remove(_players.begin(), _players.end(), playerID);
-    _players.erase(eraseBegin, _players.end());
+bool Game::removePlayer(Connection player_connection) {
+    if (_players->erase(player_connection)) {
+        return true;
+    } else {
+        // player is not in game
+        return false;
+    }
 }
 
-bool Game::hasPlayer(Connection playerID) {
-    return std::find(_players.begin(), _players.end(), playerID) != _players.end();
+bool Game::hasPlayer(Connection player_connection) {
+    return _players->count(player_connection);
 }
 
-// return the list of players
+// return the list of player connections
 std::vector<Connection> Game::players() {
-    return _players;
+    std::vector<Connection> connections;
+    for(auto it = _players->begin(); it != _players->end(); it++) {
+        connections.push_back(it->first);
+    }
+    return connections;
 }
 
 // returns the number of players in the game
 size_t Game::numPlayers() {
-    return _players.size();
+    return _players->size();
 }
 
 std::string Game::name() {
     return _name;
 }
 
-uintptr_t Game::ownerID() {
-    return _ownerID;
+Connection Game::owner() {
+    return _owner;
 }
 
 uintptr_t Game::id() {

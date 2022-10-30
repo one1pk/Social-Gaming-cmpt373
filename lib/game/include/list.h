@@ -1,5 +1,7 @@
 #pragma once
 
+#include "server.h"
+
 #include <string>
 #include <vector>
 #include <map>
@@ -17,6 +19,7 @@ class ListElement;
 typedef std::shared_ptr<ListElement> ElementSptr; // shared pointer to a list element
 typedef std::vector<std::shared_ptr<ListElement>> ElementVector; // a vector of shared pointers to list elements
 typedef std::map<std::string, std::shared_ptr<ListElement>> ElementMap; // a map of of shared pointers to list elements (with string keys)
+typedef std::map<Connection, std::shared_ptr<ListElement>> PlayerMap;
 
 // INTERFACE
 // The building block for all Lists
@@ -27,12 +30,17 @@ public:
     Type type;
     virtual ~ListElement(){}
 
+    virtual ElementSptr clone() = 0;
+
     // Iterable //
     virtual bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) = 0;
     virtual bool getIterator(ElementMap::iterator& begin, ElementMap::iterator& end) = 0;
 
-    // Getters //
+    // Getters & Setters //
+    virtual void setMapElement(std::string key, ElementSptr element) = 0;
     virtual ElementSptr getMapElement(std::string key) = 0;
+    virtual void removeMapElement(std::string key) = 0;
+
     virtual ElementVector getSubList(std::string key) = 0;
     virtual std::string getString() = 0;
     virtual int getInt() = 0;
@@ -55,6 +63,25 @@ public:
     Element(ElementVector data)    : _data(data) { type = Type::VECTOR; }
     Element(ElementMap data)       : _data(data) { type = Type::MAP; }
 
+    ElementSptr clone() final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            ElementVector cloned;
+            for (auto& element: _data) {
+                cloned.push_back(element->clone());
+            }
+            return std::make_shared<Element<ElementVector>>(cloned); 
+        } else if constexpr (std::is_same_v<T, ElementMap>) {
+            ElementMap cloned;
+            for (auto& [key, element]: _data) {
+                cloned[key] = element->clone();
+            }
+            return std::make_shared<Element<ElementMap>>(cloned); 
+        } else {
+            return std::make_shared<Element<T>>(_data);
+        }
+    }
+
+
     bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) final {
         if constexpr (std::is_same_v<T, ElementVector>) {
             begin = _data.begin();
@@ -76,19 +103,34 @@ public:
     }
 
 
+    void setMapElement(std::string key, ElementSptr element) final {
+    // static_assert(std::is_same_v<T, ElementMap>, "setMapElement() must be called on a map");
+
+        if constexpr (std::is_same_v<T, ElementMap>) {
+            _data[key] = element;
+        } else {
+            // throw error //
+        }
+    }
+
     ElementSptr getMapElement(std::string key) final {
         // static_assert(std::is_same_v<T, ElementMap>, "getMapElement() must be called on a map");
         
         if constexpr (std::is_same_v<T, ElementMap>) {
-            if (_data.find(key) == _data.end()) {
-                // not found
-                return nullptr;
-            } else {
-                return _data[key];
-            }
+            return _data[key];
         } else {
             // throw error //
             return nullptr;
+        }
+    }
+
+    void removeMapElement(std::string key) final {
+        // static_assert(std::is_same_v<T, ElementMap>, "removeMapElement() must be called on a map");
+        
+        if constexpr (std::is_same_v<T, ElementMap>) {
+            _data.erase(key);
+        } else {
+            // throw error //
         }
     }
 
@@ -145,6 +187,7 @@ public:
             return _data.size();
         }
     }
+
 
 
     void extend(ElementSptr element) final {
