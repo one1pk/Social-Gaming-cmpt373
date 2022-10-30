@@ -10,8 +10,6 @@
  */
 struct Connection {
     uintptr_t id;
-    bool in_game = false;
-    uintptr_t gameID = 0;
 
     bool operator==(Connection other) const {
         return id == other.id;
@@ -103,8 +101,6 @@ public:
      *  Disconnect the Client specified by the given Connection.
      */
     void disconnect(Connection connection);
-
-    void setGameIdentity(Connection connection, uintptr_t gameID);
 
 private:
     friend class ServerImpl;
