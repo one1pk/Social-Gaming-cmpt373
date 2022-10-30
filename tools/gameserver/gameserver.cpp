@@ -200,21 +200,34 @@ void constructGame(std::string game_name, Connection owner) {
                 std::make_shared<When>(
                     std::vector<std::pair<std::function<bool()>,RuleVector>>{
                         std::pair<std::function<bool()>,RuleVector>(
-                            [](){ return false; },
+                            [variables, players](){ 
+                                return variables->getMapElement("winners")->getSize() == players->size(); 
+                            },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("tie game")
+                                std::make_shared<GlobalMsg>("Tie game!")
                             }
                         ),
                         std::pair<std::function<bool()>,RuleVector>(
-                            [](){ return false; },
+                            [variables](){ 
+                                return variables->getMapElement("winners")->getSize() == 0; 
+                            },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("tie game")
+                                std::make_shared<GlobalMsg>("Tie game!")
                             }
                         ), 
                         std::pair<std::function<bool()>,RuleVector>(
                             [](){ return true; },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("tie game")
+                                std::make_shared<GlobalMsg>("Winners: "),
+                                std::make_shared<Foreach>(
+                                    variables->getMapElement("winners"),
+                                    RuleVector{
+                                        std::make_shared<Add>(
+                                            "wins", 
+                                            std::make_shared<Element<int>>(1)
+                                        )
+                                    }
+                                )
                             }
                         ),
                     }

@@ -64,10 +64,10 @@ public:
 // Arithmetic //
 
 class Add : public Rule {
-    int* _to;
-    int* _value;
+    std::string _to;
+    ElementSptr _value;
 public: 
-    Add(int* to, int* value);
+    Add(std::string to, ElementSptr value);
     void execute(ElementSptr element = nullptr) const final;
 };
 

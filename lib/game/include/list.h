@@ -43,7 +43,11 @@ public:
 
     virtual ElementVector getSubList(std::string key) = 0;
     virtual std::string getString() = 0;
+
+    virtual void addInt(int value) = 0;
+    virtual void setInt(int value) = 0;
     virtual int getInt() = 0;
+
     virtual size_t getSize() = 0;
 
     // List Operations //
@@ -163,6 +167,26 @@ public:
         } else {
             // throw error //
             return "";
+        }
+    }
+
+    void addInt(int value) final {
+        // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
+        
+        if constexpr (std::is_integral_v<T>) {
+            _data += value;
+        } else {
+            // throw error //
+        }
+    }
+    
+    void setInt(int value) final {
+        // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
+        
+        if constexpr (std::is_integral_v<T>) {
+            _data = value;
+        } else {
+            // throw error //
         }
     }
 

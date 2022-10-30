@@ -55,6 +55,7 @@ void When::execute(ElementSptr element) const {
             for (auto rule: case_rule_pair.second) {
                 rule->execute();
             }
+            break;
         } else {
             std::cout << "Case Fail, testing next case\n";
         }
@@ -87,14 +88,14 @@ void Discard::execute(ElementSptr element) const {
 
 // Add //
 
-Add::Add(int* to, int* value)
+Add::Add(std::string to, ElementSptr value)
     : _to(to), _value(value) {
 }
 
 void Add::execute(ElementSptr element) const {
-    std::cout << "* Add Rule\n";
+    std::cout << "* Add Rule *\n";
 
-    *_to += *_value;
+    element->getMapElement(_to)->addInt(_value->getInt());
 }
 
 // InputChoice //
