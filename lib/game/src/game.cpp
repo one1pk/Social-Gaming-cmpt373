@@ -10,14 +10,17 @@ Game::Game(
     ElementSptr constants, ElementSptr variables,
     ElementSptr per_player, ElementSptr per_audience, 
     std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
-    RuleVector rules
+    RuleVector rules,
+    std::shared_ptr<std::deque<Message>> player_msgs,
+    std::shared_ptr<std::deque<std::string>> global_msgs
 ) : _name(name), _owner(owner), _started(false),
     _player_count{ min_players, max_players }, _has_audience(has_audience),
     _setup(setup),
     _constants{constants}, _variables(variables),
     _per_player(per_player), _per_audience(per_audience),
     _players(players), _audience(audience),
-    _rules(rules)  {
+    _rules(rules),
+    _player_msgs(player_msgs), _global_msgs(global_msgs)  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
@@ -41,7 +44,12 @@ bool Game::isOngoing() {
 bool Game::addPlayer(Connection player_connection) {
     if (_players->size() < _player_count.max) {
         _players->insert({ player_connection,  _per_player->clone() });
-        _players->at(player_connection)->setMapElement("id", std::make_shared<Element<int>>(player_connection.id));
+        _players->at(player_connection)->setMapElement(
+            "connection", std::make_shared<Element<Connection>>(player_connection)
+        );
+        _players->at(player_connection)->setMapElement(
+            "name", std::make_shared<Element<std::string>>(std::to_string(player_connection.id))
+        );
         return true;
     } else {
         // game is full
@@ -86,4 +94,16 @@ Connection Game::owner() {
 
 uintptr_t Game::id() {
     return _id;
+}
+
+std::deque<Message> Game::playerMsgs() {
+    std::deque<Message> tmp = *_player_msgs;
+    _player_msgs->clear();
+    return tmp;
+}
+
+std::deque<std::string> Game::globalMsgs() {
+    std::deque<std::string> tmp = *_global_msgs;
+    _global_msgs->clear();
+    return tmp;
 }

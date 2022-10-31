@@ -77,16 +77,20 @@ class InputChoice : public Rule {
     std::string _prompt;
     ElementVector _choices;
     std::string _result;
+    std::shared_ptr<std::deque<Message>> _player_msgs;
     // unsigned _timeout_s; // in seconds
 public:
-    InputChoice(std::string prompt, ElementVector choices, std::string result/*, unsigned timeout_s*/);
+    InputChoice(std::string prompt, ElementVector choices, std::string result,
+                std::shared_ptr<std::deque<Message>> player_msgs/*, unsigned timeout_s*/);
     void execute(ElementSptr player) const final;
 };
 
 class GlobalMsg : public Rule {
     std::string _msg;
+    std::shared_ptr<std::deque<std::string>> _global_msgs;
 public:
-    GlobalMsg(std::string msg);
+    GlobalMsg(std::string msg,
+              std::shared_ptr<std::deque<std::string>> global_msgs);
     void execute(ElementSptr element = nullptr) const final;
 };
 
@@ -94,7 +98,9 @@ class Scores : public Rule {
     std::shared_ptr<PlayerMap> _player_maps;
     std::string _attribute_key;
     bool _ascending;
+    std::shared_ptr<std::deque<std::string>> _global_msgs;
 public:
-    Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, bool ascending);
+    Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, 
+           bool ascending, std::shared_ptr<std::deque<std::string>> global_msgs);
     void execute(ElementSptr element = nullptr) const final;
 };

@@ -7,11 +7,12 @@
 #include <map>
 #include <memory>
 
-enum Type {
+enum Type { // doesn't seem useful, might remove later 
     INT,
     STRING,
     VECTOR,
     MAP,
+    CONNECTION
 };
 
 class ListElement;
@@ -32,10 +33,6 @@ public:
 
     virtual ElementSptr clone() = 0;
 
-    // Iterable //
-    virtual bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) = 0;
-    virtual bool getIterator(ElementMap::iterator& begin, ElementMap::iterator& end) = 0;
-
     // Getters & Setters //
     virtual void setMapElement(std::string key, ElementSptr element) = 0;
     virtual ElementSptr getMapElement(std::string key) = 0;
@@ -51,6 +48,8 @@ public:
     virtual int getInt() = 0;
 
     virtual size_t getSize() = 0;
+
+    virtual Connection getConnection() = 0;
 
     // List Operations //
     virtual void extend(ElementSptr element) = 0;
@@ -68,6 +67,7 @@ public:
     Element(std::string data)      : _data(data) { type = Type::STRING; }
     Element(ElementVector data)    : _data(data) { type = Type::VECTOR; }
     Element(ElementMap data)       : _data(data) { type = Type::MAP; }
+    Element(Connection data)       : _data(data) { type = Type::CONNECTION; }
 
     ElementSptr clone() final {
         if constexpr (std::is_same_v<T, ElementVector>) {
@@ -84,27 +84,6 @@ public:
             return std::make_shared<Element<ElementMap>>(cloned); 
         } else {
             return std::make_shared<Element<T>>(_data);
-        }
-    }
-
-
-    bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) final {
-        if constexpr (std::is_same_v<T, ElementVector>) {
-            begin = _data.begin();
-            end = _data.end();
-            return true;
-        } else {
-            return false;
-        }
-    }
-        
-    bool getIterator(ElementMap::iterator& begin, ElementMap::iterator& end) final {
-        if constexpr (std::is_same_v<T, ElementMap>) {
-            begin = _data.begin();
-            end = _data.end();
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -176,6 +155,8 @@ public:
 
         if constexpr (std::is_same_v<T, std::string>) {
             return _data;
+        } else if constexpr (std::is_integral_v<T>) {
+            return std::to_string(_data);
         } else {
             // throw error //
             return "";
@@ -216,7 +197,7 @@ public:
     size_t getSize() final {
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
         
-        if constexpr (std::is_integral_v<T>) {
+        if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection>) {
             // throw error //
             return 0;
         } else {
@@ -224,6 +205,16 @@ public:
         }
     }
 
+    Connection getConnection() final {
+        // static_assert(std::is_same_v<T, Connection>, "getConnection() must be called on an Connection element");
+
+        if constexpr (std::is_same_v<T, Connection>) {
+            return _data;
+        } else {
+            // throw error //
+            return {0};
+        }
+    }
 
 
     void extend(ElementSptr elements) final {

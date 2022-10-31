@@ -77,11 +77,7 @@ void constructGame(std::string game_name, Connection owner) {
     
     // Currently manually creating Rock Paper Scissors game object
     
-    clients.push_back({0});
-    clients.push_back({1});
-    clients.push_back({2});
-
-
+    
     //---------------LISTS--------------//
 
     // "constants": {
@@ -153,9 +149,12 @@ void constructGame(std::string game_name, Connection owner) {
 
     ElementSptr setup = std::make_shared<Element<ElementMap>>(
         ElementMap{
-            {"Rounds", std::make_shared<Element<int>>(10)}
+            {"Rounds", std::make_shared<Element<int>>(4)}
         }
     );
+
+    std::shared_ptr<std::deque<Message>> player_msgs = std::make_shared<std::deque<Message>>();
+    std::shared_ptr<std::deque<std::string>> global_msgs = std::make_shared<std::deque<std::string>>();
 
 
     //---------------RULES--------------//
@@ -164,14 +163,18 @@ void constructGame(std::string game_name, Connection owner) {
         std::make_shared<Foreach>(
             setup->getMapElement("Rounds")->upfrom(1),
             RuleVector{
-                std::make_shared<GlobalMsg>("Round {}. Choose your weapon!"),
+                std::make_shared<GlobalMsg>(
+                    "Round {}. Choose your weapon!\n",
+                    global_msgs
+                ),
                 std::make_shared<ParallelFor>(
                     players,
                     RuleVector{ 
                         std::make_shared<InputChoice>(
-                            "{id}, choose your weapon!",
+                            "{name}, choose your weapon!\n",
                             constants->getMapElement("weapons")->getSubList("name"),
-                            "weapon"
+                            "weapon",
+                            player_msgs
                         )
                     }
                 ),
@@ -226,7 +229,7 @@ void constructGame(std::string game_name, Connection owner) {
                                 return variables->getMapElement("winners")->getSize() == players->size(); 
                             },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("Tie game!")
+                                std::make_shared<GlobalMsg>("Tie game!\n", global_msgs)
                             }
                         ),
                         std::pair<std::function<bool(ElementSptr)>,RuleVector>(
@@ -234,7 +237,7 @@ void constructGame(std::string game_name, Connection owner) {
                                 return variables->getMapElement("winners")->getSize() == 0; 
                             },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("Tie game!")
+                                std::make_shared<GlobalMsg>("Tie game!\n", global_msgs)
                             }
                         ), 
                         std::pair<std::function<bool(ElementSptr)>,RuleVector>(
@@ -242,7 +245,7 @@ void constructGame(std::string game_name, Connection owner) {
                                 return true; 
                             },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("Winners: "),
+                                std::make_shared<GlobalMsg>("Winners: \n", global_msgs),
                                 std::make_shared<Foreach>(
                                     variables->getMapElement("winners"),
                                     RuleVector{
@@ -261,7 +264,8 @@ void constructGame(std::string game_name, Connection owner) {
         std::make_shared<Scores>(
             players,
             "wins",
-            false
+            false,
+            global_msgs
         )
     };
 
@@ -273,7 +277,9 @@ void constructGame(std::string game_name, Connection owner) {
         constants, variables,
         per_player, per_audience,
         players, audience,
-        rules
+        rules, 
+        player_msgs,
+        global_msgs
     );
 }
 
@@ -317,6 +323,8 @@ std::string gamesList() {
 // returns a shutdown signal (if any was received)
 bool processMessages(Server &server);
 
+void processGames(Server &server);
+
 std::string getHTTPMessage(const char *htmlLocation) {
     if (access(htmlLocation, R_OK) != -1) {
         std::ifstream infile{htmlLocation};
@@ -329,54 +337,77 @@ std::string getHTTPMessage(const char *htmlLocation) {
     }
 }
 
+
 int main(int argc, char *argv[]) {
-    constructGame("rock_paper_scissors", {0});
-    game_instances.back().addPlayer({111});
-    game_instances.back().addPlayer({222});
-    game_instances.back().addPlayer({333});
-    game_instances.back().addPlayer({444});
-    game_instances.back().addPlayer({555});
-    game_instances.back().start();
+    // constructGame("rock_paper_scissors", {0});
+    // game_instances.back().addPlayer({111});
+    // game_instances.back().addPlayer({222});
+    // game_instances.back().addPlayer({333});
+    // game_instances.back().addPlayer({444});
+    // game_instances.back().addPlayer({555});
+    // game_instances.back().start();
 
-    // if (argc < 3) {
-    //     std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
-    //               << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
-    //     return 1;
-    // }
-    // std::cout << "Setting up the server...\n";
+    if (argc < 3) {
+        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
+                  << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
+        return 1;
+    }
+    std::cout << "Setting up the server...\n";
 
-    // // extract the server configuration parameters from ./serverconfig.json
-    // // start a new session based on the configuration
-    // // (for now we take them as cmdline args)
+    // extract the server configuration parameters from ./serverconfig.json
+    // start a new session based on the configuration
+    // (for now we take them as cmdline args)
 
-    // unsigned short port = std::stoi(argv[1]);
-    // Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
+    unsigned short port = std::stoi(argv[1]);
+    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
 
-    // std::cout << "Game server is up!\n";
+    std::cout << "Game server is up!\n";
 
-    // createAvailableGamesList();
+    createAvailableGamesList();
 
-    // // start listening for messages and serving content as appropriate
-    // while (true) {
-    //     bool errorWhileUpdating = false;
-    //     try {
-    //         server.update();
-    //     } catch (std::exception &e) {
-    //         std::cerr << "Exception from Server update:\n"
-    //                   << " " << e.what() << "\n\n";
-    //         errorWhileUpdating = true;
-    //     }
+    // start listening for messages and serving content as appropriate
+    while (true) {
+        bool errorWhileUpdating = false;
+        try {
+            server.update();
+        } catch (std::exception &e) {
+            std::cerr << "Exception from Server update:\n"
+                      << " " << e.what() << "\n\n";
+            errorWhileUpdating = true;
+        }
 
-    //     bool shutdownSignal = processMessages(server);
+        bool shutdownSignal = processMessages(server);
 
-    //     if (shutdownSignal || errorWhileUpdating) {
-    //         break;
-    //     }
+        if (shutdownSignal || errorWhileUpdating) {
+            break;
+        }
 
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
+        processGames(server);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 
     return 0;
+}
+
+void processGames(Server &server) {
+    std::deque<Message> outgoing;
+
+    for (auto &game: game_instances) {
+        std::deque<Message> player_msgs = game.playerMsgs();
+        std::deque<std::string> global_strings = game.globalMsgs();
+
+        std::deque<Message> global_msgs;
+        std::transform(global_strings.begin(), global_strings.end(), std::back_inserter(global_msgs),
+            [&game](auto global_string) {
+                return Message{ game.owner(), global_string };
+            }
+        );
+
+        outgoing.insert(outgoing.end(), player_msgs.begin(), player_msgs.end());
+        outgoing.insert(outgoing.end(), global_msgs.begin(), global_msgs.end());
+    }
+    server.send(outgoing);
 }
 
 void HandleJoin(Message message, std::deque<Message> &outgoing, Server &server);

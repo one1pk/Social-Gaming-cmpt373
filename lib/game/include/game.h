@@ -19,7 +19,9 @@ public:
         ElementSptr constants, ElementSptr variables,
         ElementSptr per_player, ElementSptr per_audience, 
         std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
-        RuleVector rules
+        RuleVector rules,
+        std::shared_ptr<std::deque<Message>> player_msgs,
+        std::shared_ptr<std::deque<std::string>> global_msgs
     );
 
     void start();
@@ -34,6 +36,9 @@ public:
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
     size_t numPlayers(); //number of players in vector above
+
+    std::deque<Message> playerMsgs();
+    std::deque<std::string> globalMsgs();
 
 private:
     uintptr_t _id; // unique id can act as an invitation code
@@ -61,4 +66,7 @@ private:
     std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
 
     RuleVector _rules;
+
+    std::shared_ptr<std::deque<Message>> _player_msgs;
+    std::shared_ptr<std::deque<std::string>> _global_msgs;
 };
