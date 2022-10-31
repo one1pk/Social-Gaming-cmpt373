@@ -40,8 +40,10 @@ public:
     virtual void setMapElement(std::string key, ElementSptr element) = 0;
     virtual ElementSptr getMapElement(std::string key) = 0;
     virtual void removeMapElement(std::string key) = 0;
-
+    
     virtual ElementVector getSubList(std::string key) = 0;
+    virtual ElementVector getVector() = 0;
+
     virtual std::string getString() = 0;
 
     virtual void addInt(int value) = 0;
@@ -159,6 +161,16 @@ public:
         return sublist;
     }
 
+    
+    ElementVector getVector() final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            return _data;
+        } else {
+            // throw error //
+            return {};
+        }
+    }
+
     std::string getString() final {
         // static_assert(std::is_same_v<T, std::string>, "getString() must be called on an string element");
 
@@ -214,29 +226,16 @@ public:
 
 
 
-    void extend(ElementSptr element) final {
-        // static_assert(std::is_same_v<T, ElementVector> || std::is_same_v<T, ElementMap>,
-        //     "extend() must be called on an map or a vector"
-        // );
+    void extend(ElementSptr elements) final {
+        // static_assert(std::is_same_v<T, ElementVector>, "extend() must be called on a vector");
 
-        if constexpr (std::is_same_v<T, ElementMap>) {
-            if (element->type == Type::MAP) {
-                // extend //
-                // element must be a map
-            } else {
-                // throw error //
-            } 
-        } else if constexpr (std::is_same_v<T, ElementVector>) {
-            if (element->type == Type::MAP) {
-                // throw error //
-            } else {
-                // extend //
-                // element could be another vector
-                // or it could be a primitive (string/int)
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            // extend //
+            for (auto element: elements->getVector()) {
+                _data.push_back(element);
             }
         } else {
             // throw error //
-            // cannot extend strings or ints
         }
     }
 

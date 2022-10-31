@@ -37,9 +37,9 @@ public:
 };
 
 class When : public Rule {
-    const std::vector<std::pair<std::function<bool()>,RuleVector>> _case_rules; // a rule list for every case
+    const std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _case_rules; // a rule list for every case
 public: 
-    When(std::vector<std::pair<std::function<bool()>,RuleVector>> case_rules);
+    When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
     void execute(ElementSptr element = nullptr) const final;
 };
 
@@ -47,17 +47,17 @@ public:
 
 class Extend : public Rule {
     ElementSptr _target;
-    ElementSptr _extension;
+    std::function<ElementSptr(ElementSptr)> _extension;
 public:
-    Extend(ElementSptr target, ElementSptr extension);
+    Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension);
     void execute(ElementSptr element = nullptr) const final;
 };
 
 class Discard : public Rule {
     ElementSptr _list;
-    unsigned _count;
+    std::function<size_t(ElementSptr)> _count;
 public:
-    Discard(ElementSptr list, unsigned count);
+    Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
     void execute(ElementSptr element = nullptr) const final;
 };
 
@@ -80,7 +80,7 @@ class InputChoice : public Rule {
     // unsigned _timeout_s; // in seconds
 public:
     InputChoice(std::string prompt, ElementVector choices, std::string result/*, unsigned timeout_s*/);
-    void execute(ElementSptr element = nullptr) const final;
+    void execute(ElementSptr player) const final;
 };
 
 class GlobalMsg : public Rule {

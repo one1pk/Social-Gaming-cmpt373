@@ -177,19 +177,41 @@ void constructGame(std::string game_name, Connection owner) {
                 ),
                 std::make_shared<Discard>(
                     variables->getMapElement("winners"),
-                    variables->getMapElement("winners")->getSize()
+                    [variables](ElementSptr element) {
+                        return variables->getMapElement("winners")->getSize();
+                    }
                 ),
                 std::make_shared<Foreach>(
                     constants->getMapElement("weapons"),
                     RuleVector{
                         std::make_shared<When>(
-                            std::vector<std::pair<std::function<bool()>,RuleVector>>{
-                                std::pair<std::function<bool()>,RuleVector>{
-                                    [](){ return true; },
+                            std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>{
+                                std::pair<std::function<bool(ElementSptr)>,RuleVector>{
+                                    [players](ElementSptr element){ 
+                                        ElementVector player_weapons;
+                                        for (auto player = players->begin(); player != players->end(); player++) {
+                                            player_weapons.push_back(player->second->getMapElement("weapon"));
+                                        }
+
+                                        return player_weapons.end() == std::find_if(player_weapons.begin(), player_weapons.end(), 
+                                            [element](auto player_weapon){
+                                                return player_weapon->getString() == element->getMapElement("name")->getString();
+                                            }
+                                        );
+                                    },
                                     RuleVector{
                                         std::make_shared<Extend>(
                                             variables->getMapElement("winners"),
-                                            std::make_shared<Element<ElementVector>>(ElementVector{})
+                                            [players](ElementSptr element){ 
+                                                ElementVector winners;
+                                                for (auto player = players->begin(); player != players->end(); player++) {
+                                                    if (player->second->getMapElement("weapon")->getString()
+                                                            == element->getMapElement("beats")->getString()){
+                                                        winners.push_back(player->second);
+                                                    }
+                                                }
+                                                return std::make_shared<Element<ElementVector>>(winners);
+                                            }
                                         )
                                     }
                                 }
@@ -198,25 +220,27 @@ void constructGame(std::string game_name, Connection owner) {
                     }
                 ),
                 std::make_shared<When>(
-                    std::vector<std::pair<std::function<bool()>,RuleVector>>{
-                        std::pair<std::function<bool()>,RuleVector>(
-                            [variables, players](){ 
+                    std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>{
+                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
+                            [variables, players](ElementSptr element){ 
                                 return variables->getMapElement("winners")->getSize() == players->size(); 
                             },
                             RuleVector{
                                 std::make_shared<GlobalMsg>("Tie game!")
                             }
                         ),
-                        std::pair<std::function<bool()>,RuleVector>(
-                            [variables](){ 
+                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
+                            [variables](ElementSptr element){ 
                                 return variables->getMapElement("winners")->getSize() == 0; 
                             },
                             RuleVector{
                                 std::make_shared<GlobalMsg>("Tie game!")
                             }
                         ), 
-                        std::pair<std::function<bool()>,RuleVector>(
-                            [](){ return true; },
+                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
+                            [](ElementSptr element){ 
+                                return true; 
+                            },
                             RuleVector{
                                 std::make_shared<GlobalMsg>("Winners: "),
                                 std::make_shared<Foreach>(

@@ -9,18 +9,15 @@ Foreach::Foreach(ElementSptr list, RuleVector rules)
     : _list(list), _rules(rules) {
 }
 
-void Foreach::execute(ElementSptr element) const {
+void Foreach::execute(ElementSptr) const {
     std::cout << "* Foreach Rule *\n";
 
-    ElementVector::iterator begin, end;
-    if (_list->getIterator(begin, end)) {
-        for (auto it = begin; it != end; it++) {
-            ElementSptr element = *it;
-            std::cout << "\nForeach loop: value = " << element->getInt() <<"\n";
+    ElementVector elements = _list->getVector();
+    for (auto element: elements) {
+        std::cout << "\nForeach loop: value = " << element->getInt() <<"\n";
 
-            for (auto rule: _rules) {
-                rule->execute(element);
-            }
+        for (auto rule: _rules) {
+            rule->execute(element);
         }
     }
 }
@@ -43,17 +40,17 @@ void ParallelFor::execute(ElementSptr element) const {
 
 // When //
 
-When::When(std::vector<std::pair<std::function<bool()>,RuleVector>> case_rules)
+When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules)
     : _case_rules(case_rules) {
 }
 
 void When::execute(ElementSptr element) const {
     std::cout << "* When Rule *\n";
     for (auto case_rule_pair: _case_rules) {
-        if (case_rule_pair.first()) {
+        if (case_rule_pair.first(element)) {
             std::cout << "Case Match!\nExecuting Case Rules\n";
             for (auto rule: case_rule_pair.second) {
-                rule->execute();
+                rule->execute(element);
             }
             break;
         } else {
@@ -64,26 +61,26 @@ void When::execute(ElementSptr element) const {
 
 // Extend //
 
-Extend::Extend(ElementSptr target, ElementSptr extension)
+Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension)
     : _target(target), _extension(extension) {
 }
 
 void Extend::execute(ElementSptr element) const {
     std::cout << "* Extend Rule *\n";
 
-    _target->extend(_extension);
+    _target->extend(_extension(element));
 }
 
 // Discard //
 
-Discard::Discard(ElementSptr list, unsigned count)
+Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
     : _list(list), _count(count) {
 }
 
 void Discard::execute(ElementSptr element) const {
     std::cout << "* Discard Rule *\n";
 
-    _list->discard(_count);
+    _list->discard(_count(element));
 }
 
 // Add //
@@ -100,34 +97,35 @@ void Add::execute(ElementSptr element) const {
 
 // InputChoice //
 
-void formatString(std::string& str, ElementSptr element) {
+std::string formatString(std::string_view str, ElementSptr element) {
+    std::string res(str);
     if (element) {
         size_t open_brace = 0; 
-        while ((open_brace = str.find("{", open_brace)) != std::string::npos) {
-            size_t close_brace = str.find("}", open_brace);
+        while ((open_brace = res.find("{", open_brace)) != std::string::npos) {
+            size_t close_brace = res.find("}", open_brace);
 
             if (close_brace == open_brace+1) {
-                str.replace(open_brace, 2, std::to_string(element->getInt()));
+                res.replace(open_brace, 2, std::to_string(element->getInt()));
             } else {
                 std::string value_str = std::to_string(
-                    element->getMapElement(str.substr(open_brace+1, close_brace-open_brace-1))->getInt()
+                    element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getInt()
                 );
-                str.replace(open_brace, close_brace-open_brace+1, value_str);
+                res.replace(open_brace, close_brace-open_brace+1, value_str);
             }
         }
     }
+    return res;
 }
 
 InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string result/*, unsigned timeout_s*/)
     : _prompt(prompt), _choices(choices), _result(result)/*, _timeout_s(timeout_s) */ {
 }
 
-void InputChoice::execute(ElementSptr element) const {
+void InputChoice::execute(ElementSptr player) const {
     std::cout << "* InputChoice Rule *\n";
 
-    std::string tmp = _prompt;
-    formatString(tmp, element);
-    std::cout << "prompt: " << tmp << "\n";
+    std::string formatted_prompt = formatString(_prompt, player);
+    std::cout << "prompt: " << formatted_prompt << "\n";
 
     std::cout << "Enter an index to select:\n";
     for (size_t i = 0; i < _choices.size(); i++) {
@@ -137,7 +135,7 @@ void InputChoice::execute(ElementSptr element) const {
     // must get user response somehow //
     int chosen_index = 0;
 
-    element->setMapElement(_result, _choices[chosen_index]);
+    player->setMapElement(_result, _choices[chosen_index]);
 }
 
 // GlobalMsg //
@@ -149,9 +147,8 @@ GlobalMsg::GlobalMsg(std::string msg)
 void GlobalMsg::execute(ElementSptr element) const {
     std::cout << "* GlobalMsg Rule *\n";
 
-    std::string tmp = _msg;
-    formatString(tmp, element);
-    std::cout << "message: " << tmp << "\n";
+    std::string formatted_msg = formatString(_msg, element);
+    std::cout << "message: " << formatted_msg << "\n";
 }
 
 // Scores //
