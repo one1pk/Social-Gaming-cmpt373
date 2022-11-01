@@ -1,14 +1,14 @@
 add_subdirectory(gtest)
 enable_testing()
 
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
 
 add_executable(runAllTests
   test-interpreter.cpp
 )
 
 target_link_libraries(runAllTests
-  gmock gtest 
+  gmock gtest gtest_main
 
   game
   networking
