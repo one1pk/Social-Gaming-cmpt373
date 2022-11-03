@@ -53,6 +53,12 @@ public:
 
 using json = nlohmann::json;
 using namespace std;
+<<<<<<< HEAD
+=======
+using namespace listNS;
+
+//namespace needed because nlohmann methods from_json and to_json only work if defined in types namespace
+>>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
 namespace ns{
 class Game {
 public:
@@ -75,6 +81,7 @@ public:
     size_t numPlayers();
 >>>>>>> 19b7927 (Interpret part of json and add test)
 
+<<<<<<< HEAD
     void run();
     GameStatus status();
 
@@ -130,10 +137,24 @@ private:
     std::string getName();
     void printInfo(){
         cout << _name << " " << _audience << " " << _player_count.min << " " << _player_count.max << endl;
+=======
+    //getters for printing in test.cpp
+    ElementSptr setup(){
+        return _setup;
     }
-
-    
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, _name, _audience, _player_count)
+    ElementSptr constants(){
+        return _constants;
+    }
+    ElementSptr variables(){
+        return _variables;
+    }
+    ElementSptr per_player(){
+        return _per_player;
+    }
+    ElementSptr per_audience(){
+        return _per_audience;
+>>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
+    }
     
 private:
     uintptr_t _id; // unique id can act as an invitation code
@@ -146,7 +167,6 @@ private:
     struct PlayerCount {
         int min;
         int max;
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlayerCount, min, max)
     } _player_count;
 
     
@@ -174,6 +194,37 @@ private:
     ElementSptr _per_audience; // a vector of lists for each audience member
 
     RuleVector _rules;
+
+    //allows from_json and to_json to access private fields
+    friend void from_json(const json &j, Game &g);
+    friend void to_json(json &j, const Game &g);
+    
 };
+
+inline void from_json(const json &j,  Game &g){
+    j.at("_name").get_to(g._name);
+    j.at("_audience").get_to(g._audience);
+    j.at("_player_count").at("min").get_to(g._player_count.min);
+    j.at("_player_count").at("max").get_to(g._player_count.max);
+    j.at("_setup").get_to(g._setup);
+    j.at("_constants").get_to(g._constants);
+    j.at("_variables").get_to(g._variables);
+    j.at("_per_player").get_to(g._per_player);
+    j.at("_per_audience").get_to(g._per_audience);
 }
+<<<<<<< HEAD
 >>>>>>> cf6b5f2 (Add brace)
+=======
+
+//only works for config, not urgent
+inline void to_json( json &j, const Game &g){
+    j["_name"] = g._name;
+    j["_audience"] = g._audience;
+    j["_player_count"]["min"] = g._player_count.min;
+    j["_player_count"]["max"] = g._player_count.max;
+    //j["_setup"] = g._setup;
+    
+    //j = json{ {"_name", g._name}, {"_audience", g._audience}, {"_player_count", g._player_count} };
+}
+}
+>>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)

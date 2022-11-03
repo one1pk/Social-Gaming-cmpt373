@@ -22,8 +22,22 @@
 =======
 using namespace ns;
 using namespace std;
+<<<<<<< HEAD
 >>>>>>> 19b7927 (Interpret part of json and add test)
 
+=======
+using namespace listNS;
+/*
+game server that can be configured by the person running it
+to allow games to be played.
+The configuration of the server will be specified in JSON.
+Similarly, the specification for a single game will be in JSON.
+A game specification will define the state that a game must maintain
+as well as the rules of the game.
+You may think of the specifications as being written in a domain specific
+programming language that your game server will interpret.
+*/
+>>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
 
 GlobalServerState globalState;
 

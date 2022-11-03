@@ -1,0 +1,27 @@
+{
+    
+        "_name": "Rock, Paper, Scissors",
+        "_player_count": {"min": 2, "max": 4},
+        "_audience": false,
+        "_setup": {
+            "Rounds": 10
+        },
+        "_constants": {
+            "weapons": [
+              { "name": "Rock",     "beats": "Scissors"},
+              { "name": "Paper",    "beats": "Rock"},
+              { "name": "Scissors", "beats": "Paper"}
+            ]
+          },
+        
+          "_variables": {
+            "winners": []
+          },
+        
+          "_per_player": {
+            "wins": 0
+          },
+        
+          "_per_audience": {}
+    
+}
