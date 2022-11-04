@@ -15,6 +15,7 @@ target_link_libraries(gameserver
     game
     networking
     interpreter
+    commandProcessing
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
