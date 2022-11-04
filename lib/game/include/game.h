@@ -12,6 +12,7 @@
 #include <memory>
 #include <stack>
 
+<<<<<<< HEAD
 enum GameStatus {
     Created,
     Running,
@@ -19,6 +20,10 @@ enum GameStatus {
     AwaitingInput,
     AwaitingOutput
 };
+=======
+using json = nlohmann::json;
+using namespace std;
+>>>>>>> 8983a65 (Move json mapping from game and list classes to interpretJson class)
 
 class Game {
 public:
@@ -201,6 +206,7 @@ private:
     
 };
 
+<<<<<<< HEAD
 inline void from_json(const json &j,  Game &g){
     j.at("_name").get_to(g._name);
     j.at("_has_audience").get_to(g._has_audience);
@@ -228,3 +234,7 @@ inline void to_json( json &j, const Game &g){
 }
 }
 >>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
+=======
+   
+
+>>>>>>> 8983a65 (Move json mapping from game and list classes to interpretJson class)

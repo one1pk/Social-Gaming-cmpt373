@@ -18,6 +18,7 @@
 #include <thread>
 #include <vector>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <map>
 =======
 using namespace ns;
@@ -27,6 +28,11 @@ using namespace std;
 
 =======
 using namespace listNS;
+=======
+
+using namespace std;
+
+>>>>>>> 8983a65 (Move json mapping from game and list classes to interpretJson class)
 /*
 game server that can be configured by the person running it
 to allow games to be played.

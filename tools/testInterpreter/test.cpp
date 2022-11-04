@@ -5,8 +5,8 @@
 #include "game.h"
 #include "list.h"
 
-using namespace ns;
 using namespace std;
+
 int main(){
     Game g;
         

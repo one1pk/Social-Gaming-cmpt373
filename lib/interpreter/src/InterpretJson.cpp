@@ -6,7 +6,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using namespace ns;
 
 
 InterpretJson::InterpretJson(string path){
@@ -18,7 +17,7 @@ InterpretJson::InterpretJson(string path){
 
 
 void InterpretJson::interpret(Game& obj){
-    obj = data.get<ns::Game>();
+    obj = data.get<Game>();
 }
 
 

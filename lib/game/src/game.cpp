@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <algorithm>
-using namespace ns;
 
 <<<<<<< HEAD
 <<<<<<< HEAD

@@ -5,8 +5,6 @@
 #include <vector>
 #include <functional>
 
-using namespace listNS;
-
 class Rule;
 typedef std::shared_ptr<Rule> RuleSptr; // shared pointer to a rule object
 typedef std::vector<std::shared_ptr<Rule>> RuleVector; // a vector of shared pointers to rule objects

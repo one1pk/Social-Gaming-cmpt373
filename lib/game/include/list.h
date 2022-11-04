@@ -11,9 +11,6 @@
 
 using json = nlohmann::json;
 
-//namespace needed because nlohmann methods from_json and to_json only work if defined in types namespace
-namespace listNS{
-
 enum Type { // doesn't seem useful, might remove later 
     INT,
     STRING,
@@ -275,18 +272,6 @@ public:
 =======
 };
 
-//recursively maps json data to list element
-inline void from_json(const json&j, ElementSptr &e){
-        if(j.is_string()) e = std::make_shared<Element<std::string>>(j.get<std::string>());
-        else if(j.is_number()) e = std::make_shared<Element<int>>(j.get<int>());
-        else if(j.is_array()) e = std::make_shared<Element<ElementVector>>(j.get<ElementVector>());
-	    else if(j.is_object()) e = std::make_shared<Element<ElementMap>>(j.get<ElementMap>());
-    }
-
-inline void to_json(json&j, const ElementSptr &e){
-    j = e;
-}
-}
 
 ////////////////////////////////////////////////////////////////////////
 // alternate implementation, keeping in case we want to switch methods
