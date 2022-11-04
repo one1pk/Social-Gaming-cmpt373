@@ -2,7 +2,7 @@
     
         "_name": "Rock, Paper, Scissors",
         "_player_count": {"min": 2, "max": 4},
-        "_audience": false,
+        "_has_audience": false,
         "_setup": {
             "Rounds": 10
         },

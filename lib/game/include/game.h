@@ -203,7 +203,7 @@ private:
 
 inline void from_json(const json &j,  Game &g){
     j.at("_name").get_to(g._name);
-    j.at("_audience").get_to(g._audience);
+    j.at("_has_audience").get_to(g._has_audience);
     j.at("_player_count").at("min").get_to(g._player_count.min);
     j.at("_player_count").at("max").get_to(g._player_count.max);
     j.at("_setup").get_to(g._setup);
@@ -219,7 +219,7 @@ inline void from_json(const json &j,  Game &g){
 //only works for config, not urgent
 inline void to_json( json &j, const Game &g){
     j["_name"] = g._name;
-    j["_audience"] = g._audience;
+    j["_has_audience"] = g._has_audience;
     j["_player_count"]["min"] = g._player_count.min;
     j["_player_count"]["max"] = g._player_count.max;
     //j["_setup"] = g._setup;

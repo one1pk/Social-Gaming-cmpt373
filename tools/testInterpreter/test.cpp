@@ -37,15 +37,11 @@ int main(){
         //Print constants
         cout << "\nconstants: " << endl;
         cout << "weapons: ";
-        ElementSptr _list =  g.constants()->getMapElement("weapons");
-        ElementVector::iterator begin, end;
-        if (_list->getIterator(begin, end)) {
-            for (auto it = begin; it != end; it++) {
-                ElementSptr element = *it;
-                std::cout << "\nName: " << element->getMapElement("name")->getString() << "\t";
-                std::cout << "Beats: " << element->getMapElement("beats")->getString() <<"\n";
+        ElementVector _list =  g.constants()->getMapElement("weapons")->getVector();
+        for (auto element : _list) {
+            std::cout << "\nName: " << element->getMapElement("name")->getString() << "\t";
+            std::cout << "Beats: " << element->getMapElement("beats")->getString() <<"\n";
 
-            }
         }
 
         //Print variables
