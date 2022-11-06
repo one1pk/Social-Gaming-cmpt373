@@ -10,8 +10,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <unistd.h>
 #include <vector>
+#include <map>
 
 /*
 game server that can be configured by the person running it
@@ -26,6 +26,7 @@ programming language that your game server will interpret.
 
 std::vector<Connection> clients;
 std::vector<Connection> clients_in_lobby;
+std::map<Connection, std::pair<bool, std::string>> game_input;
 // std::vector<std::vector<Connection>> clients_in_games;
 std::vector<std::string> game_names;
 std::vector<Game> game_instances;
@@ -155,6 +156,7 @@ void constructGame(std::string game_name, Connection owner) {
 
     std::shared_ptr<std::deque<Message>> player_msgs = std::make_shared<std::deque<Message>>();
     std::shared_ptr<std::deque<std::string>> global_msgs = std::make_shared<std::deque<std::string>>();
+    std::shared_ptr<std::map<Connection, std::string>> player_input = std::make_shared<std::map<Connection, std::string>>();
 
 
     //---------------RULES--------------//
@@ -173,9 +175,11 @@ void constructGame(std::string game_name, Connection owner) {
                         std::make_shared<InputChoice>(
                             "{name}, choose your weapon!\n",
                             constants->getMapElement("weapons")->getSubList("name"),
+                            10,
                             "weapon",
-                            player_msgs
-                        )
+                            player_msgs,
+                            player_input
+                        ),
                     }
                 ),
                 std::make_shared<Discard>(
@@ -190,7 +194,7 @@ void constructGame(std::string game_name, Connection owner) {
                         std::make_shared<When>(
                             std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>{
                                 std::pair<std::function<bool(ElementSptr)>,RuleVector>{
-                                    [players](ElementSptr element){ 
+                                    [players](ElementSptr element){
                                         ElementVector player_weapons;
                                         for (auto player = players->begin(); player != players->end(); player++) {
                                             player_weapons.push_back(player->second->getMapElement("weapon"));
@@ -205,15 +209,15 @@ void constructGame(std::string game_name, Connection owner) {
                                     RuleVector{
                                         std::make_shared<Extend>(
                                             variables->getMapElement("winners"),
-                                            [players](ElementSptr element){ 
-                                                ElementVector winners;
+                                            [players](ElementSptr element){
+                                                ElementVector round_winners;
                                                 for (auto player = players->begin(); player != players->end(); player++) {
                                                     if (player->second->getMapElement("weapon")->getString()
                                                             == element->getMapElement("beats")->getString()){
-                                                        winners.push_back(player->second);
+                                                        round_winners.push_back(player->second);
                                                     }
                                                 }
-                                                return std::make_shared<Element<ElementVector>>(winners);
+                                                return std::make_shared<Element<ElementVector>>(round_winners);
                                             }
                                         )
                                     }
@@ -239,13 +243,13 @@ void constructGame(std::string game_name, Connection owner) {
                             RuleVector{
                                 std::make_shared<GlobalMsg>("Tie game!\n", global_msgs)
                             }
-                        ), 
+                        ),
                         std::pair<std::function<bool(ElementSptr)>,RuleVector>(
                             [](ElementSptr element){ 
                                 return true; 
                             },
                             RuleVector{
-                                std::make_shared<GlobalMsg>("Winners: \n", global_msgs),
+                                std::make_shared<GlobalMsg>("Winners:\nTODO: print winner names\n", global_msgs),
                                 std::make_shared<Foreach>(
                                     variables->getMapElement("winners"),
                                     RuleVector{
@@ -278,8 +282,8 @@ void constructGame(std::string game_name, Connection owner) {
         per_player, per_audience,
         players, audience,
         rules, 
-        player_msgs,
-        global_msgs
+        player_msgs, global_msgs,
+        player_input
     );
 }
 
@@ -325,28 +329,21 @@ bool processMessages(Server &server);
 
 void processGames(Server &server);
 
-std::string getHTTPMessage(const char *htmlLocation) {
-    if (access(htmlLocation, R_OK) != -1) {
-        std::ifstream infile{htmlLocation};
-        return std::string{std::istreambuf_iterator<char>(infile),
-                           std::istreambuf_iterator<char>()};
-    } else {
-        std::cerr << "Unable to open HTML index file:\n"
-                  << htmlLocation << "\n";
-        std::exit(-1);
-    }
-}
+// #include <unistd.h>
+// std::string getHTTPMessage(const char *htmlLocation) {
+//     if (access(htmlLocation, R_OK) != -1) {
+//         std::ifstream infile{htmlLocation};
+//         return std::string{std::istreambuf_iterator<char>(infile),
+//                            std::istreambuf_iterator<char>()};
+//     } else {
+//         std::cerr << "Unable to open HTML index file:\n"
+//                   << htmlLocation << "\n";
+//         std::exit(-1);
+//     }
+// }
 
 
 int main(int argc, char *argv[]) {
-    // constructGame("rock_paper_scissors", {0});
-    // game_instances.back().addPlayer({111});
-    // game_instances.back().addPlayer({222});
-    // game_instances.back().addPlayer({333});
-    // game_instances.back().addPlayer({444});
-    // game_instances.back().addPlayer({555});
-    // game_instances.back().start();
-
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
@@ -359,7 +356,7 @@ int main(int argc, char *argv[]) {
     // (for now we take them as cmdline args)
 
     unsigned short port = std::stoi(argv[1]);
-    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
+    Server server{port, ""/*getHTTPMessage(argv[2])*/, onConnect, onDisconnect};
 
     std::cout << "Game server is up!\n";
 
@@ -390,22 +387,85 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+void processGameMsgs(Game& game, std::deque<Message>& outgoing) {
+    // transform the global msg strings to message objects to be sent to the owner's screen (main screen)
+    std::deque<std::string> global_msg_strings = game.globalMsgs();
+    std::transform(global_msg_strings.begin(), global_msg_strings.end(), std::back_inserter(outgoing),
+        [&game](auto global_msg_string) {
+            return Message{ game.owner(), global_msg_string };
+        }
+    );
+
+    // add the player messages to the list and flag the users requiring input (if the game is not finished)
+    std::deque<Message> player_msgs = game.playerMsgs();
+    if (game.status() != GameStatus::Finished) {
+        for (auto msg: player_msgs) {
+            game_input[msg.connection].first = false;
+        }
+    }
+    outgoing.insert(outgoing.end(), player_msgs.begin(), player_msgs.end());
+}
+
+void finishGame(Game& game, std::deque<Message>& outgoing, Server& server) {
+    outgoing.push_back({game.owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
+    clients_in_lobby.push_back(game.owner());
+    server.setGameIdentity(game.owner(), 0);
+
+    for (auto player: game.players()) {
+        outgoing.push_back({player, "\nGood game!\nYou are now back in the lobby\n\n"});
+        clients_in_lobby.push_back(player);
+        server.setGameIdentity(player, 0);
+    }
+}
+
 void processGames(Server &server) {
     std::deque<Message> outgoing;
 
-    for (auto &game: game_instances) {
-        std::deque<Message> player_msgs = game.playerMsgs();
-        std::deque<std::string> global_strings = game.globalMsgs();
+    auto game = game_instances.begin();
+    while (game != game_instances.end()) {
+    // std::cout << "Game Check\n";
 
-        std::deque<Message> global_msgs;
-        std::transform(global_strings.begin(), global_strings.end(), std::back_inserter(global_msgs),
-            [&game](auto global_string) {
-                return Message{ game.owner(), global_string };
+        switch (game->status()) {
+            case GameStatus::AwaitingOutput: {
+            // std::cout << "AwaitingOutput\n";
+                processGameMsgs(*game, outgoing);
+                game->outputSent(); // changes the status to AwaitingInput
+                game++;
             }
-        );
+            break;
+            case GameStatus::AwaitingInput: {
+            // std::cout << "AwaitingInput\n";
+                std::deque<Message> player_msgs = game->playerMsgs();
 
-        outgoing.insert(outgoing.end(), player_msgs.begin(), player_msgs.end());
-        outgoing.insert(outgoing.end(), global_msgs.begin(), global_msgs.end());
+                for (auto player_msg: player_msgs) {
+                    Connection player = player_msg.connection;
+                    if (game_input[player].first) {
+                        game->registerPlayerInput(player, game_input[player].second);
+                        outgoing.push_back({
+                            player,
+                            "Input Received, you entered: " + game_input[player].second + "\n"
+                            "Waiting for other players...\n\n"
+                        });
+                    }
+                }
+
+                if (game->playerMsgs().size() == 0) {
+                    game->run();
+                }
+                game++;
+            }
+            break;
+            case GameStatus::Finished: {
+            // std::cout << "GameFinished\n";
+                processGameMsgs(*game, outgoing);
+                finishGame(*game, outgoing, server);
+                game = game_instances.erase(game);  
+            }
+            break;
+            default:
+                game++;
+            break;
+        }
     }
     server.send(outgoing);
 }
@@ -436,21 +496,24 @@ bool processMessages(Server &server) {
             } else if (message.text == "start" && message.connection == game_instance->owner()){
                 HandleStart(message, outgoing, server, game_instance);
             } else {
+                game_input[message.connection] = {true, message.text};
+                
+
                 // currently all in-game messages are broadcasted to all players
                 // TODO: Handle input and output for a game
                 // will need to integrate with the Game object and the input/output game rules
                 
-                if (message.connection == game_instance->owner() && !game_instance->hasPlayer(message.connection)) {
-                    // if owner hasnt joined, don't broadcast their message
-                    continue;
-                }
+                // if (message.connection == game_instance->owner() && !game_instance->hasPlayer(message.connection)) {
+                //     // if owner hasnt joined, don't broadcast their message
+                //     continue;
+                // }
                 
-                std::ostringstream ingame_message;
-                ingame_message << message.connection.id << "> " << message.text << "\n";
+                // std::ostringstream ingame_message;
+                // ingame_message << message.connection.id << "> " << message.text << "\n";
 
-                for (auto &player : game_instance->players()) {
-                    outgoing.push_back({player, ingame_message.str()});
-                }
+                // for (auto &player : game_instance->players()) {
+                //     outgoing.push_back({player, ingame_message.str()});
+                // }
             }
         } else { // a lobby message //
 
@@ -580,7 +643,7 @@ void HandleCreate(Message message, std::deque<Message> &outgoing, Server &server
 }
 
 void HandleStart(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {
-    if (game_instance->isOngoing()) return;
+    if (game_instance->status() != GameStatus::Created) return;
 
     // reply with confirmation to game owner
     outgoing.push_back({message.connection, "Game Started\n"});
@@ -592,7 +655,7 @@ void HandleStart(Message message, std::deque<Message> &outgoing, Server &server,
         outgoing.push_back({player, "The owner has started the game!\n\n"});
     }
 
-    game_instance->start();
+    game_instance->run();
 }
 
 void HandleLeave(Message message, std::deque<Message> &outgoing, Server &server, Game* game_instance) {

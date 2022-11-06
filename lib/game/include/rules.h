@@ -14,93 +14,129 @@ typedef std::vector<std::shared_ptr<Rule>> RuleVector; // a vector of shared poi
 class Rule {
 public:
     virtual ~Rule() {}
-    virtual void execute(ElementSptr element = nullptr) const = 0;
+
+    bool execute(ElementSptr element = nullptr) {
+        if (executed) {
+            return true;
+        }
+        return executeImpl(element);
+    }
+    void reset() {
+        executed = false;
+        resetImpl();
+    }
+
+private:
+    virtual bool executeImpl(ElementSptr element) = 0;
+    virtual void resetImpl() {}
+
+protected:
+    bool executed = false;
 };
 
 // Control Structures//
 
 class Foreach : public Rule {
 private:
-    ElementSptr _list;
-    RuleVector _rules;
+    ElementSptr list;
+    ElementVector elements;
+    ElementVector::iterator element;
+    RuleVector rules;
+    RuleVector::iterator rule;
+    bool initialized = false;
 public:
     Foreach(ElementSptr list, RuleVector rules);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
+    void resetImpl() final;
 };
 
 class ParallelFor : public Rule {
-    std::shared_ptr<PlayerMap> _players;
-    RuleVector _rules;
+    std::shared_ptr<PlayerMap> player_maps;
+    RuleVector rules;
+    std::map<Connection, RuleVector::iterator> player_rule_it;
+    bool initialized = false;
 public:
-    ParallelFor(std::shared_ptr<PlayerMap> players, RuleVector rules);
-    void execute(ElementSptr element = nullptr) const final;
+    ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules);
+    bool executeImpl(ElementSptr element) final;
+    void resetImpl() final;
 };
 
 class When : public Rule {
-    const std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _case_rules; // a rule list for every case
+    // a vector of case-rules pairs
+    // containes a rule list for every case
+    // a case is a function (lambda) that returns a bool
+    std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules; 
+    std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>::iterator case_rule_pair;
+    RuleVector::iterator rule;
+    bool match = false;
 public: 
     When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
+    void resetImpl() final;
 };
 
 // List Operations //
 
 class Extend : public Rule {
-    ElementSptr _target;
-    std::function<ElementSptr(ElementSptr)> _extension;
+    ElementSptr target;
+    std::function<ElementSptr(ElementSptr)> extension;
 public:
     Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
 };
 
 class Discard : public Rule {
-    ElementSptr _list;
-    std::function<size_t(ElementSptr)> _count;
+    ElementSptr list;
+    std::function<size_t(ElementSptr)> count;
 public:
     Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
 };
 
 // Arithmetic //
 
 class Add : public Rule {
-    std::string _to;
-    ElementSptr _value;
+    std::string to;
+    ElementSptr value;
 public: 
     Add(std::string to, ElementSptr value);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
 };
 
 // Input/ Output //
 
 class InputChoice : public Rule {
-    std::string _prompt;
-    ElementVector _choices;
-    std::string _result;
-    std::shared_ptr<std::deque<Message>> _player_msgs;
-    // unsigned _timeout_s; // in seconds
+    std::string prompt;
+    ElementVector choices;
+    unsigned timeout_s; // in seconds
+    std::string result;
+    std::shared_ptr<std::deque<Message>> player_msgs;
+    std::shared_ptr<std::map<Connection, std::string>> player_input;
+    std::map<Connection, bool> awaitingInput;
 public:
-    InputChoice(std::string prompt, ElementVector choices, std::string result,
-                std::shared_ptr<std::deque<Message>> player_msgs/*, unsigned timeout_s*/);
-    void execute(ElementSptr player) const final;
+    InputChoice(std::string prompt, ElementVector choices, 
+                       unsigned timeout_s, std::string result,
+                       std::shared_ptr<std::deque<Message>> player_msgs,
+                       std::shared_ptr<std::map<Connection, std::string>> player_input);
+    bool executeImpl(ElementSptr element) final;
 };
 
 class GlobalMsg : public Rule {
-    std::string _msg;
-    std::shared_ptr<std::deque<std::string>> _global_msgs;
+    std::string msg;
+    std::shared_ptr<std::deque<std::string>> global_msgs;
 public:
     GlobalMsg(std::string msg,
               std::shared_ptr<std::deque<std::string>> global_msgs);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
 };
 
 class Scores : public Rule {
-    std::shared_ptr<PlayerMap> _player_maps;
-    std::string _attribute_key;
-    bool _ascending;
-    std::shared_ptr<std::deque<std::string>> _global_msgs;
+    std::shared_ptr<PlayerMap> player_maps;
+    std::string attribute_key;
+    bool ascending;
+    std::shared_ptr<std::deque<std::string>> global_msgs;
 public:
     Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, 
            bool ascending, std::shared_ptr<std::deque<std::string>> global_msgs);
-    void execute(ElementSptr element = nullptr) const final;
+    bool executeImpl(ElementSptr element) final;
 };

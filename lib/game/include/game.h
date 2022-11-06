@@ -7,8 +7,16 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <any>
 #include <memory>
+#include <stack>
+
+enum GameStatus {
+    Created,
+    Running,
+    Finished,
+    AwaitingInput,
+    AwaitingOutput
+};
 
 class Game {
 public:
@@ -20,12 +28,13 @@ public:
         ElementSptr per_player, ElementSptr per_audience, 
         std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
         RuleVector rules,
-        std::shared_ptr<std::deque<Message>> player_msgs,
-        std::shared_ptr<std::deque<std::string>> global_msgs
+        std::shared_ptr<std::deque<Message>> _player_msgs,
+        std::shared_ptr<std::deque<std::string>> _global_msgs,
+        std::shared_ptr<std::map<Connection, std::string>> _player_input
     );
 
-    void start();
-    bool isOngoing();
+    void run();
+    GameStatus status();
 
     std::string name();
     Connection owner();
@@ -35,16 +44,19 @@ public:
     bool removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
-    size_t numPlayers(); //number of players in vector above
+    size_t numPlayers();
 
     std::deque<Message> playerMsgs();
     std::deque<std::string> globalMsgs();
+
+    void outputSent();
+    void registerPlayerInput(Connection player, std::string input);
 
 private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
     Connection _owner;
-    bool _started;
+    GameStatus _status;
 
     //Bounds of player given in json file
     struct PlayerCount {
@@ -69,4 +81,5 @@ private:
 
     std::shared_ptr<std::deque<Message>> _player_msgs;
     std::shared_ptr<std::deque<std::string>> _global_msgs;
+    std::shared_ptr<std::map<Connection, std::string>> _player_input;
 };

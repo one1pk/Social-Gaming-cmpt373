@@ -12,33 +12,38 @@ Game::Game(
     std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
     RuleVector rules,
     std::shared_ptr<std::deque<Message>> player_msgs,
-    std::shared_ptr<std::deque<std::string>> global_msgs
-) : _name(name), _owner(owner), _started(false),
+    std::shared_ptr<std::deque<std::string>> global_msgs,
+    std::shared_ptr<std::map<Connection, std::string>> player_input
+) : _name(name), _owner(owner), _status(GameStatus::Created),
     _player_count{ min_players, max_players }, _has_audience(has_audience),
     _setup(setup),
     _constants{constants}, _variables(variables),
     _per_player(per_player), _per_audience(per_audience),
     _players(players), _audience(audience),
     _rules(rules),
-    _player_msgs(player_msgs), _global_msgs(global_msgs)  {
+    _player_msgs(player_msgs), _global_msgs(global_msgs),
+    _player_input(player_input)  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
 }
 
 // starts the game execution
-void Game::start() {
-    _started = true;
-    std::cout << "Game Started\n"
-              << "Starting Rule Loop\n";
+void Game::run() {
+    // TODO: Check if num_players > player_count.max
+
+    _status = GameStatus::Running;
 
     for (auto rule: _rules) {
-        rule->execute();
+        if (!rule->execute()) {
+            _status = GameStatus::AwaitingOutput;
+            return;
+        }
     }
+    _status = GameStatus::Finished;
 }
 
-// returns game status
-bool Game::isOngoing() {
-    return _started;
+GameStatus Game::status() {
+    return _status;
 }
 
 bool Game::addPlayer(Connection player_connection) {
@@ -97,13 +102,24 @@ uintptr_t Game::id() {
 }
 
 std::deque<Message> Game::playerMsgs() {
-    std::deque<Message> tmp = *_player_msgs;
-    _player_msgs->clear();
-    return tmp;
+    return *_player_msgs;
 }
 
 std::deque<std::string> Game::globalMsgs() {
     std::deque<std::string> tmp = *_global_msgs;
     _global_msgs->clear();
     return tmp;
+}
+
+void Game::outputSent() {
+    _status = GameStatus::AwaitingInput;
+}
+
+void Game::registerPlayerInput(Connection player, std::string input) {
+    _player_input->insert_or_assign(player, input);
+    _player_msgs->erase(std::remove_if(_player_msgs->begin(), _player_msgs->end(),
+        [player](Message player_msg) {
+                return player_msg.connection == player;
+        }
+    ));
 }
