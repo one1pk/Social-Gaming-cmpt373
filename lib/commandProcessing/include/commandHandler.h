@@ -4,28 +4,9 @@
 #include "globalState.h"
 #include "messageProcessor.h"
 
-enum class commandOutput {
-    ERROR_INCORRECT_COMMAND_FORMAT,
-    ERROR_INVALID_GAME_INDEX,
-    ERROR_INVALID_INVITATION_CODE,
-    ERROR_INVALID_START_GAME_COMMAND,
-    ERROR_NOT_AN_OWNER,
-    ERROR_OWNER_CANNOT_LEAVE,
-    ERROR_INVALID_COMMAND,
-
-    SUCCESS_GAME_CREATION,
-    SUCCESS_GAME_JOIN,
-    SUCCESS_GAME_START,
-    SUCCESS_GAME_END,
-    SUCCESS_GAME_LEAVE,
-
-    STRING_HELP,
-
-};
-
 /**
  * This class takes in processedMessages objects that have the command type
- * it them executes that commandType and returns the response as Message for each command.
+ * It then executes that commandType and returns the response as Messages.
  */
 class CommandHandler {
 public:
@@ -34,16 +15,30 @@ public:
     CommandHandler(GlobalServerState &globalState) : globalState{globalState} { initializeMaps(); }
     ~CommandHandler(){};
 
-    void initializeMaps();
+    /**
+     * Adds new command objects to the commandMap
+     */
+    void registerCommand(UserCommand, commandPointer);
+
+    /**
+     * Returns the messages after executing the incoming commands represented by processedMessages
+     */
     std::deque<Message> getOutgoingMessages(const std::deque<ProcessedMessage> &incomingProcessedMessages);
 
 private:
     GlobalServerState &globalState;
     std::deque<Message> outgoing;
-    std::unordered_map<UserCommand, commandPointer> commandMap;
-    std::unordered_map<commandResult, std::string> commandResultMap;
+    std::unordered_map<UserCommand, commandPointer> commandMap;      // Maps command names to command objects
+    std::unordered_map<commandResult, std::string> commandResultMap; // Maps command results to feedback strings
 
+    void initializeMaps();
     void initializeCommandMap();
     void initializeCommandResultMap();
+    void registerCommandImpl();
+
+    /**
+     * Main function responsible for handling execution of a single command type.
+     * Calls the execute method of command object in the commandMap
+     */
     commandResult executeCommand(ProcessedMessage &processedMessage);
 };

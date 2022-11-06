@@ -1,18 +1,17 @@
 #include "messageProcessor.h"
 
 std::deque<ProcessedMessage>
-MessageProcessor::getProcessedMessages(const std::deque<Message>& incoming){
+MessageProcessor::getProcessedMessages(const std::deque<Message> &incoming) {
     std::deque<ProcessedMessage> processedMessages;
 
-    for(auto message : incoming){
+    for (auto message : incoming) {
         processedMessages.push_back(createProcessedMessage(message));
     }
 
     return processedMessages;
 }
 
-
-ProcessedMessage MessageProcessor::createProcessedMessage(const Message& message) {
+ProcessedMessage MessageProcessor::createProcessedMessage(const Message &message) {
 
     ProcessedMessage processedMessage;
     std::vector<std::string> messageTokens = tokenizeMessage(message.text);
@@ -20,11 +19,11 @@ ProcessedMessage MessageProcessor::createProcessedMessage(const Message& message
 
     std::string commandString = messageTokens[0];
 
-    if (ServerCommandMap.find(commandString) != ServerCommandMap.end()) {
-        processedMessage.commandType = ServerCommandMap[commandString];
-        
+    if (CommandStringMap.find(commandString) != CommandStringMap.end()) {
+        processedMessage.commandType = CommandStringMap[commandString];
+
         auto eraseBegin = std::remove(messageTokens.begin(), messageTokens.end(), commandString);
-        messageTokens.erase(eraseBegin,messageTokens.end());
+        messageTokens.erase(eraseBegin, messageTokens.end());
 
         processedMessage.arguments = messageTokens;
     } else {
@@ -34,27 +33,26 @@ ProcessedMessage MessageProcessor::createProcessedMessage(const Message& message
     return processedMessage;
 }
 
-std::vector<std::string> 
-MessageProcessor::tokenizeMessage(std::string text){
+std::vector<std::string>
+MessageProcessor::tokenizeMessage(const std::string &text) {
 
     std::vector<std::string> tokens;
     std::string token;
     std::stringstream ss(text);
-    while (ss >> token){
+    while (ss >> token) {
         tokens.push_back(token);
     }
 
     return tokens;
 }
 
-void
-MessageProcessor::initializeServerCommandMap() {
-    ServerCommandMap["exit"] = UserCommand::EXIT;
-    ServerCommandMap["help"] = UserCommand::HELP;
-    ServerCommandMap["games"] = UserCommand::GAMES;
-    ServerCommandMap["create"] = UserCommand::CREATE;
-    ServerCommandMap["join"] = UserCommand::JOIN;
-    ServerCommandMap["start"] = UserCommand::START;
-    ServerCommandMap["leave"] = UserCommand::LEAVE;
-    ServerCommandMap["end"] = UserCommand::END;
+void MessageProcessor::initializeCommandStringMap() {
+    CommandStringMap["exit"] = UserCommand::EXIT;
+    CommandStringMap["help"] = UserCommand::HELP;
+    CommandStringMap["games"] = UserCommand::GAMES;
+    CommandStringMap["create"] = UserCommand::CREATE;
+    CommandStringMap["join"] = UserCommand::JOIN;
+    CommandStringMap["start"] = UserCommand::START;
+    CommandStringMap["leave"] = UserCommand::LEAVE;
+    CommandStringMap["end"] = UserCommand::END;
 }

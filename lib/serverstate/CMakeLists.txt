@@ -1,10 +1,8 @@
-add_library(commandProcessing
-    src/commandHandler.cpp
-    src/commands.cpp
-    src/messageProcessor.cpp
+add_library(serverstate
+    src/globalState.cpp
 )
 
-target_include_directories(commandProcessing
+target_include_directories(serverstate
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -12,18 +10,18 @@ target_include_directories(commandProcessing
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(commandProcessing
+target_link_libraries(serverstate
   PUBLIC
     networking
-    serverstate
+    game
 )
 
-set_target_properties(commandProcessing
+set_target_properties(serverstate
                     PROPERTIES
                     LINKER_LANGUAGE CXX
                     CXX_STANDARD 17
 )
 
-install(TARGETS commandProcessing
+install(TARGETS serverstate
     ARCHIVE DESTINATION lib
 )

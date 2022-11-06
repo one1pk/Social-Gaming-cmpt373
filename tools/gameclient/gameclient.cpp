@@ -37,10 +37,9 @@ int main(int argc, char* argv[]) {
 
     bool done = false;
     auto onTextEntry = [&done, &client] (std::string text) {
+        client.send(text);
         if ("exit" == text) {
             done = true;
-        } else {
-            client.send(text);
         }
     };
     ChatWindow chatWindow(onTextEntry);

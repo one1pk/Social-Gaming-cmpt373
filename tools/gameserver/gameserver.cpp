@@ -1,11 +1,10 @@
-#include "game.h"
-#include "interpreter.h"
-#include "server.h"
-#include "globalState.h"
-#include "messageProcessor.h"
 #include "commandHandler.h"
+#include "game.h"
+#include "globalState.h"
+#include "interpreter.h"
+#include "messageProcessor.h"
+#include "server.h"
 
-#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -13,8 +12,6 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
-#include <unordered_set>
-#include <vector>
 
 
 std::unique_ptr<GlobalServerState> globalState = std::make_unique<GlobalServerState>();
@@ -30,7 +27,7 @@ void onConnect(Connection c) {
 // called when a client disconnects
 void onDisconnect(Connection c) {
     std::cout << "Connection lost: " << c.id << "\n";
-    globalState->disconnectConnection(c);
+    // globalState->disconnectConnection(c);
 }
 
 // extracts the port number from ./serverconfig.json
@@ -79,7 +76,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "Exception from Server update:\n"
                       << " " << e.what() << "\n\n";
             errorWhileUpdating = true;
-        } 
+        }
 
         std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor->getProcessedMessages(server.receive());
 

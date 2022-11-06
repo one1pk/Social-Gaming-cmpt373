@@ -17,7 +17,6 @@ void GlobalServerState::addClientToGame(Connection connection, uintptr_t invitat
 
     clients_in_games[connection] = game_instance->id();
     removeClientFromList(clients_in_lobby, connection);
-
 }
 
 void GlobalServerState::removeClientFromGame(Connection connection) {
@@ -33,7 +32,8 @@ void GlobalServerState::removeClientFromGame(Connection connection) {
 ///////////////////     GAME- RELATED FUNCTIONS     ///////////////////
 
 uintptr_t GlobalServerState::createGame(int gameIndex, Connection connection) {
-    game_instances.emplace_back(GameNameStringsByIndex[gameIndex], connection.id);
+    // FIX: Change game constructor to use enum rather than string as game name. here change first to second
+    game_instances.emplace_back(gameNameList[gameIndex].first, connection.id);
 
     removeClientFromList(clients_in_lobby, connection);
     clients_in_games[connection] = game_instances.back().id();
@@ -49,7 +49,7 @@ void GlobalServerState::startGame(Connection connection) {
 
 void GlobalServerState::endGame(Connection connection) {
     Game *game_instance = getGameInstancebyOwner(connection);
-    // FIX: Figure if needed here (related to createGame)
+    // FIX: Figure if needed here (related to createGame) (right now owner is added to clients in games)
     clients_in_games.erase(connection);
     clients_in_lobby.push_back(connection);
 
@@ -68,15 +68,23 @@ std::string
 GlobalServerState::getGameNamesAsString() {
     std::stringstream gamesList;
     gamesList << "Available Games: \n";
-    for (auto games : GameNameStringsByIndex) {
-        gamesList << "[ " << games.first << " ] " << games.second << "\n";
+    for (auto games : gameNameList) {
+        gamesList << "[ " << games.first << " ] " << games.second.first << "\n";
     }
+    gamesList << "\n";
 
     return gamesList.str();
 }
 
-int 
-GlobalServerState::getPlayerCount(Connection connection){
+// FIX: Establish owner as connection in game rather than uintptr_t
+
+// Connection
+// GlobalServerState::getGameOwnerConnection(Connection connection){
+//     uintptr_t gameID = clients_in_games[connection];
+//     return getGameInstancebyId(gameID)->ownerID();
+// }
+
+int GlobalServerState::getPlayerCount(Connection connection) {
     uintptr_t gameID = clients_in_games[connection];
     return getGameInstancebyId(gameID)->numPlayers();
 }
@@ -86,7 +94,7 @@ bool GlobalServerState::isCurrentlyInGame(Connection connection) {
 }
 
 bool GlobalServerState::isGameIndex(int index) {
-    return GameList.find(index) != GameList.end();
+    return gameNameList.find(index) != gameNameList.end();
 }
 
 bool GlobalServerState::isOwner(Connection connection) {
@@ -107,7 +115,7 @@ bool GlobalServerState::isValidGameInvitation(uintptr_t invitationCode) {
 //////////////////////////////      BROADCASTING MESSAGE BUILDERS   //////////////////////
 
 std::deque<Message>
-GlobalServerState::buildMessagesForLobby(std::string messageText) {
+GlobalServerState::buildMessagesForServerLobby(std::string messageText) {
     std::deque<Message> messages;
     for (auto client : clients_in_lobby) {
         messages.push_back({client, messageText});
@@ -124,12 +132,12 @@ GlobalServerState::buildMessagesForGame(std::string messageText, Connection conn
         Game *game_instance = getGameInstancebyId(gameID);
 
         for (auto player : game_instance->players()) {
-            if(!(player==connection)){
+            if (!(player == connection)) {
                 messages.push_back({player, messageText});
             }
         }
 
-        // TODO: Send to owner as well
+        // WARNING: Send to owner as well?
         // messages.push_back({game_instance->owner(), messageText});
     }
 
@@ -175,4 +183,8 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
     auto game_iterator = std::find_if(game_instances.begin(), game_instances.end(), findGamePredicate);
 
     return game_iterator == game_instances.end() ? nullptr : &(*game_iterator);
+}
+
+void GlobalServerState::populateGameList() {
+    gameNameList[0] = std::make_pair("Rock Paper Scissors", Games::ROCK_PAPER_SCISSORS);
 }
