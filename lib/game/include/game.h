@@ -61,6 +61,10 @@ public:
     ElementSptr variables();
     ElementSptr per_player();
     ElementSptr per_audience();
+    bool audience(){
+        return _has_audience;
+    }
+
 
 private:
     uintptr_t _id; // unique id can act as an invitation code

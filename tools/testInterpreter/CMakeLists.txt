@@ -2,7 +2,7 @@ add_executable(test
     test.cpp
 )
 
-add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/../gameserver/gameconfigs/rock_paper_scissors.json")
 
 set_target_properties(test
                     PROPERTIES

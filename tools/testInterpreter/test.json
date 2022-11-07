@@ -19,7 +19,8 @@
           },
         
           "_per_player": {
-            "wins": 0
+            "wins": 0,
+            "weapon": ""
           },
         
           "_per_audience": {}

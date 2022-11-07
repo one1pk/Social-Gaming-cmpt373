@@ -272,6 +272,8 @@ void GlobalServerState::populateGameList() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////// TEMPORARY: Manual Rock Paper Scissor Game Construction //////////////////////
+#include "InterpretJson.h"
+using json = nlohmann::json;
 
 void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner) {
     // TODO: use the interpreter to generate the game object from the json configurations
@@ -287,74 +289,25 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
     //     ]
     // },
 
-    ElementSptr constants = std::make_shared<Element<ElementMap>>(
-        ElementMap{ 
-            {"weapons", std::make_shared<Element<ElementVector>>(
-                    ElementVector{
-                        std::make_shared<Element<ElementMap>>(
-                            ElementMap{
-                                {"name", std::make_shared<Element<std::string>>("Rock")}, 
-                                {"beats", std::make_shared<Element<std::string>>("Scissors")}
-                            }
-                        ),
-                        std::make_shared<Element<ElementMap>>(
-                            ElementMap{
-                                {"name", std::make_shared<Element<std::string>>("Paper")}, 
-                                {"beats", std::make_shared<Element<std::string>>("Rock")}
-                            }
-                        ),
-                        std::make_shared<Element<ElementMap>>(
-                            ElementMap{
-                                {"name", std::make_shared<Element<std::string>>("Scissors")}, 
-                                {"beats", std::make_shared<Element<std::string>>("Paper")}
-                            }
-                        )
-                    }
-                )
-            } 
-        }
-    );
 
-    // "variables": {
-    //     "winners": []
-    // },
-    
-    ElementSptr variables = std::make_shared<Element<ElementMap>>(
-        ElementMap{
-            {"winners", std::make_shared<Element<ElementVector>>(ElementVector{})}
-        }
-    );
+    //Interpretr maps json info to game fields and lists
+    Game g;
+    std::string path = PATH_TO_JSON;
+    InterpretJson j(path);
+    j.interpret(g);
 
-    // "per-player": {
-    //     "wins": 0
-    // },
+    //Manual
+    ElementSptr setup = g.setup();
+    ElementSptr constants = g.constants();
+    ElementSptr variables = g.variables();
+    ElementSptr per_player = g.per_player();
+    ElementSptr per_audience = g.per_audience();
 
-    ElementSptr per_player = std::make_shared<Element<ElementMap>>(
-        ElementMap{
-            {"wins", std::make_shared<Element<int>>(0)},
-            {"weapon", std::make_shared<Element<std::string>>("null")}
-        }
-    );
     std::shared_ptr<PlayerMap> players = std::make_shared<PlayerMap>(PlayerMap{});
-
-    // "per-audience": {},
-
-    ElementSptr per_audience = std::make_shared<Element<ElementMap>>(ElementMap{});
-    std::shared_ptr<PlayerMap> audience = std::make_shared<PlayerMap>(PlayerMap{});
-
-    // "setup": {
-    //   "Rounds": 10
-    // }
-
-    ElementSptr setup = std::make_shared<Element<ElementMap>>(
-        ElementMap{
-            {"Rounds", std::make_shared<Element<int>>(4)}
-        }
-    );
-
     std::shared_ptr<std::deque<Message>> player_msgs = std::make_shared<std::deque<Message>>();
     std::shared_ptr<std::deque<std::string>> global_msgs = std::make_shared<std::deque<std::string>>();
     std::shared_ptr<std::map<Connection, std::string>> player_input = std::make_shared<std::map<Connection, std::string>>();
+    std::shared_ptr<PlayerMap> audience = std::make_shared<PlayerMap>(PlayerMap{});
 
 
     //---------------RULES--------------//

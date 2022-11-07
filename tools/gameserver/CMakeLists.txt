@@ -4,8 +4,6 @@ add_executable(gameserver
 
 find_package(nlohmann_json 3.2.0 REQUIRED)
 
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/gameconfigs")
-
 set_target_properties(gameserver
                     PROPERTIES
                     LINKER_LANGUAGE CXX

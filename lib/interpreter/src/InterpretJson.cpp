@@ -1,4 +1,3 @@
-#include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
 #include "InterpretJson.h"
@@ -9,10 +8,14 @@ using json = nlohmann::json;
 
 
 InterpretJson::InterpretJson(string path){
+    try{
     ifstream f(path);
     json jData = json::parse(f);
     f.close();
     data = jData;
+    } catch (std::exception& e){
+        cout << "error reading file" << e.what() << endl;
+    }
 }
 
 

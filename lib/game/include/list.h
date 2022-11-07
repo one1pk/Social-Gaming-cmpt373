@@ -161,7 +161,7 @@ public:
             return std::to_string(_data);
         } else {
             // throw error //
-            return "{ }";
+            return "{}";
         }
     }
 

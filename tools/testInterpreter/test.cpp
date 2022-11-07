@@ -18,27 +18,32 @@ int main(){
     cout << "Full json object: " << endl;
     cout << std::setw(4) << j.getData() << endl << endl;
     
-    InterpretJson data(j);
+    //InterpretJson data(j);
     //Map json to game object
-    data.interpret(g);
-    
+    j.interpret(g);
+    ElementSptr setup = g.setup();
+    ElementSptr constants = g.constants();
+    ElementSptr variables = g.variables();
+    ElementSptr per_player = g.per_player();
+    ElementSptr per_audience = g.per_audience();
     //convert game object back to json (only works for config and not lists)
     json p = g;
 
     //Print config
     cout << " Data from game object:\n" << endl;
-    cout << p << endl;
+    cout << std::setw(4) <<  p << endl;
 
 
     //Manually print lists
     //Print setup
     cout << "\nsetup: " << endl;
-    cout <<  "Rounds: " << g.setup()->getMapElement("Rounds")->getInt() << "\n";
+    cout <<  "Rounds: " << setup->getMapElement("Rounds")->getInt() << "\n";
+    
     
     //Print constants
     cout << "\nconstants: " << endl;
     cout << "weapons: ";
-    ElementVector _list =  g.constants()->getMapElement("weapons")->getVector();
+    ElementVector _list =  constants->getMapElement("weapons")->getVector();
     for (auto element : _list) {
         std::cout << "\nName: " << element->getMapElement("name")->getString() << "\t";
         std::cout << "Beats: " << element->getMapElement("beats")->getString() <<"\n";
@@ -47,14 +52,16 @@ int main(){
 
     //Print variables
     cout << "\nvariables: " << endl;
-    cout << "winners: " << g.variables()->getMapElement("winners")->getString() << "\n";
+    cout << "winners: " << variables->getMapElement("winners")->getString() << "\n";
 
     //Print per_player
     cout << "\nper_player: " << endl;
-    cout << "wins: "  << g.per_player()->getMapElement("wins")->getInt() << "\n";
+    cout << "wins: "  << per_player->getMapElement("wins")->getInt() << "\n";
+    cout << "weapon: "  << per_player->getMapElement("weapon")->getString() << "\n";
+    
     
     //Print per_audience
-    cout << "\nper_audience: "  << g.per_audience()->getString() << "\n";
+    cout << "\nper_audience: "  << per_audience->getString() << "\n";
     
         
 
