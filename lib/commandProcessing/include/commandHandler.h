@@ -13,7 +13,7 @@ public:
     using commandPointer = std::unique_ptr<Command>;
 
     CommandHandler(GlobalServerState &globalState) : globalState{globalState} { initializeMaps(); }
-    ~CommandHandler(){};
+    virtual ~CommandHandler() = default;
 
     /**
      * Adds new command objects to the commandMap

@@ -55,7 +55,7 @@ public:
     Command(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : globalState(globalState), outgoing(outgoing) 
     {}
-    ~Command() = default;
+    virtual ~Command() = default;
     virtual commandResult execute(ProcessedMessage &);
 
 private:
