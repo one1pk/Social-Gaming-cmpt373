@@ -2,7 +2,7 @@ add_executable(gameserver
     gameserver.cpp
 )
 
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/gameconfigs")
+find_package(nlohmann_json 3.2.0 REQUIRED)
 
 set_target_properties(gameserver
                     PROPERTIES
@@ -14,9 +14,11 @@ set_target_properties(gameserver
 find_package(Threads REQUIRED)
 
 target_link_libraries(gameserver
+PRIVATE
     game
     networking
     interpreter
+    commandProcessing
     ${CMAKE_THREAD_LIBS_INIT}
 )
 

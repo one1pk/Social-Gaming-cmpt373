@@ -1,85 +1,104 @@
 #pragma once
 
 #include "server.h"
-#include  "rules.h"
+#include "rules.h"
+#include "list.h"
+
 #include <string>
 #include <vector>
 #include <map>
-#include <any>
-#include <nlohmann/json.hpp>
 #include <memory>
-#include <iostream>
+#include <stack>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
-using namespace std;
 
-namespace ns{
+enum GameStatus {
+    Created,
+    Running,
+    Finished,
+    AwaitingInput,
+    AwaitingOutput
+};
 
 class Game {
 public:
     Game();
     Game(
-        std::string name, uintptr_t ownerID, 
-        int min_players, int max_players, bool audience,
+        std::string name, Connection owner, 
+        unsigned min_players, unsigned max_players, bool has_audience,
         ElementSptr setup,
         ElementSptr constants, ElementSptr variables,
         ElementSptr per_player, ElementSptr per_audience, 
-        RuleVector rules
+        std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
+        RuleVector rules,
+        std::shared_ptr<std::deque<Message>> _player_msgs,
+        std::shared_ptr<std::deque<std::string>> _global_msgs,
+        std::shared_ptr<std::map<Connection, std::string>> _player_input
     );
 
-    void start();
-    bool isOngoing();
+    void run();
+    GameStatus status();
 
     std::string name();
-    uintptr_t ownerID();
+    Connection owner();
     uintptr_t id();
 
-    void addPlayer(Connection playerID);
-    void removePlayer(Connection playerID);
+    bool addPlayer(Connection playerID);
+    bool removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
-    //number of players in vector above
     size_t numPlayers();
 
+    std::deque<Message> playerMsgs();
+    std::deque<std::string> globalMsgs();
 
-    std::string getName();
+    void outputSent();
+    void registerPlayerInput(Connection player, std::string input);
 
-    // TODO move to better location
-    std::string getConfigInfo() {
-        return "name: " + _name + ", audience: " + std::to_string(_audience) + ", min. players: " + std::to_string(_player_count.min) + ", max. players: " + std::to_string(_player_count.min);
+    ElementSptr setup();
+    ElementSptr constants();
+    ElementSptr variables();
+    ElementSptr per_player();
+    ElementSptr per_audience();
+    bool audience(){
+        return _has_audience;
     }
-    
-    void printInfo(){
-        cout << _name << " " << _audience << " " << _player_count.min << " " << _player_count.max << endl;
-    }
 
-    
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Game, _name, _audience, _player_count)
-    
+
 private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
-    uintptr_t _ownerID;
-    bool _started;
-    std::vector<Connection> _players;
+    Connection _owner;
+    GameStatus _status;
 
     //Bounds of player given in json file
     struct PlayerCount {
-        int min;
-        int max;
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlayerCount, min, max)
+        unsigned min;
+        unsigned max;
     } _player_count;
 
-    bool _audience;
+    bool _has_audience;
 
     // Goal: map of { name_string -> { configurable_value , prompt_text } }
     ElementSptr _setup;
 
     ElementSptr _constants;
     ElementSptr _variables;
-    ElementSptr _per_player; // a vector of lists for each player
-    ElementSptr _per_audience; // a vector of lists for each audience member
+
+    ElementSptr _per_player; // a map template for players
+    ElementSptr _per_audience; // a map template for audience members
+    std::shared_ptr<PlayerMap> _players;  // maps each player to their game map
+    std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
 
     RuleVector _rules;
+
+    std::shared_ptr<std::deque<Message>> _player_msgs;
+    std::shared_ptr<std::deque<std::string>> _global_msgs;
+    std::shared_ptr<std::map<Connection, std::string>> _player_input;
+
+    //allows from_json and to_json to access private fields
+    friend void from_json(const json &j, Game &g);
+    friend void to_json(json &j, const Game &g);
+
 };
-}
