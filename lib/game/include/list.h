@@ -6,10 +6,8 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <nlohmann/json.hpp>
 
 
-using json = nlohmann::json;
 
 enum Type { // doesn't seem useful, might remove later 
     INT,
@@ -73,13 +71,7 @@ public:
     Element(ElementMap data)       : _data(data) { type = Type::MAP; }
     Element(Connection data)       : _data(data) { type = Type::CONNECTION; }
 
-<<<<<<< HEAD
     ElementSptr clone() final {
-=======
-    
-
-    bool getIterator(ElementVector::iterator& begin, ElementVector::iterator& end) final {
->>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
         if constexpr (std::is_same_v<T, ElementVector>) {
             ElementVector cloned;
             for (auto& element: _data) {
@@ -267,114 +259,4 @@ public:
         }
         return std::make_shared<Element<ElementVector>>(list);
     }
-<<<<<<< HEAD
 };
-=======
-};
-
-
-////////////////////////////////////////////////////////////////////////
-// alternate implementation, keeping in case we want to switch methods
-
-// class Element {
-// public:
-//     Type type;
-//     virtual ~Element() = 0; // pure virtual function makes the class abstract (cannot be instantiated)
-//     virtual void extend(std::shared_ptr<Element> element) {}
-//     virtual void discard(unsigned count) {}
-//     virtual std::shared_ptr<Element> upfrom(int start) { return nullptr; }
-// };
-// Element::~Element() {} // must define the destructor implementation
-
-// typedef std::shared_ptr<Element> ElementSptr; // shared pointer to a list element (could be a map, vector, int, string)
-// typedef std::vector<std::shared_ptr<Element>> ElementVector; // a vector of shared pointers to list elements
-// typedef std::map<std::string, std::shared_ptr<Element>> ElementMap; // a map of of shared pointers to list elements (with string keys)
-
-// class Map : public Element {
-//     ElementMap _value;
-// public:
-//     Map(ElementMap value) : _value(value) { type = Type::MAP; }
-    
-//     void extend(ElementSptr element) final {
-//         if (element->type == Type::MAP) {
-//             // extend //
-//             // element must be a map
-//         } else {
-//             // throw error //
-//         }
-//     }
-
-//     void discard(unsigned count) final {
-//         // discard <count> elements from map
-//     }
-// };
-
-// class Vector : public Element {
-//     ElementVector _value;
-// public:
-//     Vector(ElementVector value) : _value(value) { type = Type::VECTOR; }
-
-//     void extend(ElementSptr element) final {
-//         if (element->type == Type::MAP) {
-//             // throw error //
-//         } else {
-//             // extend //
-//             // element could be another vector
-//             // or it could be a primitive (string/int)
-//         }
-//     }
-
-//     void discard(unsigned count) final {
-//         // discard the last <count> elements from vector
-//     }
-// };
-
-// class Int : public Element {
-//     int _value;
-// public:
-//     Int(int value) : _value(value) { type = Type::INT; }
-
-//     ElementSptr upfrom(int start) {
-//         ElementVector list;
-//         for (int i = start; i <= _value; i++) {
-//             list.emplace_back(std::make_shared<Int>(i));
-//         }
-//         return std::make_shared<Vector>(list);
-//     }
-// };
-
-// class String : public Element {
-//     std::string _value;
-// public:
-//     String(std::string value) : _value(value) { type = Type::STRING; }
-// };
-
-
-
-
-////////////////////////////////////////////////////////////////////////
-// old implementation, keeping in case we want to reuse something
-
-// class List {
-// public:
-//     List(std::map<std::string, std::unique_ptr<Element>> list);
-//     void extend(std::unique_ptr<Element> element);
-//     void extend(List* other_list);
-//     // void reverse();
-//     // void shuffle();
-//     // void sort();
-//     // void sort(std::string attribute);
-//     // void deal(List &to, unsigned count);
-//     void discard(unsigned count);
-
-//     // size_t size();
-//     // std::vector<std::any> sublist(std::string attribute);
-//     // std::map<std::string, std::any> element(std::string attribute, std::any value);
-//     // bool contains(std::string attribute, std::any value);
-//     // // collect ??
-
-// private:
-//     std::map<std::string, std::unique_ptr<Element>> _list;
-//     // std::vector<std::string> elements;
-// };
->>>>>>> 3343487 (Implement conversion from json to ListElement and manually print to check data)
