@@ -1,28 +1,33 @@
 #include "list.h"
 
-List::List(std::vector<std::map<std::string, std::any>> _list)
-    : list(_list) {}
 
-void List::extend(std::map<std::string, std::any> element) { }
+////////////////////////////////////////////////////////////////////////
+// old implementation, keeping in case we want to reuse something
 
-void List::extend(List other_list) { }
+// List::List(std::map<std::string, Element*> list)
+//     : _list(list) 
+// {}
 
-void List::reverse() { }
+// void List::extend(Element* element) { }
 
-void List::shuffle() { }
+// void List::extend(List* other_list) { }
 
-void List::sort() { }
+// void List::reverse() { }
 
-void List::sort(std::string attribute) { }
+// void List::shuffle() { }
 
-void List::deal(List &to, unsigned count) { }
+// void List::sort() { }
 
-void List::discard(unsigned count) { }
+// void List::sort(std::string attribute) { }
 
-size_t List::size() { }
+// void List::deal(List &to, unsigned count) { }
 
-std::vector<std::any> List::sublist(std::string attribute) { }
+// void List::discard(unsigned count) { }
 
-std::map<std::string, std::any> List::element(std::string attribute, std::any value) { }
+// size_t List::size() { }
 
-bool List::contains(std::string attribute, std::any value) {}
+// std::vector<std::any> List::sublist(std::string attribute) { }
+
+// std::map<std::string, std::any> List::element(std::string attribute, std::any value) { }
+
+// bool List::contains(std::string attribute, std::any value) {}

@@ -4,6 +4,7 @@
 #include "interpreter.h"
 #include "messageProcessor.h"
 #include "server.h"
+#include "list.h"
 
 #include <chrono>
 #include <fstream>
@@ -11,17 +12,16 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <unistd.h>
+#include <vector>
+#include <map>
 
 
-std::unique_ptr<GlobalServerState> globalState = std::make_unique<GlobalServerState>();
-
-// called when a client connects
+GlobalServerState globalState;
 
 // FIX: Resolve stuff here, REMOVE OR ADD CONNECTION FROM GLOBAL STATE
 void onConnect(Connection c) {
     std::cout << "New connection: " << c.id << "\n";
-    globalState->addConnection(c);
+    globalState.addConnection(c);
 }
 
 // called when a client disconnects
@@ -36,17 +36,19 @@ unsigned short getPort() {
     return 4040;
 }
 
-std::string getHTTPMessage(const char *htmlLocation) {
-    if (access(htmlLocation, R_OK) != -1) {
-        std::ifstream infile{htmlLocation};
-        return std::string{std::istreambuf_iterator<char>(infile),
-                           std::istreambuf_iterator<char>()};
-    } else {
-        std::cerr << "Unable to open HTML index file:\n"
-                  << htmlLocation << "\n";
-        std::exit(-1);
-    }
-}
+// #include <unistd.h>
+// std::string getHTTPMessage(const char *htmlLocation) {
+//     if (access(htmlLocation, R_OK) != -1) {
+//         std::ifstream infile{htmlLocation};
+//         return std::string{std::istreambuf_iterator<char>(infile),
+//                            std::istreambuf_iterator<char>()};
+//     } else {
+//         std::cerr << "Unable to open HTML index file:\n"
+//                   << htmlLocation << "\n";
+//         std::exit(-1);
+//     }
+// }
+
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -56,14 +58,15 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "Setting up the server...\n";
 
-    // extract the server configuration parameters from ./serverconfig.json
+    /// TODO: extract the server configuration parameters from ./serverconfig.json
     // start a new session based on the configuration
     // (for now we take them as cmdline args)
 
     unsigned short port = std::stoi(argv[1]);
-    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
-    std::unique_ptr<MessageProcessor> messageProcessor = std::make_unique<MessageProcessor>();
-    std::unique_ptr<CommandHandler> commandHandler = std::make_unique<CommandHandler>(*globalState);
+
+    Server server{port, ""/*getHTTPMessage(argv[2])*/, onConnect, onDisconnect};
+    MessageProcessor messageProcessor;
+    CommandHandler commandHandler(globalState);
 
     std::cout << "Game server is up!\n";
 
@@ -78,18 +81,22 @@ int main(int argc, char *argv[]) {
             errorWhileUpdating = true;
         }
 
-        std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor->getProcessedMessages(server.receive());
+        std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor.getProcessedMessages(server.receive());
 
-        std::deque<Message> outgoing = commandHandler->getOutgoingMessages(processedIncomingMessages);
+        std::deque<Message> outgoingMsgs = commandHandler.getOutgoingMessages(processedIncomingMessages);
+        server.send(outgoingMsgs);
 
-        server.send(outgoing);
+        std::deque<Message> outgoingGameMsgs = globalState.processGames();
+        server.send(outgoingGameMsgs);
 
         if (errorWhileUpdating) {
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 
     return 0;
 }
+
+

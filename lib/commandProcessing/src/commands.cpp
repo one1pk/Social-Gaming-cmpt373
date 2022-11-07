@@ -10,7 +10,7 @@ commandResult Command::execute(ProcessedMessage &processedMessage) {
 
 commandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
 
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -47,7 +47,7 @@ commandResult CreateGameCommand::executeImpl(ProcessedMessage &processedMessage)
 
 //////////////////////////      LIST GAMES      //////////////////////////
 commandResult ListGamesCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
     return executeImpl(processedMessage);
@@ -63,7 +63,7 @@ commandResult ListHelpCommand::execute(ProcessedMessage &processedMessage) {
         return executeIngameOwnerImpl(processedMessage);
     }
 
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.connection)) {
         return executeIngamePlayerImpl(processedMessage);
     }
 
@@ -91,7 +91,7 @@ commandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
         return commandResult::ERROR_OWNER_CANNOT_JOIN_FROM_SAME_DEVICE;
     }
 
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -132,7 +132,7 @@ commandResult JoinGameCommand::executeImpl(ProcessedMessage &processedMessage) {
 
 commandResult StartGameCommand::execute(ProcessedMessage &processedMessage) {
 
-    if (!globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -148,12 +148,12 @@ commandResult StartGameCommand::execute(ProcessedMessage &processedMessage) {
 }
 
 commandResult StartGameCommand::executeImpl(ProcessedMessage &processedMessage) {
-    globalState.startGame(processedMessage.connection);
-
     std::deque<Message> messages = globalState.buildMessagesForGame("\nGame Started!\n\n", processedMessage.connection);
     for (auto message : messages) {
         outgoing.push_back(message);
     }
+
+    globalState.startGame(processedMessage.connection);
 
     return commandResult::SUCCESS_GAME_START;
 }
@@ -162,7 +162,7 @@ commandResult StartGameCommand::executeImpl(ProcessedMessage &processedMessage) 
 
 commandResult EndGameCommand::execute(ProcessedMessage &processedMessage) {
 
-    if (!globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -195,7 +195,7 @@ commandResult EndGameCommand::executeImpl(ProcessedMessage &processedMessage) {
 
 commandResult LeaveGameCommand::execute(ProcessedMessage &processedMessage) {
 
-    if (!globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.connection)) {
         return commandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -225,43 +225,6 @@ commandResult LeaveGameCommand::executeImpl(ProcessedMessage &processedMessage) 
     return commandResult::SUCCESS_GAME_LEAVE;
 }
 
-//////////////////////////      GENERAL TEXT      //////////////////////////
-
-// Can stop the in game chat by simply returning something else from the if statement
-commandResult ChatCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
-        return executeInGameImpl(processedMessage);
-    }
-    return executeImpl(processedMessage);
-}
-
-commandResult ChatCommand::executeImpl(ProcessedMessage &processedMessage) {
-
-    std::stringstream outgoingText;
-    outgoingText << processedMessage.connection.id << " : " << processedMessage.arguments[0] << "\n";
-
-    std::deque<Message> messages = globalState.buildMessagesForServerLobby(outgoingText.str());
-    for (auto message : messages) {
-        outgoing.push_back(message);
-    }
-
-    return commandResult::SUCCESS;
-}
-
-commandResult ChatCommand::executeInGameImpl(ProcessedMessage &processedMessage) {
-
-    std::stringstream outgoingText;
-    outgoingText << processedMessage.connection.id << " : " << processedMessage.arguments[0] << "\n";
-
-    std::deque<Message> messages = globalState.buildMessagesForGame(outgoingText.str(), processedMessage.connection);
-    for (auto message : messages) {
-        outgoing.push_back(message);
-    }
-    outgoing.push_back({processedMessage.connection, outgoingText.str()});
-
-    return commandResult::SUCCESS;
-}
-
 //////////////////////////      EXIT SERVER      //////////////////////////
 
 commandResult ExitServerCommand::execute(ProcessedMessage &processedMessage) {
@@ -269,7 +232,7 @@ commandResult ExitServerCommand::execute(ProcessedMessage &processedMessage) {
         return executeOwnerImpl(processedMessage);
     }
 
-    if (globalState.isCurrentlyInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.connection)) {
         return executePlayerImpl(processedMessage);
     }
 
@@ -315,3 +278,42 @@ commandResult ExitServerCommand::executeOwnerImpl(ProcessedMessage &processedMes
 
     return commandResult::SUCCESS;
 }
+
+
+/*/////////////////////////      GENERAL TEXT      //////////////////////////
+
+// Can stop the in game chat by simply returning something else from the if statement
+commandResult ChatCommand::execute(ProcessedMessage &processedMessage) {
+    if (globalState.isInGame(processedMessage.connection)) {
+        return executeInGameImpl(processedMessage);
+    }
+    return executeImpl(processedMessage);
+}
+
+commandResult ChatCommand::executeImpl(ProcessedMessage &processedMessage) {
+
+    std::stringstream outgoingText;
+    outgoingText << processedMessage.connection.id << " : " << processedMessage.arguments[0] << "\n";
+
+    std::deque<Message> messages = globalState.buildMessagesForServerLobby(outgoingText.str());
+    for (auto message : messages) {
+        outgoing.push_back(message);
+    }
+
+    return commandResult::SUCCESS;
+}
+
+commandResult ChatCommand::executeInGameImpl(ProcessedMessage &processedMessage) {
+
+    std::stringstream outgoingText;
+    outgoingText << processedMessage.connection.id << " : " << processedMessage.arguments[0] << "\n";
+
+    std::deque<Message> messages = globalState.buildMessagesForGame(outgoingText.str(), processedMessage.connection);
+    for (auto message : messages) {
+        outgoing.push_back(message);
+    }
+    outgoing.push_back({processedMessage.connection, outgoingText.str()});
+
+    return commandResult::SUCCESS;
+}
+*/

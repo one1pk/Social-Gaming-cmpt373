@@ -41,4 +41,9 @@ private:
      * Calls the execute method of command object in the commandMap
      */
     commandResult executeCommand(ProcessedMessage &processedMessage);
+
+    /**
+     * Boradcast lobby message to all users in lobby
+     */
+    void broadcastLobbyMessage(ProcessedMessage &processedMessage);
 };

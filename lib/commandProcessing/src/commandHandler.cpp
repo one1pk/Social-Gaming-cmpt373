@@ -7,22 +7,38 @@ void CommandHandler::initializeMaps() {
 
 std::deque<Message>
 CommandHandler::getOutgoingMessages(const std::deque<ProcessedMessage> &incomingProcessedMessages) {
-
     outgoing.clear();
 
     for (auto processedMessage : incomingProcessedMessages) {
-        commandResult commandResult = executeCommand(processedMessage);
-        if (commandResult != commandResult::SUCCESS) {
-            outgoing.push_back({processedMessage.connection, commandResultMap[commandResult]});
+        Connection connection = processedMessage.connection;
+
+        if (processedMessage.isCommand) {
+            commandResult commandResult = executeCommand(processedMessage);
+            if (commandResult != commandResult::SUCCESS) {
+                outgoing.push_back({connection, commandResultMap[commandResult]});
+            }
+        } else {
+            if (globalState.isInGame(connection)) {
+                globalState.registerUserGameInput(connection, processedMessage.input);
+            } else {
+                broadcastLobbyMessage(processedMessage);
+            }
         }
     }
-
     return outgoing;
 }
 
 commandResult
 CommandHandler::executeCommand(ProcessedMessage &processedMessage) {
     return commandMap[processedMessage.commandType]->execute(processedMessage);
+}
+
+void CommandHandler::broadcastLobbyMessage(ProcessedMessage &processedMessage) {
+    std::stringstream outgoingText;
+    outgoingText << processedMessage.connection.id << " : " << processedMessage.input << "\n";
+
+    std::deque<Message> messages = globalState.buildMessagesForServerLobby(outgoingText.str());
+    outgoing.insert(outgoing.end(), messages.begin(), messages.end());
 }
 
 void CommandHandler::registerCommand(UserCommand userCommand, commandPointer commandPointer) {
@@ -38,7 +54,6 @@ void CommandHandler::initializeCommandMap() {
     registerCommand(UserCommand::END, std::make_unique<EndGameCommand>(globalState, outgoing));
     registerCommand(UserCommand::HELP, std::make_unique<ListHelpCommand>(globalState, outgoing));
     registerCommand(UserCommand::GAMES, std::make_unique<ListGamesCommand>(globalState, outgoing));
-    registerCommand(UserCommand::CHAT, std::make_unique<ChatCommand>(globalState, outgoing));
     registerCommand(UserCommand::EXIT, std::make_unique<ExitServerCommand>(globalState, outgoing));
 }
 

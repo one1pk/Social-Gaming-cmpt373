@@ -20,6 +20,7 @@ ProcessedMessage MessageProcessor::createProcessedMessage(const Message &message
     std::string commandString = messageTokens[0];
 
     if (CommandStringMap.find(commandString) != CommandStringMap.end()) {
+        processedMessage.isCommand = true;
         processedMessage.commandType = CommandStringMap[commandString];
 
         auto eraseBegin = std::remove(messageTokens.begin(), messageTokens.end(), commandString);
@@ -27,7 +28,7 @@ ProcessedMessage MessageProcessor::createProcessedMessage(const Message &message
 
         processedMessage.arguments = messageTokens;
     } else {
-        processedMessage.arguments.push_back(message.text);
+        processedMessage.input = message.text;
     }
 
     return processedMessage;

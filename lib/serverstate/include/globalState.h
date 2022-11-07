@@ -9,13 +9,6 @@
 #include <vector>
 
 /**
- * Available games
- */
-enum Games {
-    ROCK_PAPER_SCISSORS,
-};
-
-/**
  * This interface represents the global state of the game server. It manages
  *  - all the clients connected to server as a whole and by game
  *  - various game instances
@@ -57,7 +50,8 @@ public:
 
     /**
      * This methods helps execution of CREATE command. It
-     *  creates a game instance of gametype with index == gameIndex
+     *  creates a game object corresponding to the respective game configuration 
+     *  with name == gameNameList[gameIndex] (found at ./gameconfigs/<name>.json)
      *  removes the client(user) from server lobby and makes them the owner of game instance
      *  adds them to the game lobby
      */
@@ -74,16 +68,27 @@ public:
      */
     void endGame(Connection connection);
 
+    /**
+     * Processes all running games
+     * - Sends out any player prompts to the respective players
+     * - Sends out any game output to the main screen
+     * - Checks whether player input has been received
+     * - Ends games that are finished
+     * Returns a deque of Messages to be sent out by the server
+     */
+    std::deque<Message> processGames();
+
     // GAME SPECIFIC METHODS
 
     std::string getGameNamesAsString();
     // Connection getGameOwnerConnection(Connection connection);    // FIX: needs game.owner as connection
     int getPlayerCount(Connection connection);
-    bool isCurrentlyInGame(Connection connection);
+    bool isInGame(Connection connection);
     bool isGameIndex(int index);
     bool isOwner(Connection connection);
     bool isOngoingGame(Connection connection);
     bool isValidGameInvitation(uintptr_t invitationCode);
+    void registerUserGameInput(Connection connection, std::string input);
 
     // BROADCASTING METHODS
 
@@ -107,10 +112,16 @@ private:
     std::vector<Connection> clients_in_lobby;
     std::vector<Game> game_instances;
 
-    std::unordered_map<int, std::pair<std::string, Games>> gameNameList;
+    std::unordered_map<int, std::string> gameNameList;
+
+    std::map<Connection, std::pair<bool, std::string>> game_input;
 
     void populateGameList();
     void removeGameInstance(uintptr_t gameID);
+
+    void processGameMsgs(Game& game, std::deque<Message>& outgoing);
+    void finishGame(Game& game, std::deque<Message>& outgoing);
+
 
     /**
      *  A general function that can be used on any vector of Connections to ease removing

@@ -14,6 +14,9 @@ struct Connection {
     bool operator==(Connection other) const {
         return id == other.id;
     }
+    bool operator<(Connection other) const {
+        return id < other.id;
+    }
 };
 
 struct ConnectionHash {
