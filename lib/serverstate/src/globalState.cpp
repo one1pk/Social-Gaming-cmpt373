@@ -8,7 +8,7 @@ void GlobalServerState::addConnection(Connection connection) {
 void GlobalServerState::disconnectConnection(Connection connection) {
     removeClientFromList(clients, connection);
     removeClientFromList(clients_in_lobby, connection);
-    removeClientFromGame(connection); // Add this?
+    //removeClientFromGame(connection); // Add this?
 }
 
 void GlobalServerState::addClientToGame(Connection connection, uintptr_t invitationCode) {

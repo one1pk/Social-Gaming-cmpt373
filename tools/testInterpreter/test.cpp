@@ -1,6 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include "InterpretJson.h"
 #include "game.h"
 #include "list.h"
