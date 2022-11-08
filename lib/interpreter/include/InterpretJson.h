@@ -39,23 +39,23 @@ inline void to_json(json&j, const ElementSptr &e){
 }
 
 inline void from_json(const json &j,  Game &g){
-    j.at("_name").get_to(g._name);
-    j.at("_has_audience").get_to(g._has_audience);
-    j.at("_player_count").at("min").get_to(g._player_count.min);
-    j.at("_player_count").at("max").get_to(g._player_count.max);
-    j.at("_setup").get_to(g._setup);
-    j.at("_constants").get_to(g._constants);
-    j.at("_variables").get_to(g._variables);
-    j.at("_per_player").get_to(g._per_player);
-    j.at("_per_audience").get_to(g._per_audience);
+    j.at("configuration").at("name").get_to(g._name);
+    j.at("configuration").at("has_audience").get_to(g._has_audience);
+    j.at("configuration").at("player_count").at("min").get_to(g._player_count.min);
+    j.at("configuration").at("player_count").at("max").get_to(g._player_count.max);
+    j.at("configuration").at("setup").get_to(g._setup);
+    j.at("constants").get_to(g._constants);
+    j.at("variables").get_to(g._variables);
+    j.at("per_player").get_to(g._per_player);
+    j.at("per_audience").get_to(g._per_audience);
 }
 
 //only works for config, not urgent
 inline void to_json( json &j, const Game &g){
-    j["_name"] = g._name;
-    j["_has_audience"] = g._has_audience;
-    j["_player_count"]["min"] = g._player_count.min;
-    j["_player_count"]["max"] = g._player_count.max;
+    j["name"] = g._name;
+    j["has_audience"] = g._has_audience;
+    j["player_count"]["min"] = g._player_count.min;
+    j["player_count"]["max"] = g._player_count.max;
     //j["_setup"] = g._setup;
     
     //j = json{ {"_name", g._name}, {"_audience", g._audience}, {"_player_count", g._player_count} };

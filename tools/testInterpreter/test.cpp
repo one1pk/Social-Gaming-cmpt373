@@ -46,8 +46,8 @@ int main(){
     cout << "weapons: ";
     ElementVector _list =  constants->getMapElement("weapons")->getVector();
     for (auto element : _list) {
-        std::cout << "\nName: " << element->getMapElement("name")->getString() << "\t";
-        std::cout << "Beats: " << element->getMapElement("beats")->getString() <<"\n";
+        std::cout << "\nname: " << element->getMapElement("name")->getString() << "\t";
+        std::cout << "beats: " << element->getMapElement("beats")->getString() <<"\n";
 
     }
 
