@@ -2,9 +2,6 @@
 
 #include <iostream>
 #include <algorithm>
-using namespace ns;
-
-Game::Game(){}
 
 Game::Game(){}
 
