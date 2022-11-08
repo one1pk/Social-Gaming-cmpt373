@@ -8,14 +8,14 @@
 #include "list.h"
 
 using json = nlohmann::json;
-
+std::string testsPath = PATH_TO_JSON_TEST;
 
 TEST(Interpreter, MinimumConfigFromJSON) {
     Game g;
         
-    string path = PATH_TO_JSON_TEST;
+    string filePath = testsPath + "/no_rules.json";
     
-    InterpretJson j(path);
+    InterpretJson j(filePath);
     //Map json to game object
     j.interpret(g);
 
@@ -39,14 +39,15 @@ TEST(Interpreter, MinimumConfigFromJSON) {
     EXPECT_EQ(_list[2]->getMapElement("name")->getString(), "Scissors");
     EXPECT_EQ(_list[2]->getMapElement("beats")->getString(), "Paper");
 
-    EXPECT_EQ(variables->getMapElement("winners")->getString(), "");
+    EXPECT_EQ(variables->getMapElement("winners")->getString(), "{}");
 
     EXPECT_EQ(per_player->getMapElement("wins")->getInt(), 0);
     EXPECT_EQ(per_player->getMapElement("weapon")->getString(), "");
-    EXPECT_EQ(per_audience->getString(), "");
+    EXPECT_EQ(per_audience->getString(), "{}");
 
 }
 
+/*
 TEST(Interpreter, MinimumConfigToJSON) {
     Game g;
         
@@ -55,5 +56,6 @@ TEST(Interpreter, MinimumConfigToJSON) {
     InterpretJson j(path);
     j.interpret(g);
     //convert game object back to json (only works for config and not lists)
-    //json p = g;
+    json p = g;
 }
+*/

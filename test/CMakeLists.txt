@@ -1,7 +1,7 @@
 add_subdirectory(gtest)
 enable_testing()
 
-add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test.json")
+add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test_files")
 
 add_executable(runAllTests
   test-interpreter.cpp
