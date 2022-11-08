@@ -1,6 +1,7 @@
 add_library(serverstate
     src/globalState.cpp
 )
+add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../tools/gameserver/gameconfigs/rock_paper_scissors.json")
 
 target_include_directories(serverstate
     PUBLIC
@@ -14,6 +15,7 @@ target_link_libraries(serverstate
   PUBLIC
     networking
     game
+    interpreter
 )
 
 set_target_properties(serverstate

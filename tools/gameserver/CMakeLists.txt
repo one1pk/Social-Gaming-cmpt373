@@ -2,6 +2,8 @@ add_executable(gameserver
     gameserver.cpp
 )
 
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
 set_target_properties(gameserver
                     PROPERTIES
                     LINKER_LANGUAGE CXX
@@ -12,6 +14,7 @@ set_target_properties(gameserver
 find_package(Threads REQUIRED)
 
 target_link_libraries(gameserver
+PRIVATE
     game
     networking
     interpreter

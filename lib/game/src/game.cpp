@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
+Game::Game(){}
+
 Game::Game(
     std::string name, Connection owner, 
     unsigned min_players, unsigned max_players, bool has_audience,
@@ -122,4 +124,20 @@ void Game::registerPlayerInput(Connection player, std::string input) {
                 return player_msg.connection == player;
         }
     ));
+}
+
+ElementSptr Game::setup(){
+        return _setup;
+    }
+ElementSptr Game::constants(){
+    return _constants;
+}
+ElementSptr Game::variables(){
+    return _variables;
+}
+ElementSptr Game::per_player(){
+    return _per_player;
+}
+ElementSptr Game::per_audience(){
+    return _per_audience;
 }

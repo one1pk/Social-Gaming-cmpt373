@@ -1,14 +1,11 @@
 {
-    "configuration": {
-      "name": "Rock, Paper, Scissors",
-      "player count": {"min": 2, "max": 4},
-      "audience": false,
-      "setup": {
-        "Rounds": 10
-      }
-    },
-  
-    "constants": {
+  "_name": "Rock, Paper, Scissors",
+  "_player_count": {"min": 2, "max": 4},
+  "_has_audience": false,
+  "_setup": {
+      "Rounds": 4
+  },
+  "_constants": {
       "weapons": [
         { "name": "Rock",     "beats": "Scissors"},
         { "name": "Paper",    "beats": "Rock"},
@@ -16,15 +13,16 @@
       ]
     },
   
-    "variables": {
+    "_variables": {
       "winners": []
     },
   
-    "per-player": {
-      "wins": 0
+    "_per_player": {
+      "wins": 0,
+      "weapon": ""
     },
   
-    "per-audience": {},
+    "_per_audience": {},
   
     "rules": [
       { "rule": "foreach",

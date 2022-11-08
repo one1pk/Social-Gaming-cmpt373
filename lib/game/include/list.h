@@ -7,6 +7,8 @@
 #include <map>
 #include <memory>
 
+
+
 enum Type { // doesn't seem useful, might remove later 
     INT,
     STRING,
@@ -159,7 +161,7 @@ public:
             return std::to_string(_data);
         } else {
             // throw error //
-            return "";
+            return "{}";
         }
     }
 

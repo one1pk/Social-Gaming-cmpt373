@@ -1,7 +1,7 @@
 #include "commandHandler.h"
 #include "game.h"
 #include "globalState.h"
-#include "interpreter.h"
+#include "InterpretJson.h"
 #include "messageProcessor.h"
 #include "server.h"
 #include "list.h"
@@ -50,7 +50,7 @@ unsigned short getPort() {
 // }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {    
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";

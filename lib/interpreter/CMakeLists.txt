@@ -1,8 +1,8 @@
 add_library(interpreter
-    src/interpreter.cpp
+    src/InterpretJson.cpp
 )
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+
 
 target_include_directories(interpreter
     PUBLIC
@@ -10,12 +10,10 @@ target_include_directories(interpreter
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${nlohmann_json_INCLUDE_DIR}
 )
 
 target_link_libraries(interpreter
-    PRIVATE 
-        ${nlohmann_json_LIBRARIES}
+        game  
 )
 
 set_target_properties(interpreter
