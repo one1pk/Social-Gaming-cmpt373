@@ -37,5 +37,6 @@ and `<html>` the html that will be served on that port in response to an index.h
 * To terminate a client
     *   leave game: `leave`
     *   exit server: `exit`
-* To terminate the server enter `shutdown` from any client while in the lobby
-    (this while change in the future)
+* To terminate the server, press Ctrl+C
+### Run Tests
+Run `./bin/runAllTests` in the build directory

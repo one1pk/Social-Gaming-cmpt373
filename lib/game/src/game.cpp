@@ -91,6 +91,7 @@ size_t Game::numPlayers() {
     return _players->size();
 }
 
+// returns the name of the game
 std::string Game::name() {
     return _name;
 }

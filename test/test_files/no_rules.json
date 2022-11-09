@@ -1,11 +1,12 @@
 {
-    
+    "configuration": {
         "name": "Rock, Paper, Scissors",
         "player_count": {"min": 2, "max": 4},
         "has_audience": false,
         "setup": {
             "Rounds": 10
-        },
+        }
+    },
         "constants": {
             "weapons": [
               { "name": "Rock",     "beats": "Scissors"},
