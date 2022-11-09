@@ -1,3 +1,7 @@
+## Iteration 2 - Notes
+
+* multiple instances of the Rock, Paper, Scissors game can now be played on the server in parallel (there still remains many unhandled cases/errors but the basic functionality should be correct)
+
 # Social Gaming
 
 #### Install Dependecies
@@ -35,7 +39,3 @@ and `<html>` the html that will be served on that port in response to an index.h
     *   exit server: `exit`
 * To terminate the server enter `shutdown` from any client while in the lobby
     (this while change in the future)
-
-### Iteration 1 - Notes
-
-* "start" command by owner doesn't actually start a game, just prints a message
