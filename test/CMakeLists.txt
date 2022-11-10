@@ -11,6 +11,7 @@ set_target_properties(runAllTests
                     LINKER_LANGUAGE CXX
                     CXX_STANDARD 17
                     PREFIX ""
+                    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test
 )
 
 target_link_libraries(runAllTests

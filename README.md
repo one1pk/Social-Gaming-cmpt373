@@ -39,4 +39,4 @@ and `<html>` the html that will be served on that port in response to an index.h
     *   exit server: `exit`
 * To terminate the server, press Ctrl+C
 ### Run Tests
-Run `./bin/runAllTests` in the build directory
+Run `./bin/test/runAllTests` in the build directory
