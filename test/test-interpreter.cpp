@@ -8,17 +8,32 @@
 #include "list.h"
 
 using json = nlohmann::json;
-std::string testsPath = PATH_TO_JSON_TEST;
 
-TEST(Interpreter, MinimumConfigFromJSON) {
+string filePath = PATH_TO_JSON_TEST"/no_rules.json";
+
+class InterpreterTest : public ::testing::Test{
+    protected:
+        void SetUp() override{
+            InterpretJson j(filePath);
+            jsonData = j.getData();
+
+            //Map json to game object
+            j.interpret(g);
+            
+            //convert game object back to json
+            gameDataToJson = g;
+        }
     Game g;
-        
-    string filePath = testsPath + "/no_rules.json";
-    
-    InterpretJson j(filePath);
-    //Map json to game object
-    j.interpret(g);
+    InterpretJson j;
 
+    //original data
+    json jsonData;
+
+    //game data
+    json gameDataToJson;
+};
+
+TEST_F(InterpreterTest, MinimumConfigFromJSON) {
     EXPECT_EQ(g.name(), "Rock, Paper, Scissors");
     EXPECT_EQ(g.audience(), false);
 
@@ -27,7 +42,6 @@ TEST(Interpreter, MinimumConfigFromJSON) {
     ElementSptr variables = g.variables();
     ElementSptr per_player = g.per_player();
     ElementSptr per_audience = g.per_audience();
-    
     
     EXPECT_EQ(setup->getMapElement("Rounds")->getInt(), 10);
 
@@ -44,18 +58,9 @@ TEST(Interpreter, MinimumConfigFromJSON) {
     EXPECT_EQ(per_player->getMapElement("wins")->getInt(), 0);
     EXPECT_EQ(per_player->getMapElement("weapon")->getString(), "");
     EXPECT_EQ(per_audience->getString(), "{}");
-
 }
 
-/*
-TEST(Interpreter, MinimumConfigToJSON) {
-    Game g;
-        
-    string path = PATH_TO_JSON_TEST;
-    
-    InterpretJson j(path);
-    j.interpret(g);
-    //convert game object back to json (only works for config and not lists)
-    json p = g;
+
+TEST_F(InterpreterTest, MinimumConfigToJSON) {
+    EXPECT_EQ(jsonData, gameDataToJson);
 }
-*/

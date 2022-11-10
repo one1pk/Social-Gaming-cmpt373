@@ -42,13 +42,13 @@ public:
     
     virtual ElementVector getSubList(std::string key) = 0;
     virtual ElementVector getVector() = 0;
-
+    virtual ElementMap getMap() = 0;
     virtual std::string getString() = 0;
+    virtual int getInt() = 0;
 
     virtual void addInt(int value) = 0;
     virtual void setInt(int value) = 0;
-    virtual int getInt() = 0;
-
+    
     virtual size_t getSize() = 0;
 
     virtual Connection getConnection() = 0;
@@ -145,6 +145,15 @@ public:
     
     ElementVector getVector() final {
         if constexpr (std::is_same_v<T, ElementVector>) {
+            return _data;
+        } else {
+            // throw error //
+            return {};
+        }
+    }
+
+    ElementMap getMap() final {
+        if constexpr (std::is_same_v<T, ElementMap>) {
             return _data;
         } else {
             // throw error //

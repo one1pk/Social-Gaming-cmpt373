@@ -8,8 +8,10 @@ using json = nlohmann::json;
 
 class InterpretJson{
     public:
-
+        InterpretJson() = default;
         InterpretJson(string path);
+       
+
         InterpretJson(json j){
             data = j;
         }
@@ -35,28 +37,47 @@ inline void from_json(const json&j, ElementSptr &e){
     }
 
 inline void to_json(json&j, const ElementSptr &e){
-    j = e;
+    switch(e->type) {
+		case Type::STRING:
+			j = e->getString();
+			break;
+		case Type::INT:
+			j = e->getInt();
+			break;
+        case Type::MAP:{
+            j = e->getMap();;
+            break;
+        }
+        case Type::VECTOR:{
+            j = e->getVector();
+            break;
+        }
+        default:
+            break;
+	}
 }
 
 inline void from_json(const json &j,  Game &g){
     j.at("configuration").at("name").get_to(g._name);
-    j.at("configuration").at("has_audience").get_to(g._has_audience);
-    j.at("configuration").at("player_count").at("min").get_to(g._player_count.min);
-    j.at("configuration").at("player_count").at("max").get_to(g._player_count.max);
+    j.at("configuration").at("audience").get_to(g._has_audience);
+    j.at("configuration").at("player count").at("min").get_to(g._player_count.min);
+    j.at("configuration").at("player count").at("max").get_to(g._player_count.max);
     j.at("configuration").at("setup").get_to(g._setup);
     j.at("constants").get_to(g._constants);
     j.at("variables").get_to(g._variables);
-    j.at("per_player").get_to(g._per_player);
-    j.at("per_audience").get_to(g._per_audience);
+    j.at("per-player").get_to(g._per_player);
+    j.at("per-audience").get_to(g._per_audience);
 }
 
 //only works for config, not urgent
 inline void to_json( json &j, const Game &g){
-    j["name"] = g._name;
-    j["has_audience"] = g._has_audience;
-    j["player_count"]["min"] = g._player_count.min;
-    j["player_count"]["max"] = g._player_count.max;
-    //j["_setup"] = g._setup;
-    
-    //j = json{ {"_name", g._name}, {"_audience", g._audience}, {"_player_count", g._player_count} };
+    j["configuration"]["name"] = g._name;
+    j["configuration"]["audience"] = g._has_audience;
+    j["configuration"]["player count"]["min"] = g._player_count.min;
+    j["configuration"]["player count"]["max"] = g._player_count.max;
+    j["configuration"]["setup"] = g._setup;
+    j["variables"] = g._variables;
+    j["constants"] = g._constants;
+    j["per-player"] = g._per_player;
+    j["per-audience"] = g._per_audience;
 }

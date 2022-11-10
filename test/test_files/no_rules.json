@@ -1,8 +1,8 @@
 {
     "configuration": {
         "name": "Rock, Paper, Scissors",
-        "player_count": {"min": 2, "max": 4},
-        "has_audience": false,
+        "player count": {"min": 2, "max": 4},
+        "audience": false,
         "setup": {
             "Rounds": 10
         }
@@ -19,11 +19,11 @@
             "winners": []
           },
         
-          "per_player": {
+          "per-player": {
             "wins": 0,
             "weapon": ""
           },
         
-          "per_audience": {}
+          "per-audience": {}
     
 }
