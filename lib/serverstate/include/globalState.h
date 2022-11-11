@@ -89,8 +89,10 @@ public:
     bool isInGame(Connection connection);
     bool isGameIndex(int index);
     bool isOwner(Connection connection);
+    bool isGameReady(Connection connection);
     bool isOngoingGame(Connection connection);
-    bool isValidGameInvitation(uintptr_t invitationCode);
+    bool isOngoingGame(uintptr_t invitation_code);
+    bool isValidGameInvitation(uintptr_t invitation_code);
     void registerUserGameInput(Connection connection, std::string input);
 
     // BROADCASTING METHODS

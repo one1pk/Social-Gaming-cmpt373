@@ -8,6 +8,7 @@ void GlobalServerState::addConnection(Connection connection) {
 void GlobalServerState::disconnectConnection(Connection connection) {
     removeClientFromList(clients, connection);
     removeClientFromList(clients_in_lobby, connection);
+    
     //removeClientFromGame(connection); // Add this?
 }
 
@@ -182,14 +183,24 @@ bool GlobalServerState::isOwner(Connection connection) {
     return gameOwnerMap.find(connection) != gameOwnerMap.end();
 }
 
+bool GlobalServerState::isGameReady(Connection connection) {
+    return getGameInstancebyOwner(connection)->hasEnoughPlayers();
+}
+
 bool GlobalServerState::isOngoingGame(Connection connection) {
     Game *game_instance = getGameInstancebyOwner(connection);
     return game_instance->status() != GameStatus::Finished
         && game_instance->status() != GameStatus::Created;
 }
 
-bool GlobalServerState::isValidGameInvitation(uintptr_t invitationCode) {
-    Game *game_instance = getGameInstancebyInvitation(invitationCode);
+bool GlobalServerState::isOngoingGame(uintptr_t invitation_code) {
+    Game *game_instance = getGameInstancebyInvitation(invitation_code);
+    return game_instance->status() != GameStatus::Finished
+        && game_instance->status() != GameStatus::Created;
+}
+
+bool GlobalServerState::isValidGameInvitation(uintptr_t invitation_code) {
+    Game *game_instance = getGameInstancebyInvitation(invitation_code);
     return game_instance != nullptr;
 }
 

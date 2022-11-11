@@ -61,12 +61,13 @@ void CommandHandler::initializeCommandResultMap() {
     commandResultMap[commandResult::ERROR_INCORRECT_COMMAND_FORMAT] = "Incorrect Command Format.\nPlease enter: <command> <arguments>. To list all commands, enter: help\n\n";
     commandResultMap[commandResult::ERROR_INVALID_GAME_INDEX] = "Invalid Game Index.\nTo list all available games, enter: games\n\n";
     commandResultMap[commandResult::ERROR_INVALID_INVITATION_CODE] = "Invalid invitation code entered: No game found.\n\n";
-    commandResultMap[commandResult::ERROR_INVALID_START_GAME_COMMAND] = "The game has already started.\n\n";
+    commandResultMap[commandResult::ERROR_GAME_HAS_STARTED] = "The game has already started.\n\n";
     commandResultMap[commandResult::ERROR_NOT_AN_OWNER] = "Only an owner can start or end the game.\n\n";
     commandResultMap[commandResult::ERROR_OWNER_CANNOT_LEAVE] = "Owner cannot leave their game. To end game for all players, enter : end\n\n";
     commandResultMap[commandResult::ERROR_OWNER_CANNOT_JOIN_FROM_SAME_DEVICE] = "Owner cannot join the game from same window. Please open up a new window to join the game!\n\n";
     commandResultMap[commandResult::ERROR_INVALID_COMMAND] = "Invalid Command!\n\n";
     commandResultMap[commandResult::ERROR_GAME_NOT_STARTED] = "The game has not been started yet!\n\n";
+    commandResultMap[commandResult::ERROR_NOT_ENOUGH_PLAYERS] = "Game cannot be started, more players needed!\n\n";
 
     commandResultMap[commandResult::SUCCESS_GAME_CREATION] = "Game Successfully Created with invitation Code : \nPlease enter \"start\" to start the game.\n\n";
     commandResultMap[commandResult::SUCCESS_GAME_JOIN] = "Game successfully joined. Waiting for the owner to start\n\n";

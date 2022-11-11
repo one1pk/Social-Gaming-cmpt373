@@ -81,7 +81,6 @@ commandResult ListHelpCommand::executeImpl(ProcessedMessage &processedMessage) {
 
 //////////////////////////      JOIN GAME      //////////////////////////
 
-// WARNING: Allows join when game has already started
 commandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
     if (processedMessage.arguments.empty()) {
         return commandResult::ERROR_INCORRECT_COMMAND_FORMAT;
@@ -99,6 +98,10 @@ commandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
 
     if (!globalState.isValidGameInvitation(invitationCode)) {
         return commandResult::ERROR_INVALID_INVITATION_CODE;
+    }
+
+    if (globalState.isOngoingGame(invitationCode)) {
+        return commandResult::ERROR_GAME_HAS_STARTED;
     }
 
     return executeImpl(processedMessage);
@@ -141,7 +144,11 @@ commandResult StartGameCommand::execute(ProcessedMessage &processedMessage) {
     }
 
     if (globalState.isOngoingGame(processedMessage.connection)) {
-        return commandResult::ERROR_INVALID_START_GAME_COMMAND;
+        return commandResult::ERROR_GAME_HAS_STARTED;
+    }
+
+    if (!globalState.isGameReady(processedMessage.connection)) {
+        return commandResult::ERROR_NOT_ENOUGH_PLAYERS;
     }
 
     return executeImpl(processedMessage);

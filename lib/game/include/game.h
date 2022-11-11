@@ -49,6 +49,7 @@ public:
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
     size_t numPlayers();
+    bool hasEnoughPlayers();
 
     std::deque<std::string> globalMsgs();
     std::deque<InputRequest> inputRequests();

@@ -31,8 +31,6 @@ Game::Game(
 
 // starts the game execution
 void Game::run() {
-    // TODO: Check if num_players > player_count.max
-
     _status = GameStatus::Running;
 
     for (auto rule: _rules) {
@@ -89,6 +87,10 @@ std::vector<Connection> Game::players() {
 // returns the number of players in the game
 size_t Game::numPlayers() {
     return _players->size();
+}
+
+bool Game::hasEnoughPlayers() {
+    return numPlayers() >= _player_count.min;
 }
 
 // returns the name of the game

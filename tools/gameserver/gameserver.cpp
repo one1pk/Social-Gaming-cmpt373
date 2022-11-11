@@ -5,6 +5,7 @@
 #include "server.h"
 #include "list.h"
 
+#include <unistd.h>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -26,7 +27,7 @@ void onConnect(Connection c) {
 // called when a client disconnects
 void onDisconnect(Connection c) {
     std::cout << "Connection lost: " << c.id << "\n";
-    // globalState->disconnectConnection(c);
+    globalState.disconnectConnection(c);
 }
 
 // extracts the port number from ./serverconfig.json
@@ -35,19 +36,17 @@ unsigned short getPort() {
     return 4040;
 }
 
-// #include <unistd.h>
-// std::string getHTTPMessage(const char *htmlLocation) {
-//     if (access(htmlLocation, R_OK) != -1) {
-//         std::ifstream infile{htmlLocation};
-//         return std::string{std::istreambuf_iterator<char>(infile),
-//                            std::istreambuf_iterator<char>()};
-//     } else {
-//         std::cerr << "Unable to open HTML index file:\n"
-//                   << htmlLocation << "\n";
-//         std::exit(-1);
-//     }
-// }
-
+std::string getHTTPMessage(const char *htmlLocation) {
+    if (access(htmlLocation, R_OK) != -1) {
+        std::ifstream infile{htmlLocation};
+        return std::string{std::istreambuf_iterator<char>(infile),
+                           std::istreambuf_iterator<char>()};
+    } else {
+        std::cerr << "Unable to open HTML index file:\n"
+                  << htmlLocation << "\n";
+        std::exit(-1);
+    }
+}
 
 int main(int argc, char *argv[]) {    
     if (argc < 3) {
@@ -63,7 +62,7 @@ int main(int argc, char *argv[]) {
 
     unsigned short port = std::stoi(argv[1]);
 
-    Server server{port, ""/*getHTTPMessage(argv[2])*/, onConnect, onDisconnect};
+    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
     MessageProcessor messageProcessor;
     CommandHandler commandHandler(globalState);
 
