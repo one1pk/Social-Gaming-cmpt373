@@ -90,7 +90,7 @@ private:
     ElementSptr _per_audience; // a map template for audience members
     std::shared_ptr<PlayerMap> _players;  // maps each player to their game map
     std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
-
+    ElementSptr _rulesString;
     RuleVector _rules;
 
     std::shared_ptr<std::deque<Message>> _player_msgs;

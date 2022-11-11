@@ -13,6 +13,7 @@ enum Type { // doesn't seem useful, might remove later
     INT,
     STRING,
     VECTOR,
+    BOOL,
     MAP,
     CONNECTION
 };
@@ -45,6 +46,7 @@ public:
     virtual ElementMap getMap() = 0;
     virtual std::string getString() = 0;
     virtual int getInt() = 0;
+    virtual bool getBool() = 0;
 
     virtual void addInt(int value) = 0;
     virtual void setInt(int value) = 0;
@@ -66,6 +68,7 @@ class Element : public ListElement {
 
 public:
     Element(int data)              : _data(data) { type = Type::INT; }
+    Element(bool data)              : _data(data) { type = Type::BOOL; }
     Element(std::string data)      : _data(data) { type = Type::STRING; }
     Element(ElementVector data)    : _data(data) { type = Type::VECTOR; }
     Element(ElementMap data)       : _data(data) { type = Type::MAP; }
@@ -198,6 +201,16 @@ public:
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
         
         if constexpr (std::is_integral_v<T>) {
+            return _data;
+        } else {
+            // throw error //
+            return 0;
+        }
+    }
+    bool getBool() final {
+        // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
+        
+        if constexpr (std::is_same_v<T, bool>) {
             return _data;
         } else {
             // throw error //

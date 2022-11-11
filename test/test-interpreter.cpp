@@ -9,7 +9,7 @@
 
 using json = nlohmann::json;
 
-string filePath = PATH_TO_JSON_TEST"/no_rules.json";
+string filePath = PATH_TO_JSON_TEST"/testRPS.json";
 
 class InterpreterTest : public ::testing::Test{
     protected:
@@ -62,5 +62,7 @@ TEST_F(InterpreterTest, MinimumConfigFromJSON) {
 
 
 TEST_F(InterpreterTest, MinimumConfigToJSON) {
+    std::cout << " Data from game object:\n" << std::endl;
+        std::cout << setw(4) << gameDataToJson << std::endl;
     EXPECT_EQ(jsonData, gameDataToJson);
 }
