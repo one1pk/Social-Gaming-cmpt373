@@ -6,8 +6,29 @@
 #include <functional>
 
 class Rule;
-typedef std::shared_ptr<Rule> RuleSptr; // shared pointer to a rule object
-typedef std::vector<std::shared_ptr<Rule>> RuleVector; // a vector of shared pointers to rule objects
+
+using RuleSptr = std::shared_ptr<Rule> ; // shared pointer to a rule object
+using RuleVector = std::vector<std::shared_ptr<Rule>>; // a vector of shared pointers to rule objects
+
+enum InputType {
+    Choice,
+    Text,
+    Vote,
+};
+
+struct InputRequest {
+    Connection user;
+    std::string prompt;
+    InputType type;
+    unsigned num_choices; // doesn't apply for InputType::Text
+    bool hasTimeout = false;
+    unsigned timeout_ms = 0;
+};
+
+struct InputResponse {
+    std::string response;
+    bool timedout = false;
+};
 
 // Rule Interface //
 
@@ -108,16 +129,17 @@ public:
 class InputChoice : public Rule {
     std::string prompt;
     ElementVector choices;
-    unsigned timeout_s; // in seconds
     std::string result;
-    std::shared_ptr<std::deque<Message>> player_msgs;
-    std::shared_ptr<std::map<Connection, std::string>> player_input;
+    std::shared_ptr<std::deque<InputRequest>> input_requests;
+    std::shared_ptr<std::map<Connection, InputResponse>> player_input;
+    unsigned timeout_s; // in seconds
+
     std::map<Connection, bool> awaitingInput;
 public:
-    InputChoice(std::string prompt, ElementVector choices, 
-                unsigned timeout_s, std::string result,
-                std::shared_ptr<std::deque<Message>> player_msgs,
-                std::shared_ptr<std::map<Connection, std::string>> player_input);
+    InputChoice(std::string prompt, ElementVector choices, std::string result,
+                std::shared_ptr<std::deque<InputRequest>> input_requests,
+                std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                unsigned timeout_s = 0);
     bool executeImpl(ElementSptr element) final;
 };
 

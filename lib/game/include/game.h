@@ -32,9 +32,9 @@ public:
         ElementSptr per_player, ElementSptr per_audience, 
         std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
         RuleVector rules,
-        std::shared_ptr<std::deque<Message>> _player_msgs,
-        std::shared_ptr<std::deque<std::string>> _global_msgs,
-        std::shared_ptr<std::map<Connection, std::string>> _player_input
+        std::shared_ptr<std::deque<std::string>> global_msgs,
+        std::shared_ptr<std::deque<InputRequest>> input_requests,
+        std::shared_ptr<std::map<Connection, InputResponse>> player_input
     );
 
     void run();
@@ -50,11 +50,12 @@ public:
     std::vector<Connection> players();
     size_t numPlayers();
 
-    std::deque<Message> playerMsgs();
     std::deque<std::string> globalMsgs();
+    std::deque<InputRequest> inputRequests();
 
     void outputSent();
     void registerPlayerInput(Connection player, std::string input);
+    void inputRequestTimedout(Connection player);
 
     ElementSptr setup();
     ElementSptr constants();
@@ -93,9 +94,9 @@ private:
 
     RuleVector _rules;
 
-    std::shared_ptr<std::deque<Message>> _player_msgs;
     std::shared_ptr<std::deque<std::string>> _global_msgs;
-    std::shared_ptr<std::map<Connection, std::string>> _player_input;
+    std::shared_ptr<std::deque<InputRequest>> _input_requests;
+    std::shared_ptr<std::map<Connection, InputResponse>> _player_input;
 
     //allows from_json and to_json to access private fields
     friend void from_json(const json &j, Game &g);

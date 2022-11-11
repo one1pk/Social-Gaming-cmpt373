@@ -65,6 +65,11 @@ void GlobalServerState::endGame(Connection connection) {
     removeGameInstance(game_instance->id());
 }
 
+bool is_number(std::string_view s) {
+    return !s.empty() && std::find_if(s.begin(), s.end(), 
+        [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+}
+
 std::deque<Message> GlobalServerState::processGames() {
     std::deque<Message> outgoing;
 
@@ -81,21 +86,42 @@ std::deque<Message> GlobalServerState::processGames() {
             break;
             case GameStatus::AwaitingInput: {
             // std::cout << "AwaitingInput\n";
-                std::deque<Message> player_msgs = game->playerMsgs();
+                std::deque<InputRequest> input_requests = game->inputRequests();
+                for (auto input_request: input_requests) {
+                    Connection user = input_request.user;
+                    if (user_game_input[user].new_input) {
+                        std::string input = user_game_input[user].input;
 
-                for (auto player_msg: player_msgs) {
-                    Connection player = player_msg.connection;
-                    if (game_input[player].first) {
-                        game->registerPlayerInput(player, game_input[player].second);
+                        // check if valid input
+                        if (input_request.type != InputType::Text &&  
+                                (!is_number(input) || (unsigned)std::stoi(input) >= input_request.num_choices)) {
+                            std::stringstream msg;
+                            msg << "Invalid index, please enter a number between 0 and " << input_request.num_choices-1 << "\n";
+                            outgoing.push_back({ user, msg.str() });
+                            user_game_input[user].new_input = false;
+                            continue;
+                        }
+
+                        game->registerPlayerInput(user, input);
                         outgoing.push_back({
-                            player,
-                            "Input Received, you entered: " + game_input[player].second + "\n"
+                            user,
+                            "Input Received, you entered: " + input + "\n"
                             "Waiting for other players...\n\n"
                         });
+                    } else if (input_request.hasTimeout) {
+                        user_game_input[user].time_remaining -= update_interval;
+                        if (user_game_input[user].time_remaining <= 0) {
+                            game->inputRequestTimedout(user);
+                            outgoing.push_back({
+                                user,
+                                "Input window timed out!\n"
+                                "Selecting index 0\n\n"
+                            });
+                        }
                     }
                 }
 
-                if (game->playerMsgs().size() == 0) {
+                if (game->inputRequests().size() == 0) {
                     game->run();
                 }
                 game++;
@@ -164,11 +190,12 @@ bool GlobalServerState::isOngoingGame(Connection connection) {
 
 bool GlobalServerState::isValidGameInvitation(uintptr_t invitationCode) {
     Game *game_instance = getGameInstancebyInvitation(invitationCode);
-    return game_instance == nullptr ? false : true;
+    return game_instance != nullptr;
 }
 
 void GlobalServerState::registerUserGameInput(Connection connection, std::string input) {
-    game_input[connection] = {true, input};
+    user_game_input[connection].input = input;
+    user_game_input[connection].new_input = true;
 }
 
 //////////////////////////////      BROADCASTING MESSAGE BUILDERS   //////////////////////
@@ -206,7 +233,7 @@ GlobalServerState::buildMessagesForGame(std::string messageText, Connection conn
 //////////////////////////////      PRIVATE METHODS     /////////////////////////////////
 
 void GlobalServerState::processGameMsgs(Game& game, std::deque<Message>& outgoing) {
-    // transform the global msg strings to message objects to be sent to the owner's screen (main screen)
+    // add the global msg strings to the outgoing message list (main screen)
     std::deque<std::string> global_msg_strings = game.globalMsgs();
     std::transform(global_msg_strings.begin(), global_msg_strings.end(), std::back_inserter(outgoing),
         [&game](auto global_msg_string) {
@@ -214,14 +241,19 @@ void GlobalServerState::processGameMsgs(Game& game, std::deque<Message>& outgoin
         }
     );
 
-    // add the player messages to the list and flag the users requiring input (if the game is not finished)
-    std::deque<Message> player_msgs = game.playerMsgs();
-    if (game.status() != GameStatus::Finished) {
-        for (auto msg: player_msgs) {
-            game_input[msg.connection].first = false;
+    // add the player input request prompts to the outgoing message list (player screens)
+    std::deque<InputRequest> input_requests = game.inputRequests();
+    std::transform(input_requests.begin(), input_requests.end(), std::back_inserter(outgoing),
+        [](auto input_request) {
+            return Message{ input_request.user, input_request.prompt };
         }
+    );
+
+    // flag the users requiring input (if the game is not finished)
+    for (auto input_request: input_requests) {
+        user_game_input[input_request.user].new_input = false;
+        user_game_input[input_request.user].time_remaining = input_request.timeout_ms;
     }
-    outgoing.insert(outgoing.end(), player_msgs.begin(), player_msgs.end());
 }
 
 void GlobalServerState::removeGameInstance(uintptr_t gameID) {
@@ -304,9 +336,9 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
     ElementSptr per_audience = g.per_audience();
 
     std::shared_ptr<PlayerMap> players = std::make_shared<PlayerMap>(PlayerMap{});
-    std::shared_ptr<std::deque<Message>> player_msgs = std::make_shared<std::deque<Message>>();
     std::shared_ptr<std::deque<std::string>> global_msgs = std::make_shared<std::deque<std::string>>();
-    std::shared_ptr<std::map<Connection, std::string>> player_input = std::make_shared<std::map<Connection, std::string>>();
+    std::shared_ptr<std::deque<InputRequest>> input_requests = std::make_shared<std::deque<InputRequest>>(); 
+    std::shared_ptr<std::map<Connection, InputResponse>> player_input = std::make_shared<std::map<Connection, InputResponse>>();
     std::shared_ptr<PlayerMap> audience = std::make_shared<PlayerMap>(PlayerMap{});
 
 
@@ -326,10 +358,10 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
                         std::make_shared<InputChoice>(
                             "{name}, choose your weapon!\n",
                             constants->getMapElement("weapons")->getSubList("name"),
-                            10,
                             "weapon",
-                            player_msgs,
-                            player_input
+                            input_requests,
+                            player_input,
+                            10
                         ),
                     }
                 ),
@@ -433,7 +465,7 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
         per_player, per_audience,
         players, audience,
         rules, 
-        player_msgs, global_msgs,
-        player_input
+        global_msgs,
+        input_requests, player_input
     );
 }

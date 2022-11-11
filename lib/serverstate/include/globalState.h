@@ -16,7 +16,10 @@
  */
 class GlobalServerState {
 public:
-    GlobalServerState() { populateGameList(); };
+    GlobalServerState(unsigned update_interval) 
+        : update_interval(update_interval) { 
+        populateGameList(); 
+    };
 
     // SERVER AND COMMAND SPECIFIC METHODS
 
@@ -106,6 +109,14 @@ public:
     std::deque<Message> buildMessagesForGame(std::string, Connection);
 
 private:
+    struct GameInput {
+        std::string input;
+        bool new_input;
+        int time_remaining;
+    };
+    std::map<Connection, GameInput> user_game_input;
+
+    unsigned update_interval;
     std::unordered_map<Connection, uintptr_t, ConnectionHash> clients_in_games;
     std::unordered_map<Connection, uintptr_t, ConnectionHash> gameOwnerMap;
     std::vector<Connection> clients;
@@ -113,8 +124,6 @@ private:
     std::vector<Game> game_instances;
 
     std::unordered_map<int, std::string> gameNameList;
-
-    std::map<Connection, std::pair<bool, std::string>> game_input;
 
     void populateGameList();
     void removeGameInstance(uintptr_t gameID);

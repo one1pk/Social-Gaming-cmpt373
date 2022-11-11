@@ -1,7 +1,6 @@
 #include "commandHandler.h"
 #include "game.h"
 #include "globalState.h"
-#include "InterpretJson.h"
 #include "messageProcessor.h"
 #include "server.h"
 #include "list.h"
@@ -15,8 +14,8 @@
 #include <vector>
 #include <map>
 
-
-GlobalServerState globalState;
+unsigned update_interval = 300;
+GlobalServerState globalState(update_interval);
 
 // FIX: Resolve stuff here, REMOVE OR ADD CONNECTION FROM GLOBAL STATE
 void onConnect(Connection c) {
