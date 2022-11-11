@@ -177,10 +177,6 @@ commandResult EndGameCommand::execute(ProcessedMessage &processedMessage) {
         return commandResult::ERROR_NOT_AN_OWNER;
     }
 
-    if (!globalState.isOngoingGame(processedMessage.connection)) {
-        return commandResult::ERROR_GAME_NOT_STARTED;
-    }
-
     return executeImpl(processedMessage);
 }
 

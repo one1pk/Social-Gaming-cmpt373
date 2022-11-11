@@ -21,7 +21,8 @@ std::string WELCOME_MESSAGE = (
         "  * To view the available games enter: games\n" 
         "  * To create a new game from the options enter: create <game_index>\n"
         "  * To join a game with an invitation code enter: join <invitation_code>\n"
-        "  * To exit the server enter: exit\n\n");
+        "  * To exit the server enter: exit\n"
+        "  * To display help information again enter: help\n\n");
 
 int main(int argc, char* argv[]) {
     
