@@ -24,15 +24,14 @@ public:
     // SERVER AND COMMAND SPECIFIC METHODS
 
     /**
-     * This method is called when a user connects to the server for the very first time. It adds the
-     * user to respective lists.
+     * Connects new users to the server for the very first time and adds them to  the respective lists.
+     * NOTE: clears the connections vector after adding all users
      */
-    void addConnection(Connection);
+    void addNewConnections(std::vector<Connection>&);
 
     /**
-     * This methods is called when a user disconnects from the server voluntarily by entering "exit"
-     * command.
-     * //TODO: Could be called involuntarily later on.
+     * This methods is called when users disconnect from the server
+     * (voluntarily byt entering exit or involuntarily by force closing the terminal)
      */
     void disconnectConnection(Connection);
 
@@ -84,12 +83,12 @@ public:
     // GAME SPECIFIC METHODS
 
     std::string getGameNamesAsString();
-    // Connection getGameOwnerConnection(Connection connection);    // FIX: needs game.owner as connection
+    Connection getGameOwner(Connection connection);
     int getPlayerCount(Connection connection);
     bool isInGame(Connection connection);
     bool isGameIndex(int index);
     bool isOwner(Connection connection);
-    bool isGameReady(Connection connection);
+    bool gameHasEnoughPlayers(Connection connection);
     bool isOngoingGame(Connection connection);
     bool isOngoingGame(uintptr_t invitation_code);
     bool isValidGameInvitation(uintptr_t invitation_code);
@@ -104,11 +103,24 @@ public:
     std::deque<Message> buildMessagesForServerLobby(std::string);
 
     /**
-     * Builds messages for the game lobby(that has user with passed in connection).
-     * Used to broadcast passed in text to all the players.
-     * WARNING: Currently skips the owner
+     * Builds messages for the game (that has user with passed in connection).
+     * Used to broadcast passed in text to all other players.
+     * NOTE: Doesn't send to owner or to current player <connection>
      */
-    std::deque<Message> buildMessagesForGame(std::string, Connection);
+    std::deque<Message> buildMsgsForOtherPlayers(std::string, Connection);
+
+    /**
+     * Builds messages for the game (that has user with passed in connection).
+     * Used to broadcast passed in text to all the players.
+     * NOTE: Doesn't send to owner
+     */
+    std::deque<Message> buildMsgsForAllPlayers(std::string, Connection);
+
+    /**
+     * Builds messages for the game (that has user with passed in connection).
+     * Used to broadcast passed in text to all the players. and the game owner (main screen)
+     */
+    std::deque<Message> buildMsgsForAllPlayersAndOwner(std::string, Connection);
 
 private:
     struct GameInput {
@@ -141,7 +153,8 @@ private:
 
     // GAME INSTANCE METHODS
 
-    Game *getGameInstancebyOwner(Connection connection);
+    Game *getGameInstancebyUser(Connection connection);
+    // Game *getGameInstancebyOwner(Connection connection);
     Game *getGameInstancebyInvitation(uintptr_t invitationCode); // TODO: FIX Invitation code in game
     Game *getGameInstancebyId(uintptr_t gameID);
 };

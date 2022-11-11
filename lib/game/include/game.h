@@ -48,7 +48,7 @@ public:
     bool removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
     std::vector<Connection> players();
-    size_t numPlayers();
+    unsigned numPlayers();
     bool hasEnoughPlayers();
 
     std::deque<std::string> globalMsgs();

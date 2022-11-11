@@ -85,7 +85,7 @@ std::vector<Connection> Game::players() {
 }
 
 // returns the number of players in the game
-size_t Game::numPlayers() {
+unsigned Game::numPlayers() {
     return _players->size();
 }
 

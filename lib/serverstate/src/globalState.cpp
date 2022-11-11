@@ -1,15 +1,14 @@
 #include "globalState.h"
 
-void GlobalServerState::addConnection(Connection connection) {
-    clients.push_back(connection);
-    clients_in_lobby.push_back(connection);
+void GlobalServerState::addNewConnections(std::vector<Connection>& connections) {
+    clients.insert(clients.end(), connections.begin(), connections.end());
+    clients_in_lobby.insert(clients_in_lobby.end(), connections.begin(), connections.end());
+    connections.clear();
 }
 
 void GlobalServerState::disconnectConnection(Connection connection) {
     removeClientFromList(clients, connection);
     removeClientFromList(clients_in_lobby, connection);
-    
-    //removeClientFromGame(connection); // Add this?
 }
 
 void GlobalServerState::addClientToGame(Connection connection, uintptr_t invitationCode) {
@@ -22,7 +21,6 @@ void GlobalServerState::addClientToGame(Connection connection, uintptr_t invitat
 }
 
 void GlobalServerState::removeClientFromGame(Connection connection) {
-
     uintptr_t gameID = clients_in_games[connection];
     Game *game_instance = getGameInstancebyId(gameID);
 
@@ -46,12 +44,12 @@ uintptr_t GlobalServerState::createGame(int gameIndex, Connection connection) {
 }
 
 void GlobalServerState::startGame(Connection connection) {
-    Game *game_instance = getGameInstancebyOwner(connection);
+    Game *game_instance = getGameInstancebyUser(connection);
     game_instance->run();
 }
 
 void GlobalServerState::endGame(Connection connection) {
-    Game *game_instance = getGameInstancebyOwner(connection);
+    Game *game_instance = getGameInstancebyUser(connection);
     // FIX: Figure if needed here (related to createGame) (right now owner is added to clients in games)
     clients_in_games.erase(connection);
     clients_in_lobby.push_back(connection);
@@ -132,7 +130,7 @@ std::deque<Message> GlobalServerState::processGames() {
             // std::cout << "GameFinished\n";
                 processGameMsgs(*game, outgoing);
                 outgoing.push_back({game->owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
-                std::deque<Message> finalMsgs = buildMessagesForGame("\nGood game!\nYou are now back in the lobby\n\n", game->owner());
+                std::deque<Message> finalMsgs = buildMsgsForOtherPlayers("\nGood game!\nYou are now back in the lobby\n\n", game->owner());
                 outgoing.insert(outgoing.end(), finalMsgs.begin(), finalMsgs.end());
                 endGame(game->owner());
             }
@@ -158,13 +156,10 @@ GlobalServerState::getGameNamesAsString() {
     return gamesList.str();
 }
 
-// FIX: Establish owner as connection in game rather than uintptr_t
-
-// Connection
-// GlobalServerState::getGameOwnerConnection(Connection connection){
-//     uintptr_t gameID = clients_in_games[connection];
-//     return getGameInstancebyId(gameID)->ownerID();
-// }
+Connection
+GlobalServerState::getGameOwner(Connection connection){
+    return getGameInstancebyUser(connection)->owner();
+}
 
 int GlobalServerState::getPlayerCount(Connection connection) {
     uintptr_t gameID = clients_in_games[connection];
@@ -183,12 +178,12 @@ bool GlobalServerState::isOwner(Connection connection) {
     return gameOwnerMap.find(connection) != gameOwnerMap.end();
 }
 
-bool GlobalServerState::isGameReady(Connection connection) {
-    return getGameInstancebyOwner(connection)->hasEnoughPlayers();
+bool GlobalServerState::gameHasEnoughPlayers(Connection connection) {
+    return getGameInstancebyUser(connection)->hasEnoughPlayers();
 }
 
 bool GlobalServerState::isOngoingGame(Connection connection) {
-    Game *game_instance = getGameInstancebyOwner(connection);
+    Game *game_instance = getGameInstancebyUser(connection);
     return game_instance->status() != GameStatus::Finished
         && game_instance->status() != GameStatus::Created;
 }
@@ -221,23 +216,33 @@ GlobalServerState::buildMessagesForServerLobby(std::string messageText) {
 }
 
 std::deque<Message>
-GlobalServerState::buildMessagesForGame(std::string messageText, Connection connection) {
+GlobalServerState::buildMsgsForOtherPlayers(std::string messageText, Connection connection) {
     std::deque<Message> messages;
+    Game* game = getGameInstancebyUser(connection);
 
-    if (clients_in_games.find(connection) != clients_in_games.end()) {
-        uintptr_t gameID = clients_in_games[connection];
-        Game *game_instance = getGameInstancebyId(gameID);
-
-        for (auto player : game_instance->players()) {
-            if (!(player == connection)) {
-                messages.push_back({player, messageText});
-            }
-        }
-
-        // WARNING: Send to owner as well?
-        // messages.push_back({game_instance->owner(), messageText});
+    for (auto player : game->players()) {
+        if (player == connection) continue;
+        messages.push_back({player, messageText});
     }
+    return messages;
+}
 
+std::deque<Message>
+GlobalServerState::buildMsgsForAllPlayers(std::string messageText, Connection connection) {
+    std::deque<Message> messages;
+    Game* game = getGameInstancebyUser(connection);
+
+    for (auto player : game->players()) {
+        messages.push_back({player, messageText});
+    }
+    return messages;
+}
+
+std::deque<Message>
+GlobalServerState::buildMsgsForAllPlayersAndOwner(std::string messageText, Connection connection) {
+    std::deque<Message> messages = buildMsgsForAllPlayers(messageText, connection);
+    Game* game = getGameInstancebyUser(connection);
+    messages.push_back({game->owner(), messageText});
     return messages;
 }
 
@@ -279,14 +284,20 @@ void GlobalServerState::removeClientFromList(std::vector<Connection> &list, Conn
 }
 
 Game *
-GlobalServerState::getGameInstancebyOwner(Connection connection) {
-    // WARNING: Assumes, owner exists;
-    uintptr_t gameID = gameOwnerMap[connection];
-
-    auto findGamePredicate = [gameID](auto &game) { return game.id() == gameID; };
-    auto game_iterator = std::find_if(game_instances.begin(), game_instances.end(), findGamePredicate);
-    return &(*game_iterator);
+GlobalServerState::getGameInstancebyUser(Connection connection) {
+    uintptr_t gameID = clients_in_games[connection];
+    return getGameInstancebyId(gameID);
 }
+
+// Game *
+// GlobalServerState::getGameInstancebyOwner(Connection connection) {
+//     // WARNING: Assumes, owner exists;
+//     uintptr_t gameID = gameOwnerMap[connection];
+
+//     auto findGamePredicate = [gameID](auto &game) { return game.id() == gameID; };
+//     auto game_iterator = std::find_if(game_instances.begin(), game_instances.end(), findGamePredicate);
+//     return &(*game_iterator);
+// }
 
 Game *
 GlobalServerState::getGameInstancebyInvitation(uintptr_t invitationCode) {

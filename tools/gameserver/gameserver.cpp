@@ -15,19 +15,18 @@
 #include <vector>
 #include <map>
 
-unsigned update_interval = 300;
-GlobalServerState globalState(update_interval);
+std::vector<Connection> newConnections;
+std::vector<Connection> lostConnections;
 
-// FIX: Resolve stuff here, REMOVE OR ADD CONNECTION FROM GLOBAL STATE
 void onConnect(Connection c) {
     std::cout << "New connection: " << c.id << "\n";
-    globalState.addConnection(c);
+    newConnections.push_back(c);
 }
 
 // called when a client disconnects
 void onDisconnect(Connection c) {
     std::cout << "Connection lost: " << c.id << "\n";
-    globalState.disconnectConnection(c);
+    lostConnections.push_back(c);
 }
 
 // extracts the port number from ./serverconfig.json
@@ -60,11 +59,13 @@ int main(int argc, char *argv[]) {
     // start a new session based on the configuration
     // (for now we take them as cmdline args)
 
+    unsigned update_interval = 300;
     unsigned short port = std::stoi(argv[1]);
-
     Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
-    MessageProcessor messageProcessor;
+
+    GlobalServerState globalState(update_interval);
     CommandHandler commandHandler(globalState);
+    MessageProcessor messageProcessor;
 
     std::cout << "Game server is up!\n";
 
@@ -80,12 +81,15 @@ int main(int argc, char *argv[]) {
         }
 
         std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor.getProcessedMessages(server.receive());
-
         std::deque<Message> outgoingMsgs = commandHandler.getOutgoingMessages(processedIncomingMessages);
         server.send(outgoingMsgs);
 
         std::deque<Message> outgoingGameMsgs = globalState.processGames();
         server.send(outgoingGameMsgs);
+
+        globalState.addNewConnections(newConnections);
+        std::deque<Message> outgoingDisconnectionMsgs = commandHandler.handleLostConnections(lostConnections);
+        server.send(outgoingDisconnectionMsgs);
 
         if (errorWhileUpdating) {
             break;
