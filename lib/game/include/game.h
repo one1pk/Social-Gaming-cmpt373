@@ -11,7 +11,7 @@
 #include <stack>
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+using Json = nlohmann::json;
 
 enum GameStatus {
     Created,
@@ -61,11 +61,15 @@ public:
     ElementSptr variables();
     ElementSptr per_player();
     ElementSptr per_audience();
+    ElementSptr rules_from_json();
+    RuleVector& rules();
     bool audience(){
         return _has_audience;
     }
 
-
+    
+    
+    
 private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
@@ -80,6 +84,8 @@ private:
 
     bool _has_audience;
 
+    
+    
     // Goal: map of { name_string -> { configurable_value , prompt_text } }
     ElementSptr _setup;
 
@@ -88,17 +94,19 @@ private:
 
     ElementSptr _per_player; // a map template for players
     ElementSptr _per_audience; // a map template for audience members
+
+    ElementSptr _rules_from_json;
+    RuleVector _rules;
+
     std::shared_ptr<PlayerMap> _players;  // maps each player to their game map
     std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
-    ElementSptr _rulesString;
-    RuleVector _rules;
 
     std::shared_ptr<std::deque<Message>> _player_msgs;
     std::shared_ptr<std::deque<std::string>> _global_msgs;
     std::shared_ptr<std::map<Connection, std::string>> _player_input;
 
     //allows from_json and to_json to access private fields
-    friend void from_json(const json &j, Game &g);
-    friend void to_json(json &j, const Game &g);
+    friend void from_json(const Json &j, Game &g);
+    friend void to_json(Json &j, const Game &g);
 
 };

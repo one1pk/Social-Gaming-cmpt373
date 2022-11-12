@@ -26,6 +26,9 @@ public:
         resetImpl();
     }
 
+//for testing
+ElementSptr getList();
+
 private:
     virtual bool executeImpl(ElementSptr element) = 0;
     virtual void resetImpl() {}
@@ -45,6 +48,7 @@ private:
     RuleVector::iterator rule;
     bool initialized = false;
 public:
+    ElementSptr getList();
     Foreach(ElementSptr list, RuleVector rules);
     bool executeImpl(ElementSptr element) final;
     void resetImpl() final;

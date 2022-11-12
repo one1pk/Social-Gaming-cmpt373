@@ -273,7 +273,7 @@ void GlobalServerState::populateGameList() {
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////// TEMPORARY: Manual Rock Paper Scissor Game Construction //////////////////////
 #include "InterpretJson.h"
-using json = nlohmann::json;
+using Json = nlohmann::json;
 
 void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner) {
     // TODO: use the interpreter to generate the game object from the json configurations

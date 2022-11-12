@@ -9,7 +9,9 @@
 Foreach::Foreach(ElementSptr _list, RuleVector _rules) 
     : list(_list), rules(_rules) {
 }
-
+ElementSptr Foreach::getList(){
+        return list;
+    }
 bool Foreach::executeImpl(ElementSptr) {
     std::cout << "* Foreach Rule *\n";
 

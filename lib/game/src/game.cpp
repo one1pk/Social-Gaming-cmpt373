@@ -21,8 +21,9 @@ Game::Game(
     _setup(setup),
     _constants{constants}, _variables(variables),
     _per_player(per_player), _per_audience(per_audience),
-    _players(players), _audience(audience),
     _rules(rules),
+    _players(players),
+    _audience(audience), 
     _player_msgs(player_msgs), _global_msgs(global_msgs),
     _player_input(player_input)  {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
@@ -141,4 +142,10 @@ ElementSptr Game::per_player(){
 }
 ElementSptr Game::per_audience(){
     return _per_audience;
+}
+RuleVector& Game::rules(){
+    return _rules;
+}
+ElementSptr Game::rules_from_json(){
+    return _rules_from_json;
 }

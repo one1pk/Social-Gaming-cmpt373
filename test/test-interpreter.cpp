@@ -6,10 +6,11 @@
 #include "InterpretJson.h"
 #include "game.h"
 #include "list.h"
+#include "rules.h"
 
-using json = nlohmann::json;
+using Json = nlohmann::json;
 
-string filePath = PATH_TO_JSON_TEST"/testRPS.json";
+string filePath = PATH_TO_JSON_TEST"/partRules.json";
 
 class InterpreterTest : public ::testing::Test{
     protected:
@@ -22,28 +23,39 @@ class InterpreterTest : public ::testing::Test{
             
             //convert game object back to json
             gameDataToJson = g;
+
+            setup = g.setup();
+            constants = g.constants();
+            variables = g.variables();
+            per_player = g.per_player();
+            per_audience = g.per_audience();
+            rules = g.rules();
+            rulesFromJson = g.rules_from_json();
         }
+
     Game g;
     InterpretJson j;
 
+    ElementSptr setup;
+    ElementSptr constants;
+    ElementSptr variables;
+    ElementSptr per_player;
+    ElementSptr per_audience;
+    RuleVector rules;
+
+    ElementSptr rulesFromJson;
     //original data
-    json jsonData;
+    Json jsonData;
 
     //game data
-    json gameDataToJson;
+    Json gameDataToJson;
 };
 
 TEST_F(InterpreterTest, MinimumConfigFromJSON) {
     EXPECT_EQ(g.name(), "Rock, Paper, Scissors");
     EXPECT_EQ(g.audience(), false);
 
-    ElementSptr setup = g.setup();
-    ElementSptr constants = g.constants();
-    ElementSptr variables = g.variables();
-    ElementSptr per_player = g.per_player();
-    ElementSptr per_audience = g.per_audience();
-    
-    EXPECT_EQ(setup->getMapElement("Rounds")->getInt(), 10);
+    EXPECT_EQ(setup->getMapElement("Rounds")->getInt(), 4);
 
     ElementVector _list =  constants->getMapElement("weapons")->getVector();
     EXPECT_EQ(_list[0]->getMapElement("name")->getString(), "Rock");
@@ -58,11 +70,35 @@ TEST_F(InterpreterTest, MinimumConfigFromJSON) {
     EXPECT_EQ(per_player->getMapElement("wins")->getInt(), 0);
     EXPECT_EQ(per_player->getMapElement("weapon")->getString(), "");
     EXPECT_EQ(per_audience->getString(), "{}");
+    
+   
 }
 
+//std::cout << " Data from game object:\n" << std::endl;
+//std::cout << setw(4) << gameDataToJson << std::endl;
+
+TEST_F(InterpreterTest, NamesAreResolved){
+    ElementSptr listToTest = j.resolveName(g, "constants");
+    
+    //std::cout << listToTest->getMapElement("weapons")->getVector()[2]->getMapElement("beats")->getString() << std::endl;
+    EXPECT_EQ(listToTest, constants);
+
+    size_t weaponsSize = listToTest->getMapElement("weapons")->getSize();
+    EXPECT_EQ(weaponsSize, 3);
+}
+
+TEST_F(InterpreterTest, RulesGetCorrectLists){
+    ElementSptr expectedList = setup->getMapElement("Rounds")->upfrom(1);
+    ElementSptr forEachList = dynamic_cast<Foreach&>(*rules[0]).getList();
+
+    int round3 =  forEachList->getVector()[2]->getInt();
+    int sizeForEachList = forEachList->getSize();
+
+    EXPECT_EQ(round3, 3);
+    EXPECT_EQ(sizeForEachList, 4);
+}
 
 TEST_F(InterpreterTest, MinimumConfigToJSON) {
-    std::cout << " Data from game object:\n" << std::endl;
-        std::cout << setw(4) << gameDataToJson << std::endl;
     EXPECT_EQ(jsonData, gameDataToJson);
 }
+

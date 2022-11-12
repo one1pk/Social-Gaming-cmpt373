@@ -1,42 +1,44 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
+
 #include "game.h"
+#include <nlohmann/json.hpp>
 #include "rules.h"
+#include <chaiscript/chaiscript.hpp>
 
 using namespace std;
-using json = nlohmann::json;
+using Json = nlohmann::json;
+using namespace chaiscript;
 
-enum TypeR { 
-   DEFAULT,
-   FOREACH,
-   GLOBALMSG
-};
 
 class InterpretJson{
     public:
+        
+        
         InterpretJson() = default;
         InterpretJson(string path);
        
 
-        InterpretJson(json j){
-            data = j;
-        }
+        InterpretJson(Json j);
         
 
         //maps json data to game object
         void interpret(Game& obj );
 
-        json getData(){
-            return data;
-        }
+        Json getData();
+        ElementSptr resolveName(Game& game, std::string name);
+
+        //void registerListsToChai(Game& game);
+       //ChaiScript chai;
+        
     private:
-        json data;
+        Json data;
+        void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
         
 };
 
-//recursively maps json data to list element
-inline void from_json(const json& j, ElementSptr& e){
+//recursively maps Json data to list element
+inline void from_json(const Json& j, ElementSptr& e){
         if(j.is_string()) e = std::make_shared<Element<std::string>>(j.get<std::string>());
         else if(j.is_number()) e = std::make_shared<Element<int>>(j.get<int>());
         else if(j.is_boolean()) e = std::make_shared<Element<bool>>(j.get<bool>());
@@ -44,7 +46,7 @@ inline void from_json(const json& j, ElementSptr& e){
 	    else if(j.is_object()) e = std::make_shared<Element<ElementMap>>(j.get<ElementMap>());
     }
 
-inline void to_json(json& j, const ElementSptr& e){
+inline void to_json(Json& j, const ElementSptr& e){
     switch(e->type) {
 		case Type::STRING:
 			j = e->getString();
@@ -68,7 +70,7 @@ inline void to_json(json& j, const ElementSptr& e){
 	}
 }
 
-inline void from_json(const json& j,  Game& g){
+inline void from_json(const Json& j,  Game& g){
     j.at("configuration").at("name").get_to(g._name);
     j.at("configuration").at("audience").get_to(g._has_audience);
     j.at("configuration").at("player count").at("min").get_to(g._player_count.min);
@@ -78,11 +80,11 @@ inline void from_json(const json& j,  Game& g){
     j.at("variables").get_to(g._variables);
     j.at("per-player").get_to(g._per_player);
     j.at("per-audience").get_to(g._per_audience);
-    j.at("rules").get_to(g._rulesString);
+    j.at("rules").get_to(g._rules_from_json);
 }
 
 //only works for config, not urgent
-inline void to_json( json& j, const Game& g){
+inline void to_json( Json& j, const Game& g){
     j["configuration"]["name"] = g._name;
     j["configuration"]["audience"] = g._has_audience;
     j["configuration"]["player count"]["min"] = g._player_count.min;
@@ -92,8 +94,14 @@ inline void to_json( json& j, const Game& g){
     j["constants"] = g._constants;
     j["per-player"] = g._per_player;
     j["per-audience"] = g._per_audience;
-    j["rules"] = g._rulesString;
+    j["rules"] = g._rules_from_json;
 }
+
+
+
+
+
+
 
 
 

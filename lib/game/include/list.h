@@ -279,6 +279,7 @@ public:
                 }
             }
         }
+        list.shrink_to_fit();
         return std::make_shared<Element<ElementVector>>(list);
     }
 };
