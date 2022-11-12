@@ -11,8 +11,6 @@ Foreach::Foreach(ElementSptr list, RuleVector rules)
 }
 
 RuleStatus Foreach::execute(ElementSptr) {
-    std::cout << "* Foreach Rule *\n";
-
     // initialize the elements vector from the dynamic list object
     // initialize the rule and list iterators
     if (!initialized) {
@@ -44,8 +42,6 @@ ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rule
 }
 
 RuleStatus ParallelFor::execute(ElementSptr element) {
-    std::cout << "* ParallelFor Rule *\n";
-
     // initialze the player rule iterators to the first rule
     if (!initialized) {
         for (auto& player_map: *player_maps) {
@@ -80,23 +76,17 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
 }
 
 RuleStatus When::execute(ElementSptr element) {
-    std::cout << "* When Rule *\n";
-
     // traverse the cases and execute the rules for the first case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
     for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
         if (case_rule_pair->first(element)) {
-            std::cout << "Case Match!\nExecuting Case Rules\n";
-
             for (; rule != case_rule_pair->second.end(); rule++) {
                 if ((*rule)->execute(element) == RuleStatus::InputRequired) {
                     return RuleStatus::InputRequired;
                 }
             }
             break;
-        } else {
-            std::cout << "Case Fail, testing next case\n";
-        }
+        } 
     }
 
     // reset the rule state to be executed in a different context 
@@ -112,8 +102,6 @@ Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> exten
 }
 
 RuleStatus Extend::execute(ElementSptr element) {
-    std::cout << "* Extend Rule *\n";
-
     target->extend(extension(element));
     return RuleStatus::Done;
 }
@@ -125,8 +113,6 @@ Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
 }
 
 RuleStatus Discard::execute(ElementSptr element) {
-    std::cout << "* Discard Rule *\n";
-
     list->discard(count(element));
     return RuleStatus::Done;
 }
@@ -138,8 +124,6 @@ Add::Add(std::string to, ElementSptr value)
 }
 
 RuleStatus Add::execute(ElementSptr element) {
-    std::cout << "* Add Rule *\n";
-
     element->getMapElement(to)->addInt(value->getInt());
     return RuleStatus::Done;
 }
@@ -173,7 +157,6 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string 
 }
 
 RuleStatus InputChoice::execute(ElementSptr player) {
-    std::cout << "* InputChoiceRequest Rule *\n";
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!awaitingInput[player_connection]) {
@@ -223,8 +206,6 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
 }
 
 RuleStatus GlobalMsg::execute(ElementSptr element) {
-    std::cout << "* GlobalMsg Rule *\n";
-
     global_msgs->push_back(formatString(msg, element));
     return RuleStatus::Done;
 }
@@ -238,8 +219,6 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
 }
 
 RuleStatus Scores::execute(ElementSptr element) {
-    std::cout << "* Scores Rule *\n";
-
     std::stringstream msg;
     msg << "\nScores are " << (ascending? "(in ascedning order)\n" : "(in descedning order)\n");
 
