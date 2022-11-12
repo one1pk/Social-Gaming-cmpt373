@@ -6,14 +6,15 @@
 
 // Foreach //
 
-Foreach::Foreach(ElementSptr _list, RuleVector _rules) 
-    : list(_list), rules(_rules) {
+Foreach::Foreach(ElementSptr list, RuleVector rules) 
+    : list(list), rules(rules) {
 }
 
-RuleStatus Foreach::executeImpl(ElementSptr) {
+RuleStatus Foreach::execute(ElementSptr) {
     std::cout << "* Foreach Rule *\n";
 
-    // initialze the elements vector from the dynamic list object
+    // initialize the elements vector from the dynamic list object
+    // initialize the rule and list iterators
     if (!initialized) {
         elements = list->getVector();
         element = elements.begin();
@@ -21,59 +22,54 @@ RuleStatus Foreach::executeImpl(ElementSptr) {
         initialized = true;
     }
 
-    // execute the child rules for each element
+    // execute the child rules for each element until input is required
     for (; element != elements.end(); element++) {
         for (; rule != rules.end(); rule++) {
             if ((*rule)->execute(*element) == RuleStatus::InputRequired) {
                 return RuleStatus::InputRequired;
             }
-            // reset the rule (to be executed by next element)
-            (*rule)->reset();
         }
         rule = rules.begin();
     }
-    return status = RuleStatus::Done;
-}
 
-void Foreach::resetImpl() {
+    // resets the rule iterators when rule is executed in a different context
     initialized = false;
+    return RuleStatus::Done;
 }
 
 // ParallelFor //
 
-ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> _player_maps, RuleVector _rules) 
-    : player_maps(_player_maps), rules(_rules) {
+ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules) 
+    : player_maps(player_maps), rules(rules) {
 }
 
-RuleStatus ParallelFor::executeImpl(ElementSptr element) {
+RuleStatus ParallelFor::execute(ElementSptr element) {
     std::cout << "* ParallelFor Rule *\n";
 
     // initialze the player rule iterators to the first rule
     if (!initialized) {
-        for (auto player_map: *player_maps) {
+        for (auto& player_map: *player_maps) {
             player_rule_it[player_map.first] = rules.begin();
         }
         initialized = true;
     }
 
-    status = RuleStatus::Done;
+    RuleStatus status = RuleStatus::Done;
     // for each player, start rule execution at their stored rule iterator
-    // for each player, execute the rules until an InputRequest rule is encountered
+    //  and execute the rules until an Input rule is encountered
     for(auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
         for (auto& rule = player_rule_it[player_map->first]; rule != rules.end(); rule++) {
             if ((*rule)->execute(player_map->second) == RuleStatus::InputRequired) {
-                // InputRequest rule encountered
                 status = RuleStatus::InputRequired;
                 break;
             }
-            (*rule)->reset(); // reset the rule (to be executed by the next player)
         }
     }
-    return status;
-}
 
-void ParallelFor::resetImpl() {
-    initialized = false;
+    // if rule execution is done this resets the rule iterators when rule is executed again in a different context 
+    // otherwise the rule will continue where it left off after input is retrieved
+    if (status == RuleStatus::Done) initialized = false;
+    return status;
 }
 
 // When //
@@ -83,10 +79,10 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
       rule(case_rule_pair->second.begin()) {
 }
 
-RuleStatus When::executeImpl(ElementSptr element) {
+RuleStatus When::execute(ElementSptr element) {
     std::cout << "* When Rule *\n";
 
-    // traverse the cases and execute the rules for the case condition that returns true
+    // traverse the cases and execute the rules for the first case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
     for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
         if (case_rule_pair->first(element)) {
@@ -96,19 +92,17 @@ RuleStatus When::executeImpl(ElementSptr element) {
                 if ((*rule)->execute(element) == RuleStatus::InputRequired) {
                     return RuleStatus::InputRequired;
                 }
-                (*rule)->reset();
             }
             break;
         } else {
             std::cout << "Case Fail, testing next case\n";
         }
     }
-    return status = RuleStatus::Done;
-}
 
-void When::resetImpl() {
+    // reset the rule state to be executed in a different context 
     case_rule_pair = case_rules.begin();
     rule = case_rule_pair->second.begin();
+    return RuleStatus::Done;
 }
 
 // Extend //
@@ -117,11 +111,11 @@ Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> exten
     : target(target), extension(extension) {
 }
 
-RuleStatus Extend::executeImpl(ElementSptr element) {
+RuleStatus Extend::execute(ElementSptr element) {
     std::cout << "* Extend Rule *\n";
 
     target->extend(extension(element));
-    return status = RuleStatus::Done;
+    return RuleStatus::Done;
 }
 
 // Discard //
@@ -130,11 +124,11 @@ Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
     : list(list), count(count) {
 }
 
-RuleStatus Discard::executeImpl(ElementSptr element) {
+RuleStatus Discard::execute(ElementSptr element) {
     std::cout << "* Discard Rule *\n";
 
     list->discard(count(element));
-    return status = RuleStatus::Done;
+    return RuleStatus::Done;
 }
 
 // Add //
@@ -143,11 +137,11 @@ Add::Add(std::string to, ElementSptr value)
     : to(to), value(value) {
 }
 
-RuleStatus Add::executeImpl(ElementSptr element) {
+RuleStatus Add::execute(ElementSptr element) {
     std::cout << "* Add Rule *\n";
 
     element->getMapElement(to)->addInt(value->getInt());
-    return status = RuleStatus::Done;
+    return RuleStatus::Done;
 }
 
 // InputChoice //
@@ -178,11 +172,13 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string 
     input_requests(input_requests), player_input(player_input), timeout_s(timeout_s) {
 }
 
-RuleStatus InputChoice::executeImpl(ElementSptr player) {
+RuleStatus InputChoice::execute(ElementSptr player) {
     std::cout << "* InputChoiceRequest Rule *\n";
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!awaitingInput[player_connection]) {
+        // first execution of rule
+        // format the input prompt and flag that input is required
         std::stringstream formatted_prompt(formatString(prompt, player));
         formatted_prompt << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
@@ -202,7 +198,6 @@ RuleStatus InputChoice::executeImpl(ElementSptr player) {
         input_requests->push_back(request);
 
         awaitingInput[player_connection] = true;
-        // returning false indicates that input is needed from the user
         return RuleStatus::InputRequired;
     }
     // execution will continue from here after input is recieved
@@ -210,7 +205,7 @@ RuleStatus InputChoice::executeImpl(ElementSptr player) {
     int chosen_index;
     InputResponse input = player_input->at(player_connection);
     if (input.timedout) {
-        // for now, if an input request times out, a default index is chosen
+        // for now, if an input request times out, a default index of 0 is chosen
         chosen_index = 0;
     } else {
         chosen_index = std::stoi(input.response);
@@ -227,11 +222,11 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
     : msg(msg), global_msgs(global_msgs) {
 }
 
-RuleStatus GlobalMsg::executeImpl(ElementSptr element) {
+RuleStatus GlobalMsg::execute(ElementSptr element) {
     std::cout << "* GlobalMsg Rule *\n";
 
     global_msgs->push_back(formatString(msg, element));
-    return status = RuleStatus::Done;
+    return RuleStatus::Done;
 }
 
 // Scores //
@@ -242,7 +237,7 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
       ascending(ascending), global_msgs(global_msgs) {
 }
 
-RuleStatus Scores::executeImpl(ElementSptr element) {
+RuleStatus Scores::execute(ElementSptr element) {
     std::cout << "* Scores Rule *\n";
 
     std::stringstream msg;
@@ -262,5 +257,5 @@ RuleStatus Scores::executeImpl(ElementSptr element) {
     }
 
     global_msgs->push_back(msg.str());
-    return status = RuleStatus::Done;
+    return RuleStatus::Done;
 }

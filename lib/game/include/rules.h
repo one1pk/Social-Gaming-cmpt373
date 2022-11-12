@@ -6,7 +6,6 @@
 #include <functional>
 
 class Rule;
-
 using RuleSptr = std::shared_ptr<Rule>;
 using RuleVector = std::vector<RuleSptr>;
 
@@ -40,24 +39,7 @@ struct InputResponse {
 class Rule {
 public:
     virtual ~Rule() {}
-
-    RuleStatus execute(ElementSptr element = nullptr) {
-        if (status == RuleStatus::Done) {
-            return RuleStatus::Done;
-        }
-        return executeImpl(element);
-    }
-    void reset() {
-        status = RuleStatus::InputRequired;
-        resetImpl();
-    }
-
-private:
-    virtual RuleStatus executeImpl(ElementSptr element) = 0;
-    virtual void resetImpl() {}
-
-protected:
-    RuleStatus status = RuleStatus::InputRequired;
+    virtual RuleStatus execute(ElementSptr element = nullptr) = 0;
 };
 
 // Control Structures//
@@ -72,8 +54,7 @@ private:
     bool initialized = false;
 public:
     Foreach(ElementSptr list, RuleVector rules);
-    RuleStatus executeImpl(ElementSptr element) final;
-    void resetImpl() final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 class ParallelFor : public Rule {
@@ -83,8 +64,7 @@ class ParallelFor : public Rule {
     bool initialized = false;
 public:
     ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules);
-    RuleStatus executeImpl(ElementSptr element) final;
-    void resetImpl() final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 class When : public Rule {
@@ -97,8 +77,7 @@ class When : public Rule {
     bool match = false;
 public: 
     When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
-    RuleStatus executeImpl(ElementSptr element) final;
-    void resetImpl() final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 // List Operations //
@@ -108,7 +87,7 @@ class Extend : public Rule {
     std::function<ElementSptr(ElementSptr)> extension;
 public:
     Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 class Discard : public Rule {
@@ -116,7 +95,7 @@ class Discard : public Rule {
     std::function<size_t(ElementSptr)> count;
 public:
     Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 // Arithmetic //
@@ -126,7 +105,7 @@ class Add : public Rule {
     ElementSptr value;
 public: 
     Add(std::string to, ElementSptr value);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 // Input/ Output //
@@ -145,7 +124,7 @@ public:
                 std::shared_ptr<std::deque<InputRequest>> input_requests,
                 std::shared_ptr<std::map<Connection, InputResponse>> player_input,
                 unsigned timeout_s = 0);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 class GlobalMsg : public Rule {
@@ -154,7 +133,7 @@ class GlobalMsg : public Rule {
 public:
     GlobalMsg(std::string msg,
               std::shared_ptr<std::deque<std::string>> global_msgs);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
 
 class Scores : public Rule {
@@ -165,5 +144,5 @@ class Scores : public Rule {
 public:
     Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, 
            bool ascending, std::shared_ptr<std::deque<std::string>> global_msgs);
-    RuleStatus executeImpl(ElementSptr element) final;
+    RuleStatus execute(ElementSptr element) final;
 };
