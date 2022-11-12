@@ -19,10 +19,10 @@ enum Type { // doesn't seem useful, might remove later
 
 class ListElement;
 
-typedef std::shared_ptr<ListElement> ElementSptr; // shared pointer to a list element
-typedef std::vector<std::shared_ptr<ListElement>> ElementVector; // a vector of shared pointers to list elements
-typedef std::map<std::string, std::shared_ptr<ListElement>> ElementMap; // a map of of shared pointers to list elements (with string keys)
-typedef std::map<Connection, std::shared_ptr<ListElement>> PlayerMap; // a map from player conenctions to player lists 
+using ElementSptr = std::shared_ptr<ListElement>;
+using ElementVector = std::vector<std::shared_ptr<ListElement>>;
+using ElementMap = std::map<std::string, std::shared_ptr<ListElement>>;
+using PlayerMap = std::map<Connection, std::shared_ptr<ListElement>>;
 
 // INTERFACE
 // The building block for all Lists

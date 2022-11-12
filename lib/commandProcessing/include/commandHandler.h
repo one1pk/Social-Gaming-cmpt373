@@ -25,11 +25,18 @@ public:
      */
     std::deque<Message> getOutgoingMessages(const std::deque<ProcessedMessage> &incomingProcessedMessages);
 
+    /**
+     * Handles any lost connections that didn't disconenct properly 
+     * calls commands *leave*, *exit*, & *end* artficially as required
+     * NOTE: clears the connections vector after its done
+     */
+    std::deque<Message> handleLostConnections(std::vector<Connection> &connections); 
+
 private:
     GlobalServerState &globalState;
     std::deque<Message> outgoing;
     std::unordered_map<UserCommand, commandPointer> commandMap;      // Maps command names to command objects
-    std::unordered_map<commandResult, std::string> commandResultMap; // Maps command results to feedback strings
+    std::unordered_map<CommandResult, std::string> commandResultMap; // Maps command results to feedback strings
 
     void initializeMaps();
     void initializeCommandMap();
@@ -40,7 +47,7 @@ private:
      * Main function responsible for handling execution of a single command type.
      * Calls the execute method of command object in the commandMap
      */
-    commandResult executeCommand(ProcessedMessage &processedMessage);
+    CommandResult executeCommand(ProcessedMessage &processedMessage);
 
     /**
      * Boradcast lobby message to all users in lobby

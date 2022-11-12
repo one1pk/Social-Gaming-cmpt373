@@ -176,11 +176,12 @@ std::string formatString(std::string_view str, ElementSptr element) {
     return res;
 }
 
-InputChoice::InputChoice(std::string prompt, ElementVector choices, unsigned timeout_s,
-    std::string result, std::shared_ptr<std::deque<Message>> player_msgs,
-    std::shared_ptr<std::map<Connection, std::string>> player_input)
-    : prompt(prompt), choices(choices), timeout_s(timeout_s),
-      result(result), player_msgs(player_msgs), player_input(player_input) {
+InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string result, 
+    std::shared_ptr<std::deque<InputRequest>> input_requests,
+    std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+    unsigned timeout_s)
+    : prompt(prompt), choices(choices), result(result), 
+    input_requests(input_requests), player_input(player_input), timeout_s(timeout_s) {
 }
 
 bool InputChoice::executeImpl(ElementSptr player) {
@@ -188,21 +189,38 @@ bool InputChoice::executeImpl(ElementSptr player) {
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!awaitingInput[player_connection]) {
-        std::stringstream msg(formatString(prompt, player));
-        msg << "Enter an index to select:\n";
+        std::stringstream formatted_prompt(formatString(prompt, player));
+        formatted_prompt << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
-            msg << "["<<i<<"] " << choices[i]->getString() << "\n";
+            formatted_prompt << "["<<i<<"] " << choices[i]->getString() << "\n";
         }
-        player_msgs->push_back({ player_connection, msg.str() });
+        if (timeout_s) formatted_prompt << "Input will timeout in " << timeout_s << " seconds\n"; 
 
-        // returning false indicates that input is needed from the user
+        InputRequest request;
+        request.user = player_connection;
+        request.prompt = formatted_prompt.str();
+        request.num_choices = choices.size();
+        request.type = InputType::Choice;
+        if (timeout_s) {
+            request.hasTimeout = true;
+            request.timeout_ms = timeout_s*1000;
+        }
+        input_requests->push_back(request);
+
         awaitingInput[player_connection] = true;
+        // returning false indicates that input is needed from the user
         return false;
     }
     // execution will continue from here after input is recieved
 
-    /// TODO: check if the selected index is within range, if not ask user to provide a valid index
-    int chosen_index = std::stoi(player_input->at(player_connection));
+    int chosen_index;
+    InputResponse input = player_input->at(player_connection);
+    if (input.timedout) {
+        // for now, if an input request times out, a default index is chosen
+        chosen_index = 0;
+    } else {
+        chosen_index = std::stoi(input.response);
+    }
     player->setMapElement(result, choices[chosen_index]);
 
     awaitingInput[player_connection] = false;

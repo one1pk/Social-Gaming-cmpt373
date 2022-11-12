@@ -1,11 +1,11 @@
 #include "commandHandler.h"
 #include "game.h"
 #include "globalState.h"
-#include "InterpretJson.h"
 #include "messageProcessor.h"
 #include "server.h"
 #include "list.h"
 
+#include <unistd.h>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -15,19 +15,18 @@
 #include <vector>
 #include <map>
 
+std::vector<Connection> newConnections;
+std::vector<Connection> lostConnections;
 
-GlobalServerState globalState;
-
-// FIX: Resolve stuff here, REMOVE OR ADD CONNECTION FROM GLOBAL STATE
 void onConnect(Connection c) {
     std::cout << "New connection: " << c.id << "\n";
-    globalState.addConnection(c);
+    newConnections.push_back(c);
 }
 
 // called when a client disconnects
 void onDisconnect(Connection c) {
     std::cout << "Connection lost: " << c.id << "\n";
-    // globalState->disconnectConnection(c);
+    lostConnections.push_back(c);
 }
 
 // extracts the port number from ./serverconfig.json
@@ -36,19 +35,17 @@ unsigned short getPort() {
     return 4040;
 }
 
-// #include <unistd.h>
-// std::string getHTTPMessage(const char *htmlLocation) {
-//     if (access(htmlLocation, R_OK) != -1) {
-//         std::ifstream infile{htmlLocation};
-//         return std::string{std::istreambuf_iterator<char>(infile),
-//                            std::istreambuf_iterator<char>()};
-//     } else {
-//         std::cerr << "Unable to open HTML index file:\n"
-//                   << htmlLocation << "\n";
-//         std::exit(-1);
-//     }
-// }
-
+std::string getHTTPMessage(const char *htmlLocation) {
+    if (access(htmlLocation, R_OK) != -1) {
+        std::ifstream infile{htmlLocation};
+        return std::string{std::istreambuf_iterator<char>(infile),
+                           std::istreambuf_iterator<char>()};
+    } else {
+        std::cerr << "Unable to open HTML index file:\n"
+                  << htmlLocation << "\n";
+        std::exit(-1);
+    }
+}
 
 int main(int argc, char *argv[]) {    
     if (argc < 3) {
@@ -62,11 +59,13 @@ int main(int argc, char *argv[]) {
     // start a new session based on the configuration
     // (for now we take them as cmdline args)
 
+    unsigned update_interval = 300;
     unsigned short port = std::stoi(argv[1]);
+    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
 
-    Server server{port, ""/*getHTTPMessage(argv[2])*/, onConnect, onDisconnect};
-    MessageProcessor messageProcessor;
+    GlobalServerState globalState(update_interval);
     CommandHandler commandHandler(globalState);
+    MessageProcessor messageProcessor;
 
     std::cout << "Game server is up!\n";
 
@@ -82,12 +81,15 @@ int main(int argc, char *argv[]) {
         }
 
         std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor.getProcessedMessages(server.receive());
-
         std::deque<Message> outgoingMsgs = commandHandler.getOutgoingMessages(processedIncomingMessages);
         server.send(outgoingMsgs);
 
         std::deque<Message> outgoingGameMsgs = globalState.processGames();
         server.send(outgoingGameMsgs);
+
+        globalState.addNewConnections(newConnections);
+        std::deque<Message> outgoingDisconnectionMsgs = commandHandler.handleLostConnections(lostConnections);
+        server.send(outgoingDisconnectionMsgs);
 
         if (errorWhileUpdating) {
             break;
