@@ -1,8 +1,32 @@
 #include "commands.h"
 
-/////////////////////       SERVER COMMANDS       /////////////////////
+////////////////////////////////////////////////////////////////////////////
+////////////////////////      HELPER FUNCTIONS      ////////////////////////
 
-//////////////////////////      CREATE GAME      //////////////////////////
+void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outgoing, Connection connection) {
+    std::stringstream notification;
+    notification << "\nUser " << connection.id << " left\n\n" ; 
+    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), connection);
+    for (auto message : messages) {
+        outgoing.push_back(message);
+    }
+    
+    Connection owner = globalState.getGameOwner(connection);
+    globalState.removeClientFromGame(connection);
+
+    if (globalState.isOngoingGame(owner) && !globalState.gameHasEnoughPlayers(owner)) {
+        std::deque<Message> messages = globalState.buildMsgsForAllPlayersAndOwner("\nNot enough players left, ending game.\n\n", owner);
+        for (auto message : messages) {
+            outgoing.push_back(message);
+        }
+        globalState.endGame(owner);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////      SERVER COMMAND      /////////////////////////
+
+//////////////////////////      CREATE GAME      ///////////////////////////
 
 CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
     if (globalState.isInGame(processedMessage.connection)) {
@@ -151,24 +175,9 @@ CommandResult LeaveGameCommand::execute(ProcessedMessage &processedMessage) {
     if (globalState.isOwner(processedMessage.connection)) {
         return CommandResult::ERROR_OWNER_CANNOT_LEAVE;
     }
-    
-    std::stringstream notification;
-    notification << "\nUser " << processedMessage.connection.id << " left the game.\n\n";
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), processedMessage.connection);
-    for (auto message : messages) {
-        outgoing.push_back(message);
-    }
-    
-    Connection owner = globalState.getGameOwner(processedMessage.connection);
-    globalState.removeClientFromGame(processedMessage.connection);
 
-    if (!globalState.gameHasEnoughPlayers(owner)) {
-        std::deque<Message> messages = globalState.buildMsgsForAllPlayersAndOwner("\nNot enough players left, ending game.\n\n", owner);
-        for (auto message : messages) {
-            outgoing.push_back(message);
-        }
-        globalState.endGame(owner);
-    }
+    handlePlayerLeave(globalState, outgoing, processedMessage.connection);
+
     return CommandResult::SUCCESS_GAME_LEAVE;
 }
 
@@ -181,28 +190,13 @@ CommandResult ExitServerCommand::execute(ProcessedMessage &processedMessage) {
     if (globalState.isInGame(processedMessage.connection)) {
         return executePlayerImpl(processedMessage);
     }
+
     return CommandResult::SUCCESS;
 }
 
 // FIX: DRY Violation
 CommandResult ExitServerCommand::executePlayerImpl(ProcessedMessage &processedMessage) {
-    std::stringstream notification;
-    notification << "\nUser " << processedMessage.connection.id << " left the server\n\n" ;
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), processedMessage.connection);
-    for (auto message : messages) {
-        outgoing.push_back(message);
-    }
-
-    Connection owner = globalState.getGameOwner(processedMessage.connection);
-    globalState.removeClientFromGame(processedMessage.connection);
-
-    if (!globalState.gameHasEnoughPlayers(owner)) {
-        std::deque<Message> messages = globalState.buildMsgsForAllPlayersAndOwner("\nNot enough players left, ending game.\n\n", owner);
-        for (auto message : messages) {
-            outgoing.push_back(message);
-        }
-        globalState.endGame(owner);
-    }
+    handlePlayerLeave(globalState, outgoing, processedMessage.connection);
     globalState.disconnectConnection(processedMessage.connection);
 
     return CommandResult::SUCCESS;
