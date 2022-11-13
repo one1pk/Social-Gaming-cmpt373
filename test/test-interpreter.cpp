@@ -7,6 +7,7 @@
 #include "game.h"
 #include "list.h"
 #include "rules.h"
+#include <algorithm>
 
 using Json = nlohmann::json;
 
@@ -77,25 +78,39 @@ TEST_F(InterpreterTest, MinimumConfigFromJSON) {
 //std::cout << " Data from game object:\n" << std::endl;
 //std::cout << setw(4) << gameDataToJson << std::endl;
 
-TEST_F(InterpreterTest, NamesAreResolved){
-    ElementSptr listToTest = j.resolveName(g, "constants");
-    
-    //std::cout << listToTest->getMapElement("weapons")->getVector()[2]->getMapElement("beats")->getString() << std::endl;
-    EXPECT_EQ(listToTest, constants);
+TEST_F(InterpreterTest, Split){
+    std::vector<std::string> splits = j.splitString("setup.Rounds.upfrom(1)");
+    std::vector<std::string> splitsExpected = {"setup", "Rounds", "upfrom", "1"};
 
-    size_t weaponsSize = listToTest->getMapElement("weapons")->getSize();
-    EXPECT_EQ(weaponsSize, 3);
+    EXPECT_EQ(splits, splitsExpected);
+
+    std::vector<std::string> splits2 = j.splitString("constants.weapons");
+    std::vector<std::string> splitsExpected2 = {"constants", "weapons"};
+
+    EXPECT_EQ(splits2, splitsExpected2);
 }
 
+TEST_F(InterpreterTest, NamesAreResolved){
+    ElementSptr listToTest1 = j.resolveName(g, "variables");
+    EXPECT_EQ(listToTest1, variables);
+
+    ElementSptr listToTest2 = j.resolveName(g, "constants");
+    EXPECT_EQ(listToTest2, constants);
+
+    ElementSptr listToTest3 = j.resolveName(g, "constants.weapons");
+    EXPECT_EQ(listToTest3, constants->getMapElement("weapons"));    
+}
+
+
 TEST_F(InterpreterTest, RulesGetCorrectLists){
-    ElementSptr expectedList = setup->getMapElement("Rounds")->upfrom(1);
     ElementSptr forEachList = dynamic_cast<Foreach&>(*rules[0]).getList();
-
-    int round3 =  forEachList->getVector()[2]->getInt();
-    int sizeForEachList = forEachList->getSize();
-
-    EXPECT_EQ(round3, 3);
-    EXPECT_EQ(sizeForEachList, 4);
+    std::vector<int> numVector;
+    std::vector<int> expectedNumVector = {1,2,3,4};
+    for(auto it : forEachList->getVector()){
+        numVector.push_back(it->getInt());
+    }
+    
+    EXPECT_EQ(numVector, expectedNumVector);
 }
 
 TEST_F(InterpreterTest, MinimumConfigToJSON) {

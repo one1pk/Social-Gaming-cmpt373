@@ -13,23 +13,19 @@ using namespace chaiscript;
 
 class InterpretJson{
     public:
-        
-        
         InterpretJson() = default;
         InterpretJson(string path);
-       
-
         InterpretJson(Json j);
         
-
-        //maps json data to game object
         void interpret(Game& obj );
 
         Json getData();
-        ElementSptr resolveName(Game& game, std::string name);
-
+        std::vector<std::string> splitString(const std::string& sv);
+        ElementSptr resolveName(Game& game, const std::string& name);
+        
+         
         //void registerListsToChai(Game& game);
-       //ChaiScript chai;
+        //ChaiScript chai;
         
     private:
         Json data;

@@ -16,7 +16,8 @@
           },
         
           "variables": {
-            "winners": []
+            "winners": [],
+            "Rounds": 4
           },
         
           "per-player": {
@@ -28,7 +29,7 @@
           
           "rules": [
             { "rule": "foreach",
-              "list": "setup",
+              "list": "setup.Rounds.upfrom(1)",
               "element": "round",
               "rules": [
         

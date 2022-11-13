@@ -3,6 +3,7 @@
 #include "InterpretJson.h"
 #include "game.h"
 #include <algorithm>
+#include <cctype>
 
 #define MACRO_VARIABLE_TO_STRING(Variable) (void(Variable), #Variable)
 
@@ -30,8 +31,8 @@ Json InterpretJson::getData(){
 
 void InterpretJson::interpret(Game& game){
     game = data.get<Game>();
+
     //registerListsToChai(game);
-    //create rule vector _rules from elementSptr _rules_from_json
 
     //convert ElementSptr _rules_from_json to rule vector containing rule objects _rules
     toRuleVec(game, game.rules_from_json(), game.rules());
@@ -39,18 +40,71 @@ void InterpretJson::interpret(Game& game){
 
 
 //Interpret Rules
+std::vector<std::string> InterpretJson::splitString(const std::string& listName) {
+    int pos = 0;
+    bool alnum = false;
+    std::vector<std::string> splits;
+    splits.reserve(listName.length());
 
-ElementSptr InterpretJson::resolveName(Game& game, std::string name){
+    for (unsigned i = 0; i < listName.length(); i++) {
+        if (isalnum(listName[i])) {
+            if (!alnum) {
+                pos = i;
+                alnum = true;
+            }
+        }  else {
+            if (alnum) {
+                splits.emplace_back(listName.substr(pos, i-pos));
+                alnum = false;
+            }
+        }
+    }
+    if (alnum) {
+        splits.emplace_back(listName.substr(pos, listName.length()-pos));
+    }
+
+    return splits;
+}
+
+
+ElementSptr InterpretJson::resolveName(Game& game, const std::string& listName){
     ElementSptr constants = game.constants();
     ElementSptr setup = game.setup();
+    ElementSptr variables = game.variables();
+    ElementSptr per_player = game.per_player();
+    ElementSptr per_audience = game.per_audience();
+
+    std::vector<std::string> listNames = splitString(listName);
     
-    if(MACRO_VARIABLE_TO_STRING(constants) == name){
-        return game.constants();
+    std::map<std::string, ElementSptr> listMap = std::map<std::string, ElementSptr>{{"constants", constants},
+             {"variables", variables},
+             {"setup", setup},
+             {"per-player", per_player},
+             {"per-audience", per_audience}};
+    
+    ElementSptr actualList = listMap.at(listNames[0]);
+
+    //TODO: Creat expression parser tree for operations instead of using if statements
+    int i;
+    bool isOperation = false;
+    for(i = 1; i < listNames.size(); i++){
+        if(listNames[i] == "upfrom"){
+            isOperation = true;
+            continue;
+        }
+        if(isOperation == true){
+            int start = stoi(listNames[i]);
+            ElementSptr upfromList = actualList->upfrom(start);
+            actualList.swap(upfromList);
+            isOperation = false;
+        }
+        else{
+            std::string name = listNames[i];
+            ElementSptr deeperElement = actualList->getMapElement(name);
+            actualList.swap(deeperElement);
+        }
     }
-    else if(MACRO_VARIABLE_TO_STRING(setup) == name){
-        return setup->getMapElement("Rounds")->upfrom(1);
-    }
-    return nullptr;
+    return actualList;
 }
 
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
@@ -66,7 +120,8 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         RuleSptr rule_object;
 
         if(rule_name == "foreach"){
-            ElementSptr list = resolveName(game, rule->getMapElement("list")->getString());
+            std::string listName = rule->getMapElement("list")->getString();
+            ElementSptr list = resolveName(game, listName);
             RuleVector sub_rules;
             toRuleVec(game, rule->getMapElement("rules"), sub_rules);
             rule_object = std::make_shared<Foreach>(list, sub_rules);
@@ -96,12 +151,6 @@ void InterpretJson::registerListsToChai(Game& game){
     chai.add(var(per_audience), "per_audience");
 }
 
-std::map lists = std::map<std::string, ElementSptr>{{"constants", game.constants()},
-             {"variables", game.variables()},
-             {"setup", game.setup()},
-             {"per-player", game.per_player()},
-             {"per-audience", game.per_audience()}};
-    auto location = std::find(lists.begin(), lists.end(), name);
-    return
+
     */
 
