@@ -1,0 +1,2 @@
+Per-player should contain all the elements a player would have, example, weapons, wins, etc
+Getting a sublist must be explicitly mentioned as "sublist". Example: constants.weapons.sublist.name

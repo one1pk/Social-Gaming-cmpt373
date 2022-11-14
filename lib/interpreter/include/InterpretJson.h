@@ -26,8 +26,7 @@ class InterpretJson{
          
         //void registerListsToChai(Game& game);
         //ChaiScript chai;
-        
-    private:
+    
         Json data;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
         

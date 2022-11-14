@@ -67,8 +67,7 @@ public:
         return _has_audience;
     }
 
-    
-    
+void setExternalLists(std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience, std::shared_ptr<std::deque<Message>> player_msgs, std::shared_ptr<std::deque<std::string>> global_msgs, std::shared_ptr<std::map<Connection, std::string>> player_input);
     
 private:
     uintptr_t _id; // unique id can act as an invitation code

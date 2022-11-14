@@ -16,8 +16,7 @@
           },
         
           "variables": {
-            "winners": [],
-            "Rounds": 4
+            "winners": []
           },
         
           "per-player": {

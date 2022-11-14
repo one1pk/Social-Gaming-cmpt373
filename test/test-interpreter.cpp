@@ -13,14 +13,28 @@ using Json = nlohmann::json;
 
 string filePath = PATH_TO_JSON_TEST"/partRules.json";
 
+//derived to include toRuleVec so it does not interfere with gameserver
+class InterpretJsonTest : public InterpretJson{
+    public:
+    InterpretJsonTest(std::string filePath) : InterpretJson(filePath){}
+    InterpretJsonTest() : InterpretJson() {}
+    InterpretJsonTest(Json j) : InterpretJson(j) {}
+
+    void interpretTest(Game& game){
+        game = data.get<Game>();
+        //convert ElementSptr _rules_from_json to rule vector containing rule objects _rules
+        toRuleVec(game, game.rules_from_json(), game.rules());
+    }
+};
+
 class InterpreterTest : public ::testing::Test{
     protected:
         void SetUp() override{
-            InterpretJson j(filePath);
+            InterpretJsonTest j(filePath);
             jsonData = j.getData();
 
             //Map json to game object
-            j.interpret(g);
+            j.interpretTest(g);
             
             //convert game object back to json
             gameDataToJson = g;
@@ -35,7 +49,7 @@ class InterpreterTest : public ::testing::Test{
         }
 
     Game g;
-    InterpretJson j;
+    InterpretJsonTest j;
 
     ElementSptr setup;
     ElementSptr constants;
@@ -101,6 +115,21 @@ TEST_F(InterpreterTest, NamesAreResolved){
     EXPECT_EQ(listToTest3, constants->getMapElement("weapons"));    
 }
 
+TEST_F(InterpreterTest, OperationsTest){
+    //test sublist
+    ElementSptr listToTest4 = j.resolveName(g, "constants.weapons.sublist(name)");
+    std::vector<std::string> expectedList = {"Rock", "Paper", "Scissors"};
+    std::vector<std::string> stringVector;
+    for(auto it : listToTest4->getVector()){
+        stringVector.push_back(it->getString());
+    }
+    EXPECT_EQ(stringVector, expectedList);
+
+    //test size
+    ElementSptr sizeOfList = j.resolveName(g, "constants.weapons.size");
+    EXPECT_EQ(sizeOfList->getInt(), 3);
+}
+
 
 TEST_F(InterpreterTest, RulesGetCorrectLists){
     ElementSptr forEachList = dynamic_cast<Foreach&>(*rules[0]).getList();
@@ -117,3 +146,6 @@ TEST_F(InterpreterTest, MinimumConfigToJSON) {
     EXPECT_EQ(jsonData, gameDataToJson);
 }
 
+TEST_F(InterpreterTest, RunGame){
+    g.run();
+}

@@ -170,8 +170,12 @@ std::string formatString(std::string_view str, ElementSptr element) {
             if (close_brace == open_brace+1) {
                 res.replace(open_brace, 2, element->getString());
             } else {
-                std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
-                res.replace(open_brace, close_brace-open_brace+1, value_str);
+                if(element->type == Type::INT)
+                    res.replace(open_brace, close_brace-open_brace+1, element->getString());
+                else{
+                    std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
+                    res.replace(open_brace, close_brace-open_brace+1, value_str);
+                }
             }
         }
     }

@@ -35,7 +35,7 @@ void InterpretJson::interpret(Game& game){
     //registerListsToChai(game);
 
     //convert ElementSptr _rules_from_json to rule vector containing rule objects _rules
-    toRuleVec(game, game.rules_from_json(), game.rules());
+    //toRuleVec(game, game.rules_from_json(), game.rules());
 }
 
 
@@ -68,39 +68,52 @@ std::vector<std::string> InterpretJson::splitString(const std::string& listName)
 
 
 ElementSptr InterpretJson::resolveName(Game& game, const std::string& listName){
+    std::vector<std::string> listNames = splitString(listName);
+
     ElementSptr constants = game.constants();
     ElementSptr setup = game.setup();
     ElementSptr variables = game.variables();
     ElementSptr per_player = game.per_player();
     ElementSptr per_audience = game.per_audience();
 
-    std::vector<std::string> listNames = splitString(listName);
-    
     std::map<std::string, ElementSptr> listMap = std::map<std::string, ElementSptr>{{"constants", constants},
-             {"variables", variables},
-             {"setup", setup},
-             {"per-player", per_player},
-             {"per-audience", per_audience}};
+        {"variables", variables},
+        {"setup", setup},
+        {"per-player", per_player},
+        {"per-audience", per_audience}};
     
     ElementSptr actualList = listMap.at(listNames[0]);
 
-    //TODO: Creat expression parser tree for operations instead of using if statements
+    //TODO: Create abstract syntax tree for operations instead of using if statements
     int i;
     bool isOperation = false;
+    std::string prevName;
     for(i = 1; i < listNames.size(); i++){
-        if(listNames[i] == "upfrom"){
+        auto name = listNames[i];
+        if(listNames[i] == "upfrom" || listNames[i] == "sublist"){
             isOperation = true;
+            prevName = listNames[i];
             continue;
         }
-        if(isOperation == true){
-            int start = stoi(listNames[i]);
-            ElementSptr upfromList = actualList->upfrom(start);
-            actualList.swap(upfromList);
-            isOperation = false;
+        else if(listNames[i] == "size"){
+            ElementSptr size = std::make_shared<Element<int>>(actualList->getSizeAsInt());
+            actualList.swap(size);
+        }
+        else if(isOperation == true){
+            if(prevName == "upfrom"){
+                int start = stoi(listNames[i]);
+                ElementSptr upfromList = actualList->upfrom(start);
+                actualList.swap(upfromList);
+                isOperation = false;
+            }
+            else if(prevName == "sublist"){
+                ElementSptr subList = std::make_shared<Element<ElementVector>>(actualList->getSubList(listNames[i]));
+                actualList.swap(subList);
+                isOperation = false;
+            }
         }
         else{
-            std::string name = listNames[i];
-            ElementSptr deeperElement = actualList->getMapElement(name);
+            ElementSptr deeperElement = actualList->getMapElement(listNames[i]);
             actualList.swap(deeperElement);
         }
     }
@@ -116,23 +129,42 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
     std::shared_ptr<PlayerMap> audience_list = std::make_shared<PlayerMap>(PlayerMap{});
 
     for (auto rule: rules_from_json->getVector()){
-        std::string rule_name = rule->getMapElement("rule")->getString();
+        std::string ruleName = rule->getMapElement("rule")->getString();
         RuleSptr rule_object;
 
-        if(rule_name == "foreach"){
+        if(ruleName == "foreach"){
             std::string listName = rule->getMapElement("list")->getString();
             ElementSptr list = resolveName(game, listName);
             RuleVector sub_rules;
             toRuleVec(game, rule->getMapElement("rules"), sub_rules);
             rule_object = std::make_shared<Foreach>(list, sub_rules);
-            rule_vec.push_back(rule_object);
+            
         }
-        else if(rule_name == "global-message"){
+        else if(ruleName == "global-message"){
             auto msg = rule->getMapElement("value")->getString();
             rule_object = std::make_shared<GlobalMsg>(msg, global_msg_list);
-            rule_vec.push_back(rule_object);
         }
+
+        //These cannot be tested right now as player list is empty
+        //TODO: simulate player list outside of gameserver
+        else if(ruleName == "parallelfor"){
+            RuleVector sub_rules;
+            toRuleVec(game, rule->getMapElement("rules"), sub_rules);
+            rule_object = std::make_shared<ParallelFor>(player_list, sub_rules);
+        }
+        else if(ruleName == "input-choice"){
+            auto prompt = rule->getMapElement("prompt")->getString();
+            auto choices = resolveName(game, rule->getMapElement("choices")->getString())->getVector();
+            auto result = rule->getMapElement("result")->getString();
+            auto timeout = rule->getMapElement("timeout")->getInt();
+            rule_object = std::make_shared<InputChoice>(prompt, choices, timeout, result, player_msg_list, player_input_list);
+        }
+    
+        rule_vec.push_back(rule_object);
     }
+    
+    game.setExternalLists(player_list, audience_list, player_msg_list, global_msg_list, player_input_list);
+    
 }
 
 

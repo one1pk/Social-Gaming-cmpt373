@@ -48,10 +48,12 @@ public:
     virtual int getInt() = 0;
     virtual bool getBool() = 0;
 
+
     virtual void addInt(int value) = 0;
     virtual void setInt(int value) = 0;
     
     virtual size_t getSize() = 0;
+    virtual int getSizeAsInt() = 0;
 
     virtual Connection getConnection() = 0;
 
@@ -219,6 +221,17 @@ public:
     }
 
     size_t getSize() final {
+        // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
+        
+        if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection>) {
+            // throw error //
+            return 0;
+        } else {
+            return _data.size();
+        }
+    }
+
+    int getSizeAsInt() final {
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
         
         if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection>) {
