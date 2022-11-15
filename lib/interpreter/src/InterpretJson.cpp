@@ -122,7 +122,7 @@ ElementSptr InterpretJson::resolveName(Game& game, const std::string& listName){
 
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
 
-    std::shared_ptr<PlayerMap> player_list = std::make_shared<PlayerMap>(PlayerMap{});
+    std::shared_ptr<PlayerMap> player_map = std::make_shared<PlayerMap>(PlayerMap{});
     std::shared_ptr<std::deque<Message>> player_msg_list = std::make_shared<std::deque<Message>>();
     std::shared_ptr<std::deque<std::string>> global_msg_list = std::make_shared<std::deque<std::string>>();
     std::shared_ptr<std::map<Connection, std::string>> player_input_list = std::make_shared<std::map<Connection, std::string>>();
@@ -145,12 +145,10 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             rule_object = std::make_shared<GlobalMsg>(msg, global_msg_list);
         }
 
-        //These cannot be tested right now as player list is empty
-        //TODO: simulate player list outside of gameserver
         else if(ruleName == "parallelfor"){
             RuleVector sub_rules;
             toRuleVec(game, rule->getMapElement("rules"), sub_rules);
-            rule_object = std::make_shared<ParallelFor>(player_list, sub_rules);
+            rule_object = std::make_shared<ParallelFor>(player_map, sub_rules);
         }
         else if(ruleName == "input-choice"){
             auto prompt = rule->getMapElement("prompt")->getString();
@@ -159,11 +157,20 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             auto timeout = rule->getMapElement("timeout")->getInt();
             rule_object = std::make_shared<InputChoice>(prompt, choices, timeout, result, player_msg_list, player_input_list);
         }
-    
+        else if (ruleName == "add"){
+            auto to = rule->getMapElement("to")->getString();
+            auto value = rule->getMapElement("value");
+            rule_object = std::make_shared<Add>(to, value);
+        }
+        else if (ruleName == "scores"){
+            auto score = rule->getMapElement("score")->getString();
+            auto ascending = rule->getMapElement("ascending")->getBool();
+            rule_object = std::make_shared<Scores>(player_map, score, ascending, global_msg_list);
+        }
         rule_vec.push_back(rule_object);
     }
     
-    game.setExternalLists(player_list, audience_list, player_msg_list, global_msg_list, player_input_list);
+    game.setExternalLists(player_map, audience_list, player_msg_list, global_msg_list, player_input_list);
     
 }
 

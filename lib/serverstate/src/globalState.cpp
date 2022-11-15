@@ -292,7 +292,7 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
 
     //Interpretr maps json info to game fields and lists
     Game g;
-    std::string path = PATH_TO_JSON;
+    std::string path = PATH_TO_JSON"/rock_paper_scissors.json";
     InterpretJson j(path);
     j.interpret(g);
 

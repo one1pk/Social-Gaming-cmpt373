@@ -12,6 +12,7 @@
 using Json = nlohmann::json;
 
 string filePath = PATH_TO_JSON_TEST"/partRules.json";
+string filePathWithInput = PATH_TO_JSON_TEST"/partRulesWithInput.json";
 
 //derived to include toRuleVec so it does not interfere with gameserver
 class InterpretJsonTest : public InterpretJson{
@@ -46,6 +47,8 @@ class InterpreterTest : public ::testing::Test{
             per_audience = g.per_audience();
             rules = g.rules();
             rulesFromJson = g.rules_from_json();
+
+           
         }
 
     Game g;
@@ -131,7 +134,7 @@ TEST_F(InterpreterTest, OperationsTest){
 }
 
 
-TEST_F(InterpreterTest, RulesGetCorrectLists){
+TEST_F(InterpreterTest, ForeachTest){
     ElementSptr forEachList = dynamic_cast<Foreach&>(*rules[0]).getList();
     std::vector<int> numVector;
     std::vector<int> expectedNumVector = {1,2,3,4};
@@ -142,10 +145,28 @@ TEST_F(InterpreterTest, RulesGetCorrectLists){
     EXPECT_EQ(numVector, expectedNumVector);
 }
 
+TEST_F(InterpreterTest, ParallelForTest){
+
+}
+
+TEST_F(InterpreterTest, AddTest){
+
+}
+
 TEST_F(InterpreterTest, MinimumConfigToJSON) {
     EXPECT_EQ(jsonData, gameDataToJson);
 }
 
 TEST_F(InterpreterTest, RunGame){
+    //still does not allow parallel for to execute anything
+    Connection c;
+    c.id = 1;
+    Connection c2;
+    c2.id = 2;
+    g.addPlayer(c);
+    g.addPlayer(c2);
+
     g.run();
+    EXPECT_EQ(g.status(), GameStatus::Finished);
 }
+
