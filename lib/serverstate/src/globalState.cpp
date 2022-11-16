@@ -279,7 +279,7 @@ void GlobalServerState::populateGameList() {
 using Json = nlohmann::json;
 void testConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner){
     Game g;
-    std::string path = "/Users/callum/Documents/SFUCourses/CMPT373/GamingPlatform/social-gaming/test/test_files/withInputRule.json";
+    std::string path = PATH_TO_JSON"/withInputRule.json";
     InterpretJson j(path);
     j.interpretWithRules(g);
     g.setOwner(owner);
