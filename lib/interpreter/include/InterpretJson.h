@@ -19,13 +19,12 @@ class InterpretJson{
         
         void interpret(Game& obj );
 
+        //TEMP: just fo testing purposes
+        void interpretWithRules(Game& obj );
+
         Json getData();
         std::vector<std::string> splitString(const std::string& sv);
         ElementSptr resolveName(Game& game, const std::string& name);
-        
-         
-        //void registerListsToChai(Game& game);
-        //ChaiScript chai;
     
         Json data;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
@@ -75,7 +74,6 @@ inline void from_json(const Json& j,  Game& g){
     j.at("variables").get_to(g._variables);
     j.at("per-player").get_to(g._per_player);
     j.at("per-audience").get_to(g._per_audience);
-    j.at("rules").get_to(g._rules_from_json);
 }
 
 //only works for config, not urgent
@@ -89,7 +87,6 @@ inline void to_json( Json& j, const Game& g){
     j["constants"] = g._constants;
     j["per-player"] = g._per_player;
     j["per-audience"] = g._per_audience;
-    j["rules"] = g._rules_from_json;
 }
 
 

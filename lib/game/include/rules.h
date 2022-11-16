@@ -116,7 +116,7 @@ class InputChoice : public Rule {
     std::string result;
     std::shared_ptr<std::deque<Message>> player_msgs;
     std::shared_ptr<std::map<Connection, std::string>> player_input;
-    std::map<Connection, bool> awaitingInput;
+    std::map<Connection, bool> alreadySentInput;
 public:
     InputChoice(std::string prompt, ElementVector choices, 
                 unsigned timeout_s, std::string result,

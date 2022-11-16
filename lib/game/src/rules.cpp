@@ -170,12 +170,12 @@ std::string formatString(std::string_view str, ElementSptr element) {
             if (close_brace == open_brace+1) {
                 res.replace(open_brace, 2, element->getString());
             } else {
-                if(element->type == Type::INT)
-                    res.replace(open_brace, close_brace-open_brace+1, element->getString());
-                else{
-                    std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
-                    res.replace(open_brace, close_brace-open_brace+1, value_str);
-                }
+                    if(element->type == Type::INT)
+                        res.replace(open_brace, close_brace-open_brace+1, element->getString());
+                    else{
+                        std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
+                        res.replace(open_brace, close_brace-open_brace+1, value_str);
+                    }
             }
         }
     }
@@ -191,9 +191,10 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, unsigned tim
 
 bool InputChoice::executeImpl(ElementSptr player) {
     std::cout << "* InputChoiceRequest Rule *\n";
+    
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
-    if (!awaitingInput[player_connection]) {
+    if (!alreadySentInput[player_connection]) {
         std::stringstream msg(formatString(prompt, player));
         msg << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
@@ -202,7 +203,7 @@ bool InputChoice::executeImpl(ElementSptr player) {
         player_msgs->push_back({ player_connection, msg.str() });
 
         // returning false indicates that input is needed from the user
-        awaitingInput[player_connection] = true;
+        alreadySentInput[player_connection] = true;
         return false;
     }
     // execution will continue from here after input is recieved
@@ -211,7 +212,7 @@ bool InputChoice::executeImpl(ElementSptr player) {
     int chosen_index = std::stoi(player_input->at(player_connection));
     player->setMapElement(result, choices[chosen_index]);
 
-    awaitingInput[player_connection] = false;
+    alreadySentInput[player_connection] = false;
     return true;
 }
 
@@ -223,7 +224,7 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
 
 bool GlobalMsg::executeImpl(ElementSptr element) {
     std::cout << "* GlobalMsg Rule *\n";
-
+    
     global_msgs->push_back(formatString(msg, element));
     executed = true;
     return true;

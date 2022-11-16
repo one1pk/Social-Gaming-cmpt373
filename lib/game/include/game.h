@@ -61,13 +61,35 @@ public:
     ElementSptr variables();
     ElementSptr per_player();
     ElementSptr per_audience();
-    ElementSptr rules_from_json();
     RuleVector& rules();
+
+    //for interpreter, might just make fields publics
+    void setOwner(Connection owner){
+        _owner = owner;
+    }
     bool audience(){
         return _has_audience;
     }
+    void setID(){
+         static uintptr_t shared_id_counter = 1; // gameIDs start at 1
+        _id = shared_id_counter++;
+    }
+    void setName(std::string name){
+        _name = name;
+    }
+    void setStatusCreated(){
+        _status = GameStatus::Created;
+    }
+    void setRules(RuleVector rules){
+        _rules = rules;
+    }
+   
+    std::shared_ptr<PlayerMap> _players = std::make_shared<PlayerMap>(PlayerMap{}); // maps each player to their game map
+    std::shared_ptr<PlayerMap> _audience = std::make_shared<PlayerMap>(PlayerMap{}); // maps each audience to their game map
+    std::shared_ptr<std::deque<Message>> _player_msgs = std::make_shared<std::deque<Message>>();
+    std::shared_ptr<std::deque<std::string>> _global_msgs = std::make_shared<std::deque<std::string>>();
+    std::shared_ptr<std::map<Connection, std::string>> _player_input = std::make_shared<std::map<Connection, std::string>>();
 
-void setExternalLists(std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience, std::shared_ptr<std::deque<Message>> player_msgs, std::shared_ptr<std::deque<std::string>> global_msgs, std::shared_ptr<std::map<Connection, std::string>> player_input);
     
 private:
     uintptr_t _id; // unique id can act as an invitation code
@@ -94,15 +116,9 @@ private:
     ElementSptr _per_player; // a map template for players
     ElementSptr _per_audience; // a map template for audience members
 
-    ElementSptr _rules_from_json;
     RuleVector _rules;
 
-    std::shared_ptr<PlayerMap> _players;  // maps each player to their game map
-    std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
-
-    std::shared_ptr<std::deque<Message>> _player_msgs;
-    std::shared_ptr<std::deque<std::string>> _global_msgs;
-    std::shared_ptr<std::map<Connection, std::string>> _player_input;
+    
 
     //allows from_json and to_json to access private fields
     friend void from_json(const Json &j, Game &g);

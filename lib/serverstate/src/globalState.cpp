@@ -32,11 +32,13 @@ void GlobalServerState::removeClientFromGame(Connection connection) {
 
 ///////////////////     GAME-RELATED FUNCTIONS     ///////////////////
 void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner);
-
+void testConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner);
 uintptr_t GlobalServerState::createGame(int gameIndex, Connection connection) {
     /// TODO: use interpreter to retrieve the appropriate game object corresponding to the game name
-    TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], connection);
-
+    if(gameIndex == 0)
+        TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], connection);
+    else
+        testConstruction(game_instances, gameNameList[gameIndex], connection);
     removeClientFromList(clients_in_lobby, connection);
     clients_in_games[connection] = game_instances.back().id();
     gameOwnerMap[connection] = game_instances.back().id();
@@ -265,6 +267,7 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 // all games defined in ./gameconfigs can be "served" to users
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock Paper Scissors");
+    gameNameList[1] = std::string("TestGame");
 }
 
 
@@ -274,6 +277,16 @@ void GlobalServerState::populateGameList() {
 ////////////// TEMPORARY: Manual Rock Paper Scissor Game Construction //////////////////////
 #include "InterpretJson.h"
 using Json = nlohmann::json;
+void testConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner){
+    Game g;
+    std::string path = "/Users/callum/Documents/SFUCourses/CMPT373/GamingPlatform/social-gaming/test/test_files/withInputRule.json";
+    InterpretJson j(path);
+    j.interpretWithRules(g);
+    g.setOwner(owner);
+    
+    
+    game_instances.emplace_back(g);
+}
 
 void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner) {
     // TODO: use the interpreter to generate the game object from the json configurations

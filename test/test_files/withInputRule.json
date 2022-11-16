@@ -16,14 +16,7 @@
       },
     
       "variables": {
-        "winners": [
-          {
-            "wins": {}
-        },
-        {
-          "wins": {}
-        }
-      ]
+        "winners": {}
       },
     
       "per-player": {
@@ -46,6 +39,13 @@
               "list": "players",
               "element": "player",
               "rules": [
+                { "rule": "input-choice",
+                  "to": "player",
+                  "prompt": "{name}, choose your weapon!",
+                  "choices": "constants.weapons.sublist.name",
+                  "result": "weapon",
+                  "timeout": 10
+                }
               ]
             },
             { "rule": "foreach",
@@ -57,12 +57,12 @@
                   "value": 1
                 }
               ]
-            },
-            { "rule": "scores",
-              "score": "wins",
-              "ascending": false
             }
-          ]
-        }
+          ] 
+        },
+          { "rule": "scores",
+            "score": "wins",
+            "ascending": false
+          }
       ]
 }

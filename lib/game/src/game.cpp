@@ -146,14 +146,3 @@ ElementSptr Game::per_audience(){
 RuleVector& Game::rules(){
     return _rules;
 }
-ElementSptr Game::rules_from_json(){
-    return _rules_from_json;
-}
-
-void Game::setExternalLists(std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience, std::shared_ptr<std::deque<Message>> player_msgs, std::shared_ptr<std::deque<std::string>> global_msgs, std::shared_ptr<std::map<Connection, std::string>> player_input){
-    _players = players;
-    _audience = audience;
-    _player_msgs = player_msgs;
-    _global_msgs = global_msgs;
-    _player_input = player_input;
-}
