@@ -155,7 +155,7 @@ TEST_F(InterpreterTest, RunGame){
     EXPECT_EQ(g.status(), GameStatus::Finished);
 }
 
-
+//test with input
 class InterpreterTestWithInput : public ::testing::Test{
     protected:
         void SetUp() override{

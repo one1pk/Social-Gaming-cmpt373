@@ -3,6 +3,7 @@ add_library(serverstate
 )
 add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../tools/gameserver/gameconfigs")
 
+
 target_include_directories(serverstate
     PUBLIC
         $<INSTALL_INTERFACE:include>

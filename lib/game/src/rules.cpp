@@ -224,7 +224,6 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
 
 bool GlobalMsg::executeImpl(ElementSptr element) {
     std::cout << "* GlobalMsg Rule *\n";
-    
     global_msgs->push_back(formatString(msg, element));
     executed = true;
     return true;

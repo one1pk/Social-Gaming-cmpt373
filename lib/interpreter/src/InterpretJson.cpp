@@ -130,6 +130,8 @@ ElementSptr InterpretJson::resolveName(Game& game, const std::string& listName){
     return actualList;
 }
 
+
+
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
 
     for (auto rule: rules_from_json->getVector()){

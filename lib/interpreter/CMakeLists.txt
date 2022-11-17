@@ -14,7 +14,7 @@ target_include_directories(interpreter
 )
 
 target_link_libraries(interpreter
-        game  
+        game
 )
 
 set_target_properties(interpreter

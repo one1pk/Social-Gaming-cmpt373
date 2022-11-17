@@ -22,6 +22,7 @@ set_target_properties(game
 target_link_libraries(game
         nlohmann_json::nlohmann_json
         networking    
+        AST
 )
 
 install(TARGETS game
