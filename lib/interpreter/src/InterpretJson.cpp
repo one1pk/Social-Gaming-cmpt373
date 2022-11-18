@@ -1,11 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include "InterpretJson.h"
-#include "game.h"
-#include <algorithm>
-#include <cctype>
-
-#define MACRO_VARIABLE_TO_STRING(Variable) (void(Variable), #Variable)
 
 using namespace std;
 using Json = nlohmann::json;
@@ -17,6 +12,7 @@ InterpretJson::InterpretJson(string path){
     f.close();
     data = jData;
     } catch (std::exception& e){
+        //TODO: Integrate glog instead of using cout
         cout << "error reading file" << e.what() << endl;
     }
 }
@@ -36,10 +32,21 @@ void InterpretJson::interpret(Game& game){
 void InterpretJson::interpretWithRules(Game& game){
     game = data.get<Game>();
 
+    //This stores all the content of the rules as strings
     ElementSptr rulesFromJson;
     data.at("rules").get_to(rulesFromJson);
-    //convert ElementSptr _rules_from_json to rule vector containing rule objects _rules
+
+    //convert ElementSptr to rule vector containing rule objects
     RuleVector rules;
+
+    ElementMap gameListsMap = {{"constants", game.constants()},
+        {"variables", game.variables()},
+        {"setup", game.setup()},
+        {"per-player", game.per_player()},
+        {"per-audience", game.per_audience()}};
+
+    TreeBuilder treeBuilder(gameListsMap);
+
     toRuleVec(game, rulesFromJson, rules);
     game.setRules(rules);
 
@@ -50,131 +57,75 @@ void InterpretJson::interpretWithRules(Game& game){
 
 
 //Interpret Rules
-std::vector<std::string> InterpretJson::splitString(const std::string& listName) {
-    int pos = 0;
-    bool alnum = false;
-    std::vector<std::string> splits;
-    splits.reserve(listName.length());
-
-    for (unsigned i = 0; i < listName.length(); i++) {
-        if (isalnum(listName[i])) {
-            if (!alnum) {
-                pos = i;
-                alnum = true;
-            }
-        }  else {
-            if (alnum) {
-                splits.emplace_back(listName.substr(pos, i-pos));
-                alnum = false;
-            }
-        }
-    }
-    if (alnum) {
-        splits.emplace_back(listName.substr(pos, listName.length()-pos));
-    }
-
-    return splits;
-}
-
-
-ElementSptr InterpretJson::resolveName(Game& game, const std::string& listName){
-    std::vector<std::string> listNames = splitString(listName);
-
-    ElementSptr constants = game.constants();
-    ElementSptr setup = game.setup();
-    ElementSptr variables = game.variables();
-    ElementSptr per_player = game.per_player();
-    ElementSptr per_audience = game.per_audience();
-
-    std::map<std::string, ElementSptr> listMap = std::map<std::string, ElementSptr>{{"constants", constants},
-        {"variables", variables},
-        {"setup", setup},
-        {"per-player", per_player},
-        {"per-audience", per_audience}};
-    
-    ElementSptr actualList = listMap.at(listNames[0]);
-
-    //TODO: Create abstract syntax tree for operations instead of using if statements
-    int i;
-    bool isOperation = false;
-    std::string prevName;
-    for(i = 1; i < listNames.size(); i++){
-        auto name = listNames[i];
-        if(listNames[i] == "upfrom" || listNames[i] == "sublist"){
-            isOperation = true;
-            prevName = listNames[i];
-            continue;
-        }
-        else if(listNames[i] == "size"){
-            ElementSptr size = std::make_shared<Element<int>>(actualList->getSizeAsInt());
-            actualList.swap(size);
-        }
-        else if(isOperation == true){
-            if(prevName == "upfrom"){
-                int start = stoi(listNames[i]);
-                ElementSptr upfromList = actualList->upfrom(start);
-                actualList.swap(upfromList);
-                isOperation = false;
-            }
-            else if(prevName == "sublist"){
-                ElementSptr subList = std::make_shared<Element<ElementVector>>(actualList->getSubList(listNames[i]));
-                actualList.swap(subList);
-                isOperation = false;
-            }
-        }
-        else{
-            ElementSptr deeperElement = actualList->getMapElement(listNames[i]);
-            actualList.swap(deeperElement);
-        }
-    }
-    return actualList;
-}
-
-
-
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
 
     for (auto rule: rules_from_json->getVector()){
         std::string ruleName = rule->getMapElement("rule")->getString();
-        RuleSptr rule_object;
+        RuleSptr ruleObject;
 
         if(ruleName == "foreach"){
-            std::string listName = rule->getMapElement("list")->getString();
-            ElementSptr list = resolveName(game, listName);
-            RuleVector sub_rules;
-            toRuleVec(game, rule->getMapElement("rules"), sub_rules);
-            rule_object = std::make_shared<Foreach>(list, sub_rules);
-            
+            std::string listString = rule->getMapElement("list")->getString();
+            auto listExpressionRoot = treeBuilder.buildTree(listString);
+
+            RuleVector subRules;
+            toRuleVec(game, rule->getMapElement("rules"), subRules);
+            ruleObject = std::make_shared<Foreach>(listExpressionRoot, subRules);
         }
+
         else if(ruleName == "global-message"){
             auto msg = rule->getMapElement("value")->getString();
-            rule_object = std::make_shared<GlobalMsg>(msg, game._global_msgs);
+            ruleObject = std::make_shared<GlobalMsg>(msg, game._global_msgs);
         }
 
         else if(ruleName == "parallelfor"){
-            RuleVector sub_rules;
-            toRuleVec(game, rule->getMapElement("rules"), sub_rules);
-            rule_object = std::make_shared<ParallelFor>(game._players, sub_rules);
+            RuleVector subRules;
+            toRuleVec(game, rule->getMapElement("rules"), subRules);
+            ruleObject = std::make_shared<ParallelFor>(game._players, subRules);
         }
+
         else if(ruleName == "input-choice"){
+            std::string choicesString = rule->getMapElement("choices")->getString();
+            std::shared_ptr<ASTNode> choicesExpressionRoot = treeBuilder.buildTree(choicesString);
+
             auto prompt = rule->getMapElement("prompt")->getString();
-            auto choices = resolveName(game, rule->getMapElement("choices")->getString())->getVector();
             auto result = rule->getMapElement("result")->getString();
             auto timeout = rule->getMapElement("timeout")->getInt();
-            rule_object = std::make_shared<InputChoice>(prompt, choices, timeout, result, game._player_msgs, game._player_input);
+            ruleObject = std::make_shared<InputChoice>(prompt, choicesExpressionRoot, timeout, result, game._player_msgs, game._player_input);
         }
+
         else if (ruleName == "add"){
             auto to = rule->getMapElement("to")->getString();
             auto value = rule->getMapElement("value");
-            rule_object = std::make_shared<Add>(to, value);
+            ruleObject = std::make_shared<Add>(to, value);
         }
+
         else if (ruleName == "scores"){
             auto score = rule->getMapElement("score")->getString();
             auto ascending = rule->getMapElement("ascending")->getBool();
-            rule_object = std::make_shared<Scores>(game._players, score, ascending, game._global_msgs);
+            ruleObject = std::make_shared<Scores>(game._players, score, ascending, game._global_msgs);
         }
-        rule_vec.push_back(rule_object);
+
+        else if (ruleName == "extend"){
+            std::string targetString = rule->getMapElement("target")->getString();
+            std::shared_ptr<ASTNode> targetExpressionRoot = treeBuilder.buildTree(targetString);
+
+            std::string listString = rule->getMapElement("list")->getString();
+            std::shared_ptr<ASTNode> listExpressionRoot = treeBuilder.buildTree(listString);
+            ruleObject = std::make_shared<Extend>(targetExpressionRoot, listExpressionRoot);
+        }
+
+        else if (ruleName == "discard"){
+            std::string fromString = rule->getMapElement("from")->getString();
+            std::shared_ptr<ASTNode> fromExpressionRoot = treeBuilder.buildTree(fromString);
+
+            std::string countString = rule->getMapElement("count")->getString();
+            std::shared_ptr<ASTNode> countExpressionRoot = treeBuilder.buildTree(countString);
+            ruleObject = std::make_shared<Extend>(fromExpressionRoot, countExpressionRoot);
+        }
+
+        rule_vec.push_back(ruleObject);
     }
 }
+
 
 

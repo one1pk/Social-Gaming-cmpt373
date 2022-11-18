@@ -1,5 +1,5 @@
 add_library(AST
-    src/NameResolver.cpp
+    src/ExpressionResolver.cpp
     src/TreeBuilder.cpp
 )
 
@@ -12,7 +12,8 @@ target_include_directories(AST
 )
 
 target_link_libraries(AST
-        game 
+    PRIVATE
+        game
 )
 
 set_target_properties(AST

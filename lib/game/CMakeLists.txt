@@ -3,7 +3,7 @@ add_library(game
     src/rules.cpp
     src/list.cpp
 )
-find_package(nlohmann_json 3.2.0 REQUIRED)
+
 
 target_include_directories(game
     PUBLIC
@@ -20,9 +20,9 @@ set_target_properties(game
 )
 
 target_link_libraries(game
-        nlohmann_json::nlohmann_json
         networking    
         AST
+        interpreter
 )
 
 install(TARGETS game

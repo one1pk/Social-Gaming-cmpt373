@@ -1,10 +1,11 @@
 #pragma once
 
-
 #include "game.h"
 #include <nlohmann/json.hpp>
 #include "rules.h"
 #include <chaiscript/chaiscript.hpp>
+#include "ASTVisitor.h"
+#include "TreeBuilder.h"
 
 using namespace std;
 using Json = nlohmann::json;
@@ -23,22 +24,32 @@ class InterpretJson{
         void interpretWithRules(Game& obj );
 
         Json getData();
-        std::vector<std::string> splitString(const std::string& sv);
-        ElementSptr resolveName(Game& game, const std::string& name);
     
         Json data;
+        TreeBuilder treeBuilder;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
-        
 };
 
 //recursively maps Json data to list element
 inline void from_json(const Json& j, ElementSptr& e){
-        if(j.is_string()) e = std::make_shared<Element<std::string>>(j.get<std::string>());
-        else if(j.is_number()) e = std::make_shared<Element<int>>(j.get<int>());
-        else if(j.is_boolean()) e = std::make_shared<Element<bool>>(j.get<bool>());
-        else if(j.is_array()) e = std::make_shared<Element<ElementVector>>(j.get<ElementVector>());
-	    else if(j.is_object()) e = std::make_shared<Element<ElementMap>>(j.get<ElementMap>());
-    }
+    if(j.is_string()) e = std::make_shared<Element<std::string>>(j.get<std::string>());
+    else if(j.is_number()) e = std::make_shared<Element<int>>(j.get<int>());
+    else if(j.is_boolean()) e = std::make_shared<Element<bool>>(j.get<bool>());
+    else if(j.is_array()) e = std::make_shared<Element<ElementVector>>(j.get<ElementVector>());
+    else if(j.is_object()) e = std::make_shared<Element<ElementMap>>(j.get<ElementMap>());
+}
+
+inline void from_json(const Json& j,  Game& g){
+    j.at("configuration").at("name").get_to(g._name);
+    j.at("configuration").at("audience").get_to(g._has_audience);
+    j.at("configuration").at("player count").at("min").get_to(g._player_count.min);
+    j.at("configuration").at("player count").at("max").get_to(g._player_count.max);
+    j.at("configuration").at("setup").get_to(g._setup);
+    j.at("constants").get_to(g._constants);
+    j.at("variables").get_to(g._variables);
+    j.at("per-player").get_to(g._per_player);
+    j.at("per-audience").get_to(g._per_audience);
+}
 
 inline void to_json(Json& j, const ElementSptr& e){
     switch(e->type) {
@@ -64,19 +75,6 @@ inline void to_json(Json& j, const ElementSptr& e){
 	}
 }
 
-inline void from_json(const Json& j,  Game& g){
-    j.at("configuration").at("name").get_to(g._name);
-    j.at("configuration").at("audience").get_to(g._has_audience);
-    j.at("configuration").at("player count").at("min").get_to(g._player_count.min);
-    j.at("configuration").at("player count").at("max").get_to(g._player_count.max);
-    j.at("configuration").at("setup").get_to(g._setup);
-    j.at("constants").get_to(g._constants);
-    j.at("variables").get_to(g._variables);
-    j.at("per-player").get_to(g._per_player);
-    j.at("per-audience").get_to(g._per_audience);
-}
-
-//only works for config, not urgent
 inline void to_json( Json& j, const Game& g){
     j["configuration"]["name"] = g._name;
     j["configuration"]["audience"] = g._has_audience;
@@ -88,6 +86,7 @@ inline void to_json( Json& j, const Game& g){
     j["per-player"] = g._per_player;
     j["per-audience"] = g._per_audience;
 }
+
 
 
 

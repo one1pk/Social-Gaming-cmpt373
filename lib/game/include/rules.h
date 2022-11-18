@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <functional>
+#include "ASTVisitor.h"
+#include "ExpressionResolver.h"
 
 class Rule;
 typedef std::shared_ptr<Rule> RuleSptr; // shared pointer to a rule object
@@ -29,6 +31,8 @@ public:
 //for testing
 ElementSptr getList();
 
+ExpressionResolver resolver;
+
 private:
     virtual bool executeImpl(ElementSptr element) = 0;
     virtual void resetImpl() {}
@@ -47,9 +51,12 @@ private:
     RuleVector rules;
     RuleVector::iterator rule;
     bool initialized = false;
+
+    std::shared_ptr<ASTNode> listExpressionRoot;
 public:
     ElementSptr getList();
     Foreach(ElementSptr list, RuleVector rules);
+    Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules);
     bool executeImpl(ElementSptr element) final;
     void resetImpl() final;
 };
@@ -59,6 +66,7 @@ class ParallelFor : public Rule {
     RuleVector rules;
     std::map<Connection, RuleVector::iterator> player_rule_it;
     bool initialized = false;
+    
 public:
     ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules);
     bool executeImpl(ElementSptr element) final;
@@ -73,8 +81,11 @@ class When : public Rule {
     std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>::iterator case_rule_pair;
     RuleVector::iterator rule;
     bool match = false;
+
+    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pair;
 public: 
     When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
+    When(std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditonExpression_rule_pair);
     bool executeImpl(ElementSptr element) final;
     void resetImpl() final;
 };
@@ -84,16 +95,27 @@ public:
 class Extend : public Rule {
     ElementSptr target;
     std::function<ElementSptr(ElementSptr)> extension;
+
+    std::shared_ptr<ASTNode> targetExpressionRoot;
+    std::shared_ptr<ASTNode> extensionExpressionRoot;
+
+    ElementSptr extensionList;
 public:
     Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension);
+    Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<ASTNode> extensionExpressionRoot);
     bool executeImpl(ElementSptr element) final;
 };
 
 class Discard : public Rule {
     ElementSptr list;
     std::function<size_t(ElementSptr)> count;
+
+    std::shared_ptr<ASTNode> listExpressionRoot;
+    std::shared_ptr<ASTNode> countExpressionRoot;
+    int resolvedCount;
 public:
     Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
+    Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot);
     bool executeImpl(ElementSptr element) final;
 };
 
@@ -117,8 +139,14 @@ class InputChoice : public Rule {
     std::shared_ptr<std::deque<Message>> player_msgs;
     std::shared_ptr<std::map<Connection, std::string>> player_input;
     std::map<Connection, bool> alreadySentInput;
+
+    std::shared_ptr<ASTNode> choicesExpressionRoot;
 public:
     InputChoice(std::string prompt, ElementVector choices, 
+                unsigned timeout_s, std::string result,
+                std::shared_ptr<std::deque<Message>> player_msgs,
+                std::shared_ptr<std::map<Connection, std::string>> player_input);
+    InputChoice(std::string prompt, std::shared_ptr<ASTNode> expressionRoot, 
                 unsigned timeout_s, std::string result,
                 std::shared_ptr<std::deque<Message>> player_msgs,
                 std::shared_ptr<std::map<Connection, std::string>> player_input);

@@ -4,6 +4,8 @@ add_library(interpreter
 
 find_path(CHAISCRIPT_INCLUDE_DIRS "chaiscript/chaiscript.hpp")
 
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
 target_include_directories(interpreter
     PUBLIC
         $<INSTALL_INTERFACE:include>
@@ -14,6 +16,8 @@ target_include_directories(interpreter
 )
 
 target_link_libraries(interpreter
+        nlohmann_json::nlohmann_json
+        AST
         game
 )
 

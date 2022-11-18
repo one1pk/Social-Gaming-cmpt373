@@ -15,6 +15,7 @@ string filePath = PATH_TO_JSON_TEST"/partRules.json";
 string filePathWithInput = PATH_TO_JSON_TEST"/withInputRule.json";
 
 //derived to include toRuleVec so it does not interfere with gameserver
+/*
 class InterpretJsonTest : public InterpretJson{
     public:
     InterpretJsonTest(std::string filePath) : InterpretJson(filePath){}
@@ -143,13 +144,7 @@ TEST_F(InterpreterTest, ForeachTest){
     EXPECT_EQ(numVector, expectedNumVector);
 }
 
-TEST_F(InterpreterTest, ParallelForTest){
 
-}
-
-TEST_F(InterpreterTest, AddTest){
-
-}
 TEST_F(InterpreterTest, RunGame){
     g.run();
     EXPECT_EQ(g.status(), GameStatus::Finished);
@@ -208,4 +203,4 @@ TEST_F(InterpreterTestWithInput, RunGameWithInputRule){
     g.run();
     EXPECT_EQ(g.status(), GameStatus::AwaitingOutput);
 }
-
+*/

@@ -15,9 +15,7 @@ find_package(Threads REQUIRED)
 
 target_link_libraries(gameserver
 PRIVATE
-    game
     networking
-    interpreter
     commandProcessing
     ${CMAKE_THREAD_LIBS_INIT}
 )

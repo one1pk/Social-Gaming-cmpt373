@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game.h"
+
 #include "list.h"
 
 class ASTVisitor;
@@ -13,7 +13,6 @@ public:
 
 class NameNode : public ASTNode {
 public:
-    
     NameNode(std::string name) : name(name) { }
 
     void accept(ASTVisitor& visitor) override;
@@ -23,7 +22,6 @@ public:
 
 class ListNode : public ASTNode { 
 public:
-    
     ListNode(ElementSptr list) :  list(list) { }
 
     void accept(ASTVisitor& visitor) override;
@@ -34,7 +32,6 @@ public:
 
 class BinaryOperator : public ASTNode {
 public:
-  
     BinaryOperator(std::string kind, ASTNode& left, ASTNode& right)
     : kind(kind), left(left), right(right) { }
 
@@ -47,8 +44,6 @@ public:
 
 class UnaryOperator : public ASTNode {
 public: 
-    
-  
     UnaryOperator(std::string kind, ASTNode& operand)
     : kind(kind), operand(operand) { }
 
@@ -68,19 +63,19 @@ class ASTVisitor {
     virtual void visit(UnaryOperator& uOp) = 0;
 };
 
-void NameNode::accept(ASTVisitor& visitor) {
+inline void NameNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
 }
 
-void ListNode::accept(ASTVisitor& visitor) {
+inline void ListNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
 }
 
-void BinaryOperator::accept(ASTVisitor& visitor) {
+inline void BinaryOperator::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
 }
 
-void UnaryOperator::accept(ASTVisitor& visitor) {
+inline void UnaryOperator::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
 }
 

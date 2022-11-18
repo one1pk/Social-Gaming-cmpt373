@@ -9,6 +9,10 @@
 Foreach::Foreach(ElementSptr _list, RuleVector _rules) 
     : list(_list), rules(_rules) {
 }
+Foreach::Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules)
+    : listExpressionRoot(listExpressionRoot), rules(_rules){
+}
+
 ElementSptr Foreach::getList(){
         return list;
     }
@@ -86,6 +90,10 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
       rule(case_rule_pair->second.begin()) {
 }
 
+When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> conditionExpression_rule_pair)
+    : conditionExpression_rule_pair(conditionExpression_rule_pair) {
+}
+
 bool When::executeImpl(ElementSptr element) {
     std::cout << "* When Rule *\n";
 
@@ -122,6 +130,10 @@ Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> exten
     : target(target), extension(extension) {
 }
 
+Extend::Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<ASTNode> extensionExpressionRoot)
+    : targetExpressionRoot(targetExpressionRoot), extensionExpressionRoot(extensionExpressionRoot){
+}
+
 bool Extend::executeImpl(ElementSptr element) {
     std::cout << "* Extend Rule *\n";
 
@@ -134,6 +146,10 @@ bool Extend::executeImpl(ElementSptr element) {
 
 Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
     : list(list), count(count) {
+}
+
+Discard::Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot)
+: listExpressionRoot(listExpressionRoot), countExpressionRoot(countExpressionRoot){
 }
 
 bool Discard::executeImpl(ElementSptr element) {
@@ -186,6 +202,14 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, unsigned tim
     std::string result, std::shared_ptr<std::deque<Message>> player_msgs,
     std::shared_ptr<std::map<Connection, std::string>> player_input)
     : prompt(prompt), choices(choices), timeout_s(timeout_s),
+      result(result), player_msgs(player_msgs), player_input(player_input) {
+}
+
+InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExpressionRoot, 
+                unsigned timeout_s, std::string result,
+                std::shared_ptr<std::deque<Message>> player_msgs,
+                std::shared_ptr<std::map<Connection, std::string>> player_input)
+    : prompt(prompt), choicesExpressionRoot(choicesExpressionRoot), timeout_s(timeout_s),
       result(result), player_msgs(player_msgs), player_input(player_input) {
 }
 

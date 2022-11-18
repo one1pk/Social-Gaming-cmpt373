@@ -44,6 +44,13 @@ public:
     Connection owner();
     uintptr_t id();
 
+    ElementSptr setup();
+    ElementSptr constants();
+    ElementSptr variables();
+    ElementSptr per_player();
+    ElementSptr per_audience();
+    RuleVector& rules();
+
     bool addPlayer(Connection playerID);
     bool removePlayer(Connection playerID);
     bool hasPlayer(Connection playerID);
@@ -56,12 +63,6 @@ public:
     void outputSent();
     void registerPlayerInput(Connection player, std::string input);
 
-    ElementSptr setup();
-    ElementSptr constants();
-    ElementSptr variables();
-    ElementSptr per_player();
-    ElementSptr per_audience();
-    RuleVector& rules();
 
     //for interpreter, might just make fields publics
     void setOwner(Connection owner){

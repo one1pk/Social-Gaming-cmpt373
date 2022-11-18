@@ -62,6 +62,7 @@ public:
     virtual void discard(unsigned count) = 0;
 
     virtual ElementSptr upfrom(int start) = 0;
+    virtual bool contains(ElementSptr element) = 0;
 };
 
 template <typename T>
@@ -109,7 +110,13 @@ public:
         // static_assert(std::is_same_v<T, ElementMap>, "getMapElement() must be called on a map");
         
         if constexpr (std::is_same_v<T, ElementMap>) {
-            return _data[key];
+            if (_data.find(key) != _data.end()){
+                return _data[key];
+            }
+            else {
+                return nullptr;
+            }
+
         } else {
             // throw error //
             return nullptr;
@@ -295,4 +302,19 @@ public:
         list.shrink_to_fit();
         return std::make_shared<Element<ElementVector>>(list);
     }
+
+    bool contains(ElementSptr element){
+        if constexpr (std::is_same_v<T, ElementVector>){
+            return std::find(_data.begin(), _data.end(), element) != _data.end();
+        }
+        else if constexpr (std::is_same_v<T, ElementMap>){
+            return _data.find(element->getString()) != _data.end();
+        }
+        else{
+            //throw error
+            return false;
+        }
+    }
 };
+
+

@@ -20,9 +20,4 @@ TEST(ASTTest, TestSplit){
     EXPECT_EQ(splits2, expected);
 }
 
-TEST(ASTTeest, TestBuilder){
-    TreeBuilder treeBuilder;
-    auto root = treeBuilder.buildTree("weapons->upfrom(1)");
 
-    //EXPECT_EQ();
-}
