@@ -43,9 +43,9 @@
   
               { "rule": "input-choice",
                 "to": "player",
-                "prompt": "{player.name}, choose your weapon!",
+                "prompt": "{name}, choose your weapon!",
                 "choices": "constants.weapons.sublist(name)",
-                "result": "player.weapon",
+                "result": "weapon",
                 "timeout": 10
               }
   

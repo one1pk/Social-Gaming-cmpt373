@@ -10,15 +10,15 @@ void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
 /// TODO: resolver should have a map of game lists so that if provided a name, it can search constants, variables etc so you can just provide it "wins" instead of "variables.wins"
 /// TODO: if "{}" it should return element refered to inside brackets
 /// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
-void ExpressionResolver::visit(NameNode& name, ElementMap elements)  {
-    auto elementIter = elements.find(name.name);
+void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
+    auto elementIter = elements.find(nameNode.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
     if(elementIter != elements.end())
         result = elementIter->second;
         
     //otherwise, name is just a string
     else
-        result = std::make_shared<Element<std::string>>(name.name);
+        result = std::make_shared<Element<std::string>>(nameNode.name);
 }
 
 void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
@@ -26,7 +26,7 @@ void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
-    uOp.operand.accept(*this, elements);
+    uOp.operand->accept(*this, elements);
     ElementSptr operand = result;
     std::string kind = uOp.kind;
 
@@ -38,9 +38,9 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
-    bOp.left.accept(*this, elements);
+    bOp.left->accept(*this, elements);
     ElementSptr left = result;
-    bOp.right.accept(*this, elements);
+    bOp.right->accept(*this, elements);
     ElementSptr right = result;
     std::string kind = bOp.kind;
 

@@ -6,11 +6,13 @@ class ExpressionTree{
     public:
     ExpressionTree() = default;
     ExpressionTree(ElementMap gameListsMap, std::shared_ptr<ASTNode> root);
+
     std::deque<std::string> split(std::string expression);
     void build(std::string expression);
+    void buildOperatorNode(std::deque<std::string>& operatorStack, std::deque<std::shared_ptr<ASTNode>>& nodeStack, std::shared_ptr<ASTNode>& root);
 
     bool isOperator(std::string value);
-
+    bool isBrace(std::string value);
     bool isBinary(std::string value);
     std::vector<std::string> binaryOperators = {".", "upfrom", "sublist", "collect",
      "==", "!=", ">", ">=", "<=", "<"};

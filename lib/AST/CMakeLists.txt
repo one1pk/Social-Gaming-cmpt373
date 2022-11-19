@@ -1,6 +1,7 @@
 add_library(AST
     src/ExpressionResolver.cpp
     src/ExpressionTree.cpp
+    src/TreePrinter.cpp
 )
 
 target_include_directories(AST

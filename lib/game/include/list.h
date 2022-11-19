@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <iostream>
 
 
 
@@ -114,6 +115,7 @@ public:
                 return _data[key];
             }
             else {
+                std::cout << "No element named: " << key << "in map" << std::endl;
                 return nullptr;
             }
 

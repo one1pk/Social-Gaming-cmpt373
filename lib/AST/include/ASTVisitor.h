@@ -22,35 +22,36 @@ public:
 
 class ListNode : public ASTNode { 
 public:
-    ListNode(ElementSptr list) :  list(list) { }
+    ListNode(std::string nameOfList, ElementSptr list) : nameOfList(nameOfList), list(list) { }
 
     void accept(ASTVisitor& visitor, ElementMap elements) override;
 
+    std::string nameOfList;
     ElementSptr list;
 };
 
 
 class BinaryOperator : public ASTNode {
 public:
-    BinaryOperator(std::string kind, ASTNode& left, ASTNode& right)
+    BinaryOperator(std::string kind, std::shared_ptr<ASTNode> left, std::shared_ptr<ASTNode> right)
     : kind(kind), left(left), right(right) { }
 
     void accept(ASTVisitor& visitor, ElementMap elements) override;
 
     std::string kind;
-    ASTNode& left;
-    ASTNode& right;
+    std::shared_ptr<ASTNode> left;
+    std::shared_ptr<ASTNode> right;
 };
 
 class UnaryOperator : public ASTNode {
 public: 
-    UnaryOperator(std::string kind, ASTNode& operand)
+    UnaryOperator(std::string kind, std::shared_ptr<ASTNode> operand)
     : kind(kind), operand(operand) { }
 
     void accept(ASTVisitor& visitor, ElementMap elements) override;
 
     std::string kind;
-    ASTNode& operand;
+    std::shared_ptr<ASTNode> operand;
 };
 
 
