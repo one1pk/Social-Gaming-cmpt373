@@ -6,17 +6,17 @@
 #include "list.h"
 #include "rules.h"
 #include "ASTVisitor.h"
-#include "TreeBuilder.h"
+#include "ExpressionTree.h"
 #include <algorithm>
 
 
 TEST(ASTTest, TestSplit){
-    TreeBuilder treeBuilder;
+    ExpressionTree expressionTree;
     std::vector<std::string> expected = {"constants", ".", "weapon", "!=", "player", ".", "weapon"};
-    auto splits = treeBuilder.split("constants.weapon != player.weapon");
+    auto splits = expressionTree.split("constants.weapon != player.weapon");
 
     expected = {"(", "variables", ".", "winners",  "players", ".", "wins", ")"};
-    auto splits2 = treeBuilder.split("(variables.winners->players.wins)");
+    auto splits2 = expressionTree.split("(variables.winners->players.wins)");
     EXPECT_EQ(splits2, expected);
 }
 

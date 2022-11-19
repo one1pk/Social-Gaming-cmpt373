@@ -5,7 +5,7 @@
 #include "rules.h"
 #include <chaiscript/chaiscript.hpp>
 #include "ASTVisitor.h"
-#include "TreeBuilder.h"
+#include "ExpressionTree.h"
 
 using namespace std;
 using Json = nlohmann::json;
@@ -26,7 +26,7 @@ class InterpretJson{
         Json getData();
     
         Json data;
-        TreeBuilder treeBuilder;
+        ExpressionTree expressionTree;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
 };
 

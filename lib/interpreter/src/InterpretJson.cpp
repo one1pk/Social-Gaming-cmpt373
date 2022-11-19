@@ -45,7 +45,7 @@ void InterpretJson::interpretWithRules(Game& game){
         {"per-player", game.per_player()},
         {"per-audience", game.per_audience()}};
 
-    TreeBuilder treeBuilder(gameListsMap);
+    expressionTree = ExpressionTree(gameListsMap);
 
     toRuleVec(game, rulesFromJson, rules);
     game.setRules(rules);
@@ -65,11 +65,13 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
 
         if(ruleName == "foreach"){
             std::string listString = rule->getMapElement("list")->getString();
-            auto listExpressionRoot = treeBuilder.buildTree(listString);
+            expressionTree.build(listString);
+            auto listExpressionRoot = expressionTree.getRoot();
 
             RuleVector subRules;
             toRuleVec(game, rule->getMapElement("rules"), subRules);
-            ruleObject = std::make_shared<Foreach>(listExpressionRoot, subRules);
+            auto elementName = rule->getMapElement("element")->getString();
+            ruleObject = std::make_shared<Foreach>(listExpressionRoot, subRules, elementName);
         }
 
         else if(ruleName == "global-message"){
@@ -80,12 +82,14 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         else if(ruleName == "parallelfor"){
             RuleVector subRules;
             toRuleVec(game, rule->getMapElement("rules"), subRules);
-            ruleObject = std::make_shared<ParallelFor>(game._players, subRules);
+            auto elementName = rule->getMapElement("element")->getString();
+            ruleObject = std::make_shared<ParallelFor>(game._players, subRules, elementName);
         }
 
         else if(ruleName == "input-choice"){
             std::string choicesString = rule->getMapElement("choices")->getString();
-            std::shared_ptr<ASTNode> choicesExpressionRoot = treeBuilder.buildTree(choicesString);
+            expressionTree.build(choicesString);
+            std::shared_ptr<ASTNode> choicesExpressionRoot = expressionTree.getRoot();
 
             auto prompt = rule->getMapElement("prompt")->getString();
             auto result = rule->getMapElement("result")->getString();
@@ -107,20 +111,40 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
 
         else if (ruleName == "extend"){
             std::string targetString = rule->getMapElement("target")->getString();
-            std::shared_ptr<ASTNode> targetExpressionRoot = treeBuilder.buildTree(targetString);
+            expressionTree.build(targetString);
+            std::shared_ptr<ASTNode> targetExpressionRoot = expressionTree.getRoot();
 
             std::string listString = rule->getMapElement("list")->getString();
-            std::shared_ptr<ASTNode> listExpressionRoot = treeBuilder.buildTree(listString);
+            expressionTree.build(listString);
+            std::shared_ptr<ASTNode> listExpressionRoot = expressionTree.getRoot();
             ruleObject = std::make_shared<Extend>(targetExpressionRoot, listExpressionRoot);
         }
 
         else if (ruleName == "discard"){
             std::string fromString = rule->getMapElement("from")->getString();
-            std::shared_ptr<ASTNode> fromExpressionRoot = treeBuilder.buildTree(fromString);
+            expressionTree.build(fromString);
+            std::shared_ptr<ASTNode> fromExpressionRoot = expressionTree.getRoot();
 
             std::string countString = rule->getMapElement("count")->getString();
-            std::shared_ptr<ASTNode> countExpressionRoot = treeBuilder.buildTree(countString);
+            expressionTree.build(countString);
+            std::shared_ptr<ASTNode> countExpressionRoot = expressionTree.getRoot();
             ruleObject = std::make_shared<Extend>(fromExpressionRoot, countExpressionRoot);
+        }
+
+        else if(ruleName == "when"){
+            std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpressionRulePairs;
+            ElementVector cases = rule->getMapElement("cases")->getVector();
+            for(auto caseRulePair : cases){
+                std::string conditionString = rule->getMapElement("condition")->getString();
+                expressionTree.build(conditionString);
+                std::shared_ptr<ASTNode> conditionExpressionRoot = expressionTree.getRoot();
+
+                RuleVector caseRules;
+                toRuleVec(game, rule->getMapElement("rules"), caseRules);
+                conditionExpressionRulePairs.push_back({conditionExpressionRoot, caseRules});
+            }
+
+            ruleObject = std::make_shared<When>((conditionExpressionRulePairs));
         }
 
         rule_vec.push_back(ruleObject);

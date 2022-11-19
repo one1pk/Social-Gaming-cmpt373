@@ -7,5 +7,3 @@ The result field in input choice, will always assume that it is an element of pl
 Same applied to "to" in add rule. Basically, if anything refers to an element from the parent rule, sinze the element is being passed down
 in the implementation, we can assume that it is referring to that element.
 So for add rule, "winner.wins" should just be "wins"
-
-All operations such as collect, size, etc. must be preceded with '->'

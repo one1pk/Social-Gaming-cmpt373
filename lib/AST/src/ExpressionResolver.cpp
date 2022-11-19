@@ -3,20 +3,27 @@
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 
-void ExpressionResolver::visit(ASTNode& node)  {
+void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
     assert(false && "Invalid node during evaluation");
 }
 
-void ExpressionResolver::visit(NameNode& name)  {
-    result = std::make_shared<Element<std::string>>(name.name);
+void ExpressionResolver::visit(NameNode& name, ElementMap elements)  {
+    auto elementIter = elements.find(name.name);
+    //if name is an element passed down from parent rule (eg. player, weapon, etc)
+    if(elementIter != elements.end())
+        result = elementIter->second;
+        
+    //otherwise, name is just a string
+    else
+        result = std::make_shared<Element<std::string>>(name.name);
 }
 
-void ExpressionResolver::visit(ListNode& listNode)  {
+void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
     result = listNode.list;
 }
 
-void ExpressionResolver::visit(UnaryOperator& uOp)  {
-    uOp.operand.accept(*this);
+void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
+    uOp.operand.accept(*this, elements);
     ElementSptr operand = result;
     std::string kind = uOp.kind;
 
@@ -27,10 +34,10 @@ void ExpressionResolver::visit(UnaryOperator& uOp)  {
     
 }
 
-void ExpressionResolver::visit(BinaryOperator& bOp)  {
-    bOp.left.accept(*this);
+void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
+    bOp.left.accept(*this, elements);
     ElementSptr left = result;
-    bOp.right.accept(*this);
+    bOp.right.accept(*this, elements);
     ElementSptr right = result;
     std::string kind = bOp.kind;
 

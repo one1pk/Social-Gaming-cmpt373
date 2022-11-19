@@ -1,8 +1,11 @@
-#include "TreeBuilder.h"
+#include "ExpressionTree.h"
 
-TreeBuilder::TreeBuilder(ElementMap gameListsMap) : gameListsMap(gameListsMap) { }
+ExpressionTree::ExpressionTree(ElementMap gameListsMap) : gameListsMap(gameListsMap) { }
 
-std::vector<std::string> TreeBuilder::split(std::string expression) {
+std::shared_ptr<ASTNode> ExpressionTree::getRoot(){
+    return root;
+}
+std::vector<std::string> ExpressionTree::split(std::string expression) {
     int pos = 0;
     bool alnum = false;
     bool punct = false;
@@ -41,27 +44,26 @@ std::vector<std::string> TreeBuilder::split(std::string expression) {
 
     return splits;
 }
-bool TreeBuilder::isOperator(std::string value){
+bool ExpressionTree::isOperator(std::string value){
     return isUnary(value) || isBinary(value);
 }
-bool TreeBuilder::isBinary(std::string value){
+bool ExpressionTree::isBinary(std::string value){
     auto itB = std::find(binaryOperators.begin(), binaryOperators.end(), value);
     return itB != binaryOperators.end();
 }
-bool TreeBuilder::isUnary(std::string value){
+bool ExpressionTree::isUnary(std::string value){
     auto itU = std::find(unaryOperators.begin(), unaryOperators.end(), value);
     return itU != unaryOperators.end();
 }
 
-int TreeBuilder::getPrecedence(std::string key){
+int ExpressionTree::getPrecedence(std::string key){
     return precedenceMap.at(key);
 }
 
-std::shared_ptr<ASTNode> TreeBuilder::buildTree(std::string expression){
+void ExpressionTree::build(std::string expression){
     std::vector<std::string> tokens = split(expression);
     std::deque<std::string> operatorStack;
 
-    std::shared_ptr<ASTNode> root;
     std::deque<std::shared_ptr<ASTNode>> nodeStack;
     
     for(auto token : tokens){
@@ -70,20 +72,25 @@ std::shared_ptr<ASTNode> TreeBuilder::buildTree(std::string expression){
         }
 
         else if (!isOperator(token)){
+            //if token is a gameList name i.e. constants, variables, etc
             auto gameListIter = gameListsMap.find(token);
             if(gameListIter != gameListsMap.end()){
                 root = std::make_unique<ListNode>(gameListIter->second);
                 nodeStack.emplace_front(root);
             }
+            //else it is just a string
             else {
                 root = std::make_unique<NameNode>(token);
                 nodeStack.emplace_front(root);
             }
         }
-
+        //if operator
         else if(getPrecedence(token) > 0){
             std::string stackTop = *operatorStack.begin();
-
+            //ignore "." if followed by an operator
+            if(stackTop == ".")
+                operatorStack.pop_front();
+                
             while (!operatorStack.empty() && stackTop != "(" && getPrecedence(stackTop) >= getPrecedence(token) ){
                 if(isUnary(token)){
                     auto operand = *(nodeStack.begin());
@@ -124,7 +131,6 @@ std::shared_ptr<ASTNode> TreeBuilder::buildTree(std::string expression){
     }
 
     root = *nodeStack.begin();
-    return root;
 }
 
 

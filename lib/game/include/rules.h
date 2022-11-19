@@ -17,11 +17,11 @@ class Rule {
 public:
     virtual ~Rule() {}
 
-    bool execute(ElementSptr element = nullptr) {
+    bool execute(ElementMap elementsMap, ElementSptr element = nullptr) {
         if (executed) {
             return true;
         }
-        return executeImpl(element);
+        return executeImpl(element, elementsMap);
     }
     void reset() {
         executed = false;
@@ -34,9 +34,9 @@ ElementSptr getList();
 ExpressionResolver resolver;
 
 private:
-    virtual bool executeImpl(ElementSptr element) = 0;
+    virtual bool executeImpl(ElementSptr element, ElementMap elementsMap) = 0;
     virtual void resetImpl() {}
-
+    
 protected:
     bool executed = false;
 };
@@ -53,11 +53,12 @@ private:
     bool initialized = false;
 
     std::shared_ptr<ASTNode> listExpressionRoot;
+    std::string elementName;
 public:
     ElementSptr getList();
     Foreach(ElementSptr list, RuleVector rules);
-    Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules);
-    bool executeImpl(ElementSptr element) final;
+    Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules, std::string elementName);
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
     void resetImpl() final;
 };
 
@@ -67,9 +68,11 @@ class ParallelFor : public Rule {
     std::map<Connection, RuleVector::iterator> player_rule_it;
     bool initialized = false;
     
+    std::string elementName;
 public:
     ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules);
-    bool executeImpl(ElementSptr element) final;
+    ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string elementName);
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
     void resetImpl() final;
 };
 
@@ -86,7 +89,7 @@ class When : public Rule {
 public: 
     When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
     When(std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditonExpression_rule_pair);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
     void resetImpl() final;
 };
 
@@ -103,7 +106,7 @@ class Extend : public Rule {
 public:
     Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension);
     Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<ASTNode> extensionExpressionRoot);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 
 class Discard : public Rule {
@@ -116,7 +119,7 @@ class Discard : public Rule {
 public:
     Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
     Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 
 // Arithmetic //
@@ -126,7 +129,7 @@ class Add : public Rule {
     ElementSptr value;
 public: 
     Add(std::string to, ElementSptr value);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 
 // Input/ Output //
@@ -150,7 +153,7 @@ public:
                 unsigned timeout_s, std::string result,
                 std::shared_ptr<std::deque<Message>> player_msgs,
                 std::shared_ptr<std::map<Connection, std::string>> player_input);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 
 class GlobalMsg : public Rule {
@@ -159,7 +162,7 @@ class GlobalMsg : public Rule {
 public:
     GlobalMsg(std::string msg,
               std::shared_ptr<std::deque<std::string>> global_msgs);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 
 class Scores : public Rule {
@@ -170,5 +173,5 @@ class Scores : public Rule {
 public:
     Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, 
            bool ascending, std::shared_ptr<std::deque<std::string>> global_msgs);
-    bool executeImpl(ElementSptr element) final;
+    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };

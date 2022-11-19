@@ -2,12 +2,12 @@
 #include "ASTVisitor.h"
 #include <algorithm>
 
-class TreeBuilder{
+class ExpressionTree{
     public:
-    TreeBuilder() = default;
-    TreeBuilder(ElementMap gameListsMap);
+    ExpressionTree() = default;
+    ExpressionTree(ElementMap gameListsMap);
     std::vector<std::string> split(std::string expression);
-    std::shared_ptr<ASTNode> buildTree(std::string expression);
+    void build(std::string expression);
 
     bool isOperator(std::string value);
 
@@ -20,11 +20,16 @@ class TreeBuilder{
         {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 10}, {"collect", 10},
         {">", 50}, {">=", 50}, {"<", 50}, {"<=", 50}, {"==", 50}, {"!=", 50}, {"!", 5}, 
         {"(", 0}, {")", 0} 
-    };
+    }; //higher precedence has prioirty
 
     bool isUnary(std::string value);
     std::vector<std::string> unaryOperators = {"size", "!"};
 
     ElementMap gameListsMap;
+
+    std::shared_ptr<ASTNode> getRoot();
+
+    private:
+    std::shared_ptr<ASTNode> root;
 };
 

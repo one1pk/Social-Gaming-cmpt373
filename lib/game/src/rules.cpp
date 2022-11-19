@@ -9,14 +9,14 @@
 Foreach::Foreach(ElementSptr _list, RuleVector _rules) 
     : list(_list), rules(_rules) {
 }
-Foreach::Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules)
-    : listExpressionRoot(listExpressionRoot), rules(_rules){
+Foreach::Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules, std::string elementName)
+    : listExpressionRoot(listExpressionRoot), rules(_rules), elementName(elementName) {
 }
 
 ElementSptr Foreach::getList(){
         return list;
     }
-bool Foreach::executeImpl(ElementSptr) {
+bool Foreach::executeImpl(ElementSptr, ElementMap elementsMap) {
     std::cout << "* Foreach Rule *\n";
 
     // initialze the elements vector from the dynamic list object
@@ -30,7 +30,7 @@ bool Foreach::executeImpl(ElementSptr) {
     // execute the child rules for each element
     for (; element != elements.end(); element++) {
         for (; rule != rules.end(); rule++) {
-            if (!(*rule)->execute(*element)) {
+            if (!(*rule)->execute(elementsMap, *element)) {
                 return false;
             }
             // reset the rule (to be executed by next element)
@@ -52,7 +52,11 @@ ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> _player_maps, RuleVector _ru
     : player_maps(_player_maps), rules(_rules) {
 }
 
-bool ParallelFor::executeImpl(ElementSptr element) {
+ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string elementName)
+    : player_maps(player_maps), rules(rules), elementName(elementName) {
+}
+
+bool ParallelFor::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* ParallelFor Rule *\n";
 
     // initialze the player rule iterators to the first rule
@@ -68,7 +72,7 @@ bool ParallelFor::executeImpl(ElementSptr element) {
     // for each player, execute the rules until an InputRequest rule is encountered
     for(auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
         for (auto& rule = player_rule_it[player_map->first]; rule != rules.end(); rule++) {
-            if (!(*rule)->execute(player_map->second)) {
+            if (!(*rule)->execute(elementsMap, player_map->second)) {
                 // InputRequest rule encountered
                 executed = false;
                 break;
@@ -94,7 +98,7 @@ When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> condition
     : conditionExpression_rule_pair(conditionExpression_rule_pair) {
 }
 
-bool When::executeImpl(ElementSptr element) {
+bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* When Rule *\n";
 
     // traverse the cases and execute the rules for the case condition that returns true
@@ -104,7 +108,7 @@ bool When::executeImpl(ElementSptr element) {
             std::cout << "Case Match!\nExecuting Case Rules\n";
 
             for (; rule != case_rule_pair->second.end(); rule++) {
-                if (!(*rule)->execute(element)) {
+                if (!(*rule)->execute(elementsMap, element)) {
                     return false;
                 }
                 (*rule)->reset();
@@ -134,7 +138,7 @@ Extend::Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<AS
     : targetExpressionRoot(targetExpressionRoot), extensionExpressionRoot(extensionExpressionRoot){
 }
 
-bool Extend::executeImpl(ElementSptr element) {
+bool Extend::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Extend Rule *\n";
 
     target->extend(extension(element));
@@ -152,7 +156,7 @@ Discard::Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<A
 : listExpressionRoot(listExpressionRoot), countExpressionRoot(countExpressionRoot){
 }
 
-bool Discard::executeImpl(ElementSptr element) {
+bool Discard::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Discard Rule *\n";
 
     list->discard(count(element));
@@ -166,7 +170,7 @@ Add::Add(std::string to, ElementSptr value)
     : to(to), value(value) {
 }
 
-bool Add::executeImpl(ElementSptr element) {
+bool Add::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Add Rule *\n";
 
     element->getMapElement(to)->addInt(value->getInt());
@@ -213,7 +217,7 @@ InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExp
       result(result), player_msgs(player_msgs), player_input(player_input) {
 }
 
-bool InputChoice::executeImpl(ElementSptr player) {
+bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     std::cout << "* InputChoiceRequest Rule *\n";
     
     Connection player_connection = player->getMapElement("connection")->getConnection();
@@ -246,7 +250,7 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
     : msg(msg), global_msgs(global_msgs) {
 }
 
-bool GlobalMsg::executeImpl(ElementSptr element) {
+bool GlobalMsg::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* GlobalMsg Rule *\n";
     global_msgs->push_back(formatString(msg, element));
     executed = true;
@@ -261,7 +265,7 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
       ascending(ascending), global_msgs(global_msgs) {
 }
 
-bool Scores::executeImpl(ElementSptr element) {
+bool Scores::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Scores Rule *\n";
 
     std::stringstream msg;

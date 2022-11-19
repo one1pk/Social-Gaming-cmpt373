@@ -37,7 +37,8 @@ void Game::run() {
     _status = GameStatus::Running;
 
     for (auto rule: _rules) {
-        if (!rule->execute()) {
+        ElementMap elementsMap;
+        if (!rule->execute(elementsMap)) {
             _status = GameStatus::AwaitingOutput;
             return;
         }
