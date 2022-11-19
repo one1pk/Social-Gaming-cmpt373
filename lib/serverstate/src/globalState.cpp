@@ -307,10 +307,12 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
     Game g;
     std::string path = PATH_TO_JSON"/rock_paper_scissors.json";
     InterpretJson j(path);
-    j.interpret(g);
+    j.interpretWithRules(g);
+    g.setOwner(owner);
+    game_instances.emplace_back(g);
 
     //Manual
-    ElementSptr setup = g.setup();
+    /*ElementSptr setup = g.setup();
     ElementSptr constants = g.constants();
     ElementSptr variables = g.variables();
     ElementSptr per_player = g.per_player();
@@ -440,7 +442,8 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
 
     game_instances.emplace_back(
         game_name, owner,
-        /*min_players*/ 2, /*max_players*/ 4, /*audience*/ false,
+        //min players, max players, audience
+        2, 4,  false,
         setup,
         constants, variables,
         per_player, per_audience,
@@ -448,5 +451,5 @@ void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::stri
         rules, 
         player_msgs, global_msgs,
         player_input
-    );
+    );*/
 }

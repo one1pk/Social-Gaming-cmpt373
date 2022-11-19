@@ -7,6 +7,7 @@ void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
     assert(false && "Invalid node during evaluation");
 }
 
+/// TODO: resolver should have a map of game lists so that if provided a name, it can search constants, variables etc so you can just provide it "wins" instead of "variables.wins"
 void ExpressionResolver::visit(NameNode& name, ElementMap elements)  {
     auto elementIter = elements.find(name.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)

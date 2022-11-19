@@ -21,6 +21,8 @@ bool Foreach::executeImpl(ElementSptr, ElementMap elementsMap) {
 
     // initialze the elements vector from the dynamic list object
     if (!initialized) {
+        listExpressionRoot->accept(resolver, elementsMap);
+        list = resolver.getResult();
         elements = list->getVector();
         element = elements.begin();
         rule = rules.begin();
@@ -29,6 +31,8 @@ bool Foreach::executeImpl(ElementSptr, ElementMap elementsMap) {
 
     // execute the child rules for each element
     for (; element != elements.end(); element++) {
+        //sets element in elementMap so that visitors in subrules can lookup this element (eg. round, weapon, etc)
+        elementsMap[elementName] = *element;
         for (; rule != rules.end(); rule++) {
             if (!(*rule)->execute(elementsMap, *element)) {
                 return false;
@@ -71,6 +75,8 @@ bool ParallelFor::executeImpl(ElementSptr element, ElementMap elementsMap) {
     // for each player, start rule execution at their stored rule iterator
     // for each player, execute the rules until an InputRequest rule is encountered
     for(auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
+        //sets elementsMap at "player" to ElementSptr player so visitors of sub rules can lookup this element
+        elementsMap[elementName] = player_map->second;
         for (auto& rule = player_rule_it[player_map->first]; rule != rules.end(); rule++) {
             if (!(*rule)->execute(elementsMap, player_map->second)) {
                 // InputRequest rule encountered
@@ -94,20 +100,29 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
       rule(case_rule_pair->second.begin()) {
 }
 
-When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> conditionExpression_rule_pair)
-    : conditionExpression_rule_pair(conditionExpression_rule_pair) {
+When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> conditionExpression_rule_pairs)
+    : conditionExpression_rule_pairs(conditionExpression_rule_pairs), 
+    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
+    rule(conditionExpression_rule_pair->second.begin()) {
 }
 
 bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* When Rule *\n";
-
+    
     // traverse the cases and execute the rules for the case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
-    for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
-        if (case_rule_pair->first(element)) {
+    for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
+        rule = conditionExpression_rule_pair->second.begin();
+        RuleVector rules = conditionExpression_rule_pair->second;
+
+        std::shared_ptr<ASTNode> conditionRoot = conditionExpression_rule_pair->first;
+        conditionRoot->accept(resolver, elementsMap);
+        bool caseMatch = resolver.getResult()->getBool();
+
+        if (caseMatch) {
             std::cout << "Case Match!\nExecuting Case Rules\n";
 
-            for (; rule != case_rule_pair->second.end(); rule++) {
+            for (; rule != rules.end(); rule++) {
                 if (!(*rule)->execute(elementsMap, element)) {
                     return false;
                 }
@@ -124,8 +139,8 @@ bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
 }
 
 void When::resetImpl() {
-    case_rule_pair = case_rules.begin();
-    rule = case_rule_pair->second.begin();
+    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
+    rule = conditionExpression_rule_pair->second.begin();
 }
 
 // Extend //
@@ -140,8 +155,9 @@ Extend::Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<AS
 
 bool Extend::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Extend Rule *\n";
-
-    target->extend(extension(element));
+    extensionExpressionRoot->accept(resolver, elementsMap);
+    extensionList = resolver.getResult();
+    target->extend(extensionList);
     executed = true;
     return true;
 }
@@ -159,7 +175,13 @@ Discard::Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<A
 bool Discard::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Discard Rule *\n";
 
-    list->discard(count(element));
+    listExpressionRoot->accept(resolver, elementsMap);
+    list = resolver.getResult();
+
+    countExpressionRoot->accept(resolver, elementsMap);
+    resolvedCount = resolver.getResult()->getInt();
+
+    list->discard(resolvedCount);
     executed = true;
     return true;
 }
@@ -220,6 +242,9 @@ InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExp
 bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     std::cout << "* InputChoiceRequest Rule *\n";
     
+    /// TODO: for choices, weapons.name should resolve to weapons.sublist.name
+    choicesExpressionRoot->accept(resolver, elementsMap);
+    choices = resolver.getResult()->getVector();
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!alreadySentInput[player_connection]) {
@@ -237,6 +262,7 @@ bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     // execution will continue from here after input is recieved
 
     /// TODO: check if the selected index is within range, if not ask user to provide a valid index
+    /// TODO: add player element to players list
     int chosen_index = std::stoi(player_input->at(player_connection));
     player->setMapElement(result, choices[chosen_index]);
 

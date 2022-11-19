@@ -9,9 +9,6 @@
 #include <map>
 #include <memory>
 #include <stack>
-#include <nlohmann/json.hpp>
-
-using Json = nlohmann::json;
 
 enum GameStatus {
     Created,
@@ -84,16 +81,9 @@ public:
     void setRules(RuleVector rules){
         _rules = rules;
     }
-   
-    std::shared_ptr<PlayerMap> _players = std::make_shared<PlayerMap>(PlayerMap{}); // maps each player to their game map
-    std::shared_ptr<PlayerMap> _audience = std::make_shared<PlayerMap>(PlayerMap{}); // maps each audience to their game map
-    std::shared_ptr<std::deque<Message>> _player_msgs = std::make_shared<std::deque<Message>>();
-    std::shared_ptr<std::deque<std::string>> _global_msgs = std::make_shared<std::deque<std::string>>();
-    std::shared_ptr<std::map<Connection, std::string>> _player_input = std::make_shared<std::map<Connection, std::string>>();
 
-    
-private:
-    uintptr_t _id; // unique id can act as an invitation code
+    // Goal: map of { name_string -> { configurable_value , prompt_text } }
+     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
     Connection _owner;
     GameStatus _status;
@@ -106,9 +96,6 @@ private:
 
     bool _has_audience;
 
-    
-    
-    // Goal: map of { name_string -> { configurable_value , prompt_text } }
     ElementSptr _setup;
 
     ElementSptr _constants;
@@ -116,13 +103,12 @@ private:
 
     ElementSptr _per_player; // a map template for players
     ElementSptr _per_audience; // a map template for audience members
-
     RuleVector _rules;
 
-    
-
-    //allows from_json and to_json to access private fields
-    friend void from_json(const Json &j, Game &g);
-    friend void to_json(Json &j, const Game &g);
+    std::shared_ptr<PlayerMap> _players = std::make_shared<PlayerMap>(PlayerMap{}); // maps each player to their game map
+    std::shared_ptr<PlayerMap> _audience = std::make_shared<PlayerMap>(PlayerMap{}); // maps each audience to their game map
+    std::shared_ptr<std::deque<Message>> _player_msgs = std::make_shared<std::deque<Message>>();
+    std::shared_ptr<std::deque<std::string>> _global_msgs = std::make_shared<std::deque<std::string>>();
+    std::shared_ptr<std::map<Connection, std::string>> _player_input = std::make_shared<std::map<Connection, std::string>>();
 
 };

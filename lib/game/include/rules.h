@@ -45,6 +45,8 @@ protected:
 
 class Foreach : public Rule {
 private:
+    std::shared_ptr<ASTNode> listExpressionRoot;
+
     ElementSptr list;
     ElementVector elements;
     ElementVector::iterator element;
@@ -52,7 +54,6 @@ private:
     RuleVector::iterator rule;
     bool initialized = false;
 
-    std::shared_ptr<ASTNode> listExpressionRoot;
     std::string elementName;
 public:
     ElementSptr getList();
@@ -77,6 +78,8 @@ public:
 };
 
 class When : public Rule {
+    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pairs;
+    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>::iterator conditionExpression_rule_pair;
     // a vector of case-rules pairs
     // containes a rule list for every case
     // a case is a function (lambda) that returns a bool
@@ -84,11 +87,9 @@ class When : public Rule {
     std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>::iterator case_rule_pair;
     RuleVector::iterator rule;
     bool match = false;
-
-    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pair;
 public: 
     When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
-    When(std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditonExpression_rule_pair);
+    When(std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditonExpression_rule_pairs);
     bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
     void resetImpl() final;
 };
@@ -96,11 +97,11 @@ public:
 // List Operations //
 
 class Extend : public Rule {
-    ElementSptr target;
-    std::function<ElementSptr(ElementSptr)> extension;
-
     std::shared_ptr<ASTNode> targetExpressionRoot;
     std::shared_ptr<ASTNode> extensionExpressionRoot;
+
+    ElementSptr target;
+    std::function<ElementSptr(ElementSptr)> extension;
 
     ElementSptr extensionList;
 public:
@@ -110,12 +111,12 @@ public:
 };
 
 class Discard : public Rule {
-    ElementSptr list;
-    std::function<size_t(ElementSptr)> count;
-
     std::shared_ptr<ASTNode> listExpressionRoot;
     std::shared_ptr<ASTNode> countExpressionRoot;
     int resolvedCount;
+
+    ElementSptr list;
+    std::function<size_t(ElementSptr)> count;
 public:
     Discard(ElementSptr list, std::function<size_t(ElementSptr)> count);
     Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot);
@@ -136,6 +137,9 @@ public:
 
 class InputChoice : public Rule {
     std::string prompt;
+    
+    std::shared_ptr<ASTNode> choicesExpressionRoot;
+
     ElementVector choices;
     unsigned timeout_s; // in seconds
     std::string result;
@@ -143,7 +147,6 @@ class InputChoice : public Rule {
     std::shared_ptr<std::map<Connection, std::string>> player_input;
     std::map<Connection, bool> alreadySentInput;
 
-    std::shared_ptr<ASTNode> choicesExpressionRoot;
 public:
     InputChoice(std::string prompt, ElementVector choices, 
                 unsigned timeout_s, std::string result,
