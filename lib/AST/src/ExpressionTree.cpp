@@ -1,16 +1,16 @@
 #include "ExpressionTree.h"
 
-ExpressionTree::ExpressionTree(ElementMap gameListsMap) : gameListsMap(gameListsMap) { }
+ExpressionTree::ExpressionTree(ElementMap gameListsMap, std::shared_ptr<ASTNode> root)
+    : gameListsMap(gameListsMap), root(root) { }
 
 std::shared_ptr<ASTNode> ExpressionTree::getRoot(){
     return root;
 }
-std::vector<std::string> ExpressionTree::split(std::string expression) {
+std::deque<std::string> ExpressionTree::split(std::string expression) {
     int pos = 0;
     bool alnum = false;
     bool punct = false;
-    std::vector<std::string> splits;
-    splits.reserve(expression.length());
+    std::deque<std::string> splits;
 
     for (unsigned i = 0; i < expression.length(); i++) {
         if (isalnum(expression[i])) {
@@ -22,7 +22,7 @@ std::vector<std::string> ExpressionTree::split(std::string expression) {
                 pos = i;
                 alnum = true;
             }
-        } else if (ispunct(expression[i]) && !(expression[i] == '-' || expression[i] == '>')) {
+        } else if (ispunct(expression[i]) && !(expression[i] == '-' || expression[i] == '>' || expression[i] == '{' || expression[i] == '}')) {
             if (alnum) {
                 splits.emplace_back(expression.substr(pos, i-pos));
                 alnum = false;
@@ -61,27 +61,30 @@ int ExpressionTree::getPrecedence(std::string key){
 }
 
 void ExpressionTree::build(std::string expression){
-    std::vector<std::string> tokens = split(expression);
+    std::deque<std::string> tokens = split(expression);
     std::deque<std::string> operatorStack;
 
     std::deque<std::shared_ptr<ASTNode>> nodeStack;
     
+    tokens.emplace_front("("); 
+    tokens.emplace_back(")");
+
     for(auto token : tokens){
         if(token == "(") {
-            operatorStack.emplace_front(token);
+            operatorStack.emplace_back(token);
         }
 
         else if (!isOperator(token)){
             //if token is a gameList name i.e. constants, variables, etc
             auto gameListIter = gameListsMap.find(token);
             if(gameListIter != gameListsMap.end()){
-                root = std::make_unique<ListNode>(gameListIter->second);
-                nodeStack.emplace_front(root);
+                root = std::make_shared<ListNode>(gameListIter->second);
+                nodeStack.emplace_back(root);
             }
             //else it is just a string
             else {
-                root = std::make_unique<NameNode>(token);
-                nodeStack.emplace_front(root);
+                root = std::make_shared<NameNode>(token);
+                nodeStack.emplace_back(root);
             }
         }
         //if operator
@@ -89,44 +92,44 @@ void ExpressionTree::build(std::string expression){
             std::string stackTop = *operatorStack.begin();
             //ignore "." if followed by an operator
             if(stackTop == ".")
-                operatorStack.pop_front();
+                operatorStack.pop_back();
                 
             while (!operatorStack.empty() && stackTop != "(" && getPrecedence(stackTop) >= getPrecedence(token) ){
                 if(isUnary(token)){
                     auto operand = *(nodeStack.begin());
-                    nodeStack.pop_front();
-                    root = std::make_unique<UnaryOperator>(*operatorStack.begin(), *operand);
+                    nodeStack.pop_back();
+                    root = std::make_shared<UnaryOperator>(*operatorStack.begin(), *operand);
                     
-                    operatorStack.pop_front();
-                    nodeStack.emplace_front(root);
+                    operatorStack.pop_back();
+                    nodeStack.emplace_back(root);
                 }
                 else {
                     auto right = *(nodeStack.begin());
-                    nodeStack.pop_front();
+                    nodeStack.pop_back();
                     auto left = *(nodeStack.begin());
-                    nodeStack.pop_front();
+                    nodeStack.pop_back();
 
-                    root = std::make_unique<BinaryOperator>(*operatorStack.begin(), *left, *right);
-                    operatorStack.pop_front();
-                    nodeStack.emplace_front(root);
+                    root = std::make_shared<BinaryOperator>(*operatorStack.begin(), *left, *right);
+                    operatorStack.pop_back();
+                    nodeStack.emplace_back(root);
                 }
             }
-            operatorStack.emplace_front(token);
+            operatorStack.emplace_back(token);
         }
 
         else if(token == ")") {
             std::string stackTop = *operatorStack.begin();
             while(!operatorStack.empty() && stackTop != "("){
                 auto left = *(nodeStack.begin());
-                nodeStack.pop_front();
+                nodeStack.pop_back();
                 auto right = *(nodeStack.begin());
-                nodeStack.pop_front();
+                nodeStack.pop_back();
 
-                root = std::make_unique<BinaryOperator>(*operatorStack.begin(), *left, *right);
-                operatorStack.pop_front();
-                nodeStack.emplace_front(root);
+                root = std::make_shared<BinaryOperator>(*operatorStack.begin(), *left, *right);
+                operatorStack.pop_back();
+                nodeStack.emplace_back(root);
             }
-            operatorStack.pop_front();
+            operatorStack.pop_back();
         }
     }
 

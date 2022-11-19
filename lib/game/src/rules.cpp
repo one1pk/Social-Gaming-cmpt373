@@ -6,16 +6,10 @@
 
 // Foreach //
 
-Foreach::Foreach(ElementSptr _list, RuleVector _rules) 
-    : list(_list), rules(_rules) {
-}
 Foreach::Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules, std::string elementName)
     : listExpressionRoot(listExpressionRoot), rules(_rules), elementName(elementName) {
 }
 
-ElementSptr Foreach::getList(){
-        return list;
-    }
 bool Foreach::executeImpl(ElementSptr, ElementMap elementsMap) {
     std::cout << "* Foreach Rule *\n";
 
@@ -51,10 +45,6 @@ void Foreach::resetImpl() {
 }
 
 // ParallelFor //
-
-ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> _player_maps, RuleVector _rules) 
-    : player_maps(_player_maps), rules(_rules) {
-}
 
 ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string elementName)
     : player_maps(player_maps), rules(rules), elementName(elementName) {
@@ -94,11 +84,6 @@ void ParallelFor::resetImpl() {
 }
 
 // When //
-
-When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _case_rules)
-    : case_rules(_case_rules), case_rule_pair(case_rules.begin()),
-      rule(case_rule_pair->second.begin()) {
-}
 
 When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> conditionExpression_rule_pairs)
     : conditionExpression_rule_pairs(conditionExpression_rule_pairs), 
@@ -145,10 +130,6 @@ void When::resetImpl() {
 
 // Extend //
 
-Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension)
-    : target(target), extension(extension) {
-}
-
 Extend::Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<ASTNode> extensionExpressionRoot)
     : targetExpressionRoot(targetExpressionRoot), extensionExpressionRoot(extensionExpressionRoot){
 }
@@ -163,10 +144,6 @@ bool Extend::executeImpl(ElementSptr element, ElementMap elementsMap) {
 }
 
 // Discard //
-
-Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
-    : list(list), count(count) {
-}
 
 Discard::Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot)
 : listExpressionRoot(listExpressionRoot), countExpressionRoot(countExpressionRoot){
@@ -222,13 +199,6 @@ std::string formatString(std::string_view str, ElementSptr element) {
         }
     }
     return res;
-}
-
-InputChoice::InputChoice(std::string prompt, ElementVector choices, unsigned timeout_s,
-    std::string result, std::shared_ptr<std::deque<Message>> player_msgs,
-    std::shared_ptr<std::map<Connection, std::string>> player_input)
-    : prompt(prompt), choices(choices), timeout_s(timeout_s),
-      result(result), player_msgs(player_msgs), player_input(player_input) {
 }
 
 InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExpressionRoot, 

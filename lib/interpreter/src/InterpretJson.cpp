@@ -45,7 +45,8 @@ void InterpretJson::interpretWithRules(Game& game){
         {"per-player", game.per_player()},
         {"per-audience", game.per_audience()}};
 
-    expressionTree = ExpressionTree(gameListsMap);
+    std::shared_ptr<ASTNode> root;
+    expressionTree = ExpressionTree(gameListsMap, root);
 
     toRuleVec(game, rulesFromJson, rules);
     game.setRules(rules);
@@ -135,12 +136,12 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpressionRulePairs;
             ElementVector cases = rule->getMapElement("cases")->getVector();
             for(auto caseRulePair : cases){
-                std::string conditionString = rule->getMapElement("condition")->getString();
+                std::string conditionString = caseRulePair->getMapElement("condition")->getString();
                 expressionTree.build(conditionString);
                 std::shared_ptr<ASTNode> conditionExpressionRoot = expressionTree.getRoot();
 
                 RuleVector caseRules;
-                toRuleVec(game, rule->getMapElement("rules"), caseRules);
+                toRuleVec(game, caseRulePair->getMapElement("rules"), caseRules);
                 conditionExpressionRulePairs.push_back({conditionExpressionRoot, caseRules});
             }
 

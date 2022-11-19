@@ -5,8 +5,8 @@
 class ExpressionTree{
     public:
     ExpressionTree() = default;
-    ExpressionTree(ElementMap gameListsMap);
-    std::vector<std::string> split(std::string expression);
+    ExpressionTree(ElementMap gameListsMap, std::shared_ptr<ASTNode> root);
+    std::deque<std::string> split(std::string expression);
     void build(std::string expression);
 
     bool isOperator(std::string value);

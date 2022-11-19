@@ -8,6 +8,8 @@ void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
 }
 
 /// TODO: resolver should have a map of game lists so that if provided a name, it can search constants, variables etc so you can just provide it "wins" instead of "variables.wins"
+/// TODO: if "{}" it should return element refered to inside brackets
+/// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
 void ExpressionResolver::visit(NameNode& name, ElementMap elements)  {
     auto elementIter = elements.find(name.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
