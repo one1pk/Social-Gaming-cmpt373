@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <glog/logging.h>
 
 // Foreach //
 
@@ -11,9 +12,10 @@ Foreach::Foreach(ElementSptr _list, RuleVector _rules)
 }
 
 bool Foreach::executeImpl(ElementSptr) {
-    std::cout << "* Foreach Rule *\n";
+    google::InitGoogleLogging("Rules::Foreach");
+    LOG(INFO) << "* Foreach Rule *\n";
 
-    // initialze the elements vector from the dynamic list object
+    // initialize the elements vector from the dynamic list object
     if (!initialized) {
         elements = list->getVector();
         element = elements.begin();
@@ -47,9 +49,10 @@ ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> _player_maps, RuleVector _ru
 }
 
 bool ParallelFor::executeImpl(ElementSptr element) {
-    std::cout << "* ParallelFor Rule *\n";
+    google::InitGoogleLogging("Rules::ParallelFor");
+    LOG(INFO) << "* ParallelFor Rule *\n";
 
-    // initialze the player rule iterators to the first rule
+    // initialize the player rule iterators to the first rule
     if (!initialized) {
         for (auto player_map: *player_maps) {
             player_rule_it[player_map.first] = rules.begin();
@@ -85,13 +88,14 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
 }
 
 bool When::executeImpl(ElementSptr element) {
-    std::cout << "* When Rule *\n";
+    google::InitGoogleLogging("Rules::When");
+    LOG(INFO) << "* When Rule *\n";
 
     // traverse the cases and execute the rules for the case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
     for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
         if (case_rule_pair->first(element)) {
-            std::cout << "Case Match!\nExecuting Case Rules\n";
+            LOG(INFO) << "Case Match!\nExecuting Case Rules\n";
 
             for (; rule != case_rule_pair->second.end(); rule++) {
                 if (!(*rule)->execute(element)) {
@@ -101,7 +105,7 @@ bool When::executeImpl(ElementSptr element) {
             }
             break;
         } else {
-            std::cout << "Case Fail, testing next case\n";
+            LOG(INFO) << "Case Fail, testing next case\n";
         }
     }
 
@@ -121,7 +125,8 @@ Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> exten
 }
 
 bool Extend::executeImpl(ElementSptr element) {
-    std::cout << "* Extend Rule *\n";
+    google::InitGoogleLogging("Rules::Extend");
+    LOG(INFO) << "* Extend Rule *\n";
 
     target->extend(extension(element));
     executed = true;
@@ -135,7 +140,8 @@ Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
 }
 
 bool Discard::executeImpl(ElementSptr element) {
-    std::cout << "* Discard Rule *\n";
+    google::InitGoogleLogging("Rules::Discard");
+    LOG(INFO) << "* Discard Rule *\n";
 
     list->discard(count(element));
     executed = true;
@@ -149,7 +155,8 @@ Add::Add(std::string to, ElementSptr value)
 }
 
 bool Add::executeImpl(ElementSptr element) {
-    std::cout << "* Add Rule *\n";
+    google::InitGoogleLogging("Rules::Add");
+    LOG(INFO) << "* Add Rule *\n";
 
     element->getMapElement(to)->addInt(value->getInt());
     executed = true;
@@ -185,7 +192,8 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string 
 }
 
 bool InputChoice::executeImpl(ElementSptr player) {
-    std::cout << "* InputChoiceRequest Rule *\n";
+    google::InitGoogleLogging("Rules::InputChoiceRequest");
+    LOG(INFO) << "* InputChoiceRequest Rule *\n";
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!awaitingInput[player_connection]) {
@@ -234,7 +242,8 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
 }
 
 bool GlobalMsg::executeImpl(ElementSptr element) {
-    std::cout << "* GlobalMsg Rule *\n";
+    google::InitGoogleLogging("Rules::GlobalMsg");
+    LOG(INFO) << "* GlobalMsg Rule *\n";
 
     global_msgs->push_back(formatString(msg, element));
     executed = true;
@@ -250,7 +259,8 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
 }
 
 bool Scores::executeImpl(ElementSptr element) {
-    std::cout << "* Scores Rule *\n";
+    google::InitGoogleLogging("Rules::Scores");
+    LOG(INFO) << "* Scores Rule *\n";
 
     std::stringstream msg;
     msg << "\nScores are " << (ascending? "(in ascedning order)\n" : "(in descedning order)\n");

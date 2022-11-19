@@ -1,4 +1,5 @@
 #include "globalState.h"
+#include <glog/logging.h>
 
 void GlobalServerState::addNewConnections(std::vector<Connection>& connections) {
     clients.insert(clients.end(), connections.begin(), connections.end());
@@ -70,21 +71,22 @@ bool is_number(std::string_view s) {
 }
 
 std::deque<Message> GlobalServerState::processGames() {
+    google::InitGoogleLogging("Serverstate::GlobalServerState");
     std::deque<Message> outgoing;
 
     auto game = game_instances.begin();
     while (game != game_instances.end()) {
-    // std::cout << "Game Check\n";
+    // LOG(INFO) << "Game Check\n";
         switch (game->status()) {
             case GameStatus::AwaitingOutput: {
-            // std::cout << "AwaitingOutput\n";
+            // LOG(INFO) << "AwaitingOutput\n";
                 processGameMsgs(*game, outgoing);
                 game->outputSent(); // changes the status to AwaitingInput
                 game++;
             }
             break;
             case GameStatus::AwaitingInput: {
-            // std::cout << "AwaitingInput\n";
+            // LOG(INFO) << "AwaitingInput\n";
                 std::deque<InputRequest> input_requests = game->inputRequests();
                 for (auto input_request: input_requests) {
                     Connection user = input_request.user;
@@ -127,7 +129,7 @@ std::deque<Message> GlobalServerState::processGames() {
             }
             break;
             case GameStatus::Finished: {
-            // std::cout << "GameFinished\n";
+            // LOG(INFO) << "GameFinished\n";
                 processGameMsgs(*game, outgoing);
                 outgoing.push_back({game->owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
                 std::deque<Message> finalMsgs = buildMsgsForOtherPlayers("\nGood game!\nYou are now back in the lobby\n\n", game->owner());
