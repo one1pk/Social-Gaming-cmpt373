@@ -19,7 +19,7 @@ TEST(ASTTest, TestSplit){
 
 }
 
-static ExpressionResolver& resolve(Game& game, ExpressionResolver resolver, std::string expression){
+static void resolve(Game& game, ExpressionResolver& resolver, std::string expression){
     ElementMap gameListsMap = {{"constants", game.constants()},
         {"variables", game.variables()},
         {"setup", game.setup()},
@@ -49,8 +49,6 @@ static ExpressionResolver& resolve(Game& game, ExpressionResolver resolver, std:
     std::cout << std::endl;
     expressionRoot->accept(treePrinter, elementsMap);
     std::cout << std::endl;
-
-    return resolver;
 }
 
 TEST(ASTTest, ResolverTest){
@@ -62,18 +60,18 @@ TEST(ASTTest, ResolverTest){
     
     std::string expression = "variables.winners.size";
     ExpressionResolver resolver;
-    resolver = resolve( game, resolver, expression);
+    resolve( game, resolver, expression);
     EXPECT_EQ(0, resolver.getResult()->getVector().size());
 
 
     expression = "setup.Rounds.upfrom(1)";
     auto expected = game.setup()->getMapElement("Rounds")->upfrom(1)->getVector();
-    resolver = resolve(game, resolver, expression);
+    resolve(game, resolver, expression);
     EXPECT_EQ(4, expected.size());
     
     expression = "constants.weapons.name";
     auto choices = game.constants()->getMapElement("weapons")->getSubList("name");
-    resolver = resolve(game, resolver, expression);
+    resolve(game, resolver, expression);
     EXPECT_EQ(resolver.getResult()->getVector(), choices);
     EXPECT_EQ(resolver.getResult()->getVector()[1]->getString(), "Paper");
 
@@ -88,7 +86,7 @@ TEST(ASTTest, ResolverTest){
     }
     
     expression = "players.weapon";
-    resolver = resolve(game, resolver, expression);
+    resolve(game, resolver, expression);
     
     
     ElementVector weapons;
@@ -100,7 +98,7 @@ TEST(ASTTest, ResolverTest){
     EXPECT_EQ(resolver.getResult()->getSizeAsInt(), 3);
 
     expression = "!players.weapon.contains(pap)";
-    resolver = resolve(game, resolver, expression);
+    resolve(game, resolver, expression);
     EXPECT_EQ(resolver.getResult()->getBool(), false);
 }
 
