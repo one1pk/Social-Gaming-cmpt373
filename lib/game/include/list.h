@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <iostream>
-
+#include <algorithm>
 
 
 enum Type { // doesn't seem useful, might remove later 

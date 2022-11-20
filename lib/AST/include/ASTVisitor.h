@@ -30,6 +30,15 @@ public:
     ElementSptr list;
 };
 
+class PlayersNode : public ASTNode { 
+public:
+    PlayersNode(std::shared_ptr<PlayerMap> connectionPlayerPairs) : connectionPlayerPairs(connectionPlayerPairs) { }
+
+    void accept(ASTVisitor& visitor, ElementMap elements) override;
+
+    std::shared_ptr<PlayerMap> connectionPlayerPairs;
+};
+
 
 class BinaryOperator : public ASTNode {
 public:
@@ -60,6 +69,7 @@ class ASTVisitor {
     virtual void visit(ASTNode& node, ElementMap elements) = 0;
     virtual void visit(NameNode& name, ElementMap elements) = 0;
     virtual void visit(ListNode& list, ElementMap elements) = 0;
+    virtual void visit(PlayersNode& players, ElementMap elements) = 0;
     virtual void visit(BinaryOperator& bOp, ElementMap elements) = 0;
     virtual void visit(UnaryOperator& uOp, ElementMap elements) = 0;
 };
@@ -69,6 +79,10 @@ inline void NameNode::accept(ASTVisitor& visitor, ElementMap elements) {
 }
 
 inline void ListNode::accept(ASTVisitor& visitor, ElementMap elements) {
+    visitor.visit(*this, elements);
+}
+
+inline void PlayersNode::accept(ASTVisitor& visitor, ElementMap elements) {
     visitor.visit(*this, elements);
 }
 

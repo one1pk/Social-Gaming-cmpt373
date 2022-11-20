@@ -1,5 +1,5 @@
 #include "ExpressionResolver.h"
-
+#include <algorithm>
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 
@@ -25,6 +25,14 @@ void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
     result = listNode.list;
 }
 
+void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
+    ElementVector players;
+    for(auto playerMap : *(playersNode.connectionPlayerPairs)){
+        players.emplace_back(playerMap.second);
+    }
+    result = std::make_shared<Element<ElementVector>>(players);
+}
+
 void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
     uOp.operand->accept(*this, elements);
     ElementSptr operand = result;
@@ -44,14 +52,19 @@ void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
     ElementSptr right = result;
     std::string kind = bOp.kind;
 
-    if(kind == ".") 
-        result = left->getMapElement(right->getString());
+    if(kind == ".") {
+        if(left->type == Type::VECTOR){
+            result = std::make_shared<Element<ElementVector>>(left->getSubList(right->getString()));
+        }
+        else 
+            result = left->getMapElement(right->getString());
+    }
 
     else if(kind == "upfrom")
         result = left->upfrom(stoi(right->getString()));
 
-    else if(kind == "sublist")
-        result = std::make_shared<Element<ElementVector>>(left->getSubList(right->getString()));
+    else if(kind == "contains")
+        result = std::make_shared<Element<bool>>(left->contains(right));
 
     //might make collect a trinary operator
     else if(kind == "collect")

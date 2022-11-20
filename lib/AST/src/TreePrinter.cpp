@@ -1,5 +1,5 @@
 #include "TreePrinter.h"
-#include <iostream>
+
 
 std::string TreePrinter::getResult() { return result; }
 
@@ -13,6 +13,10 @@ void TreePrinter::visit(NameNode& nameNode, ElementMap elements) {
 
 void TreePrinter::visit(ListNode& listNode, ElementMap elements) {
     std::cout << listNode.nameOfList;
+}
+
+void TreePrinter::visit(PlayersNode& playerNode, ElementMap elements) {
+    std::cout << "players";
 }
 
 void TreePrinter::visit(UnaryOperator& uOp, ElementMap elements) {
