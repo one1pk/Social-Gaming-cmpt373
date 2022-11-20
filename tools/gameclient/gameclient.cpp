@@ -26,7 +26,7 @@ std::string WELCOME_MESSAGE = (
         "  * To display help information again enter: help\n\n");
 
 int main(int argc, char* argv[]) {
-    google::InitGoogleLogging(argv[0]);
+    // google::InitGoogleLogging(argv[0]);
     
     // verify that the cmdline arguments provided describe a game server
     // and connect to the server
