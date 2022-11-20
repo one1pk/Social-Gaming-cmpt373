@@ -1,7 +1,7 @@
 #include "ExpressionTree.h"
 #include <iostream>
-ExpressionTree::ExpressionTree(ElementMap gameListsMap, std::shared_ptr<ASTNode> root)
-    : gameListsMap(gameListsMap), root(root) { }
+ExpressionTree::ExpressionTree(std::shared_ptr<ASTNode> root, ElementMap gameListsMap, std::shared_ptr<PlayerMap> playerMap)
+    : root(root), gameListsMap(gameListsMap), playerMap(playerMap) { }
 
 std::shared_ptr<ASTNode> ExpressionTree::getRoot(){
     return root;
@@ -107,6 +107,12 @@ void ExpressionTree::build(std::string expression){
                 root = std::make_shared<ListNode>(token, gameListIter->second);
                 nodeStack.emplace_back(std::move(root));
             }
+
+            else if(token == "players"){
+                root = std::make_shared<PlayersNode>(playerMap);
+                nodeStack.emplace_back(std::move(root));
+            }
+                
             //else it is just a string
             else {
                 root = std::make_shared<NameNode>(token);

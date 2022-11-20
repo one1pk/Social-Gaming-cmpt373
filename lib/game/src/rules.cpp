@@ -136,6 +136,8 @@ Extend::Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<AS
 
 bool Extend::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Extend Rule *\n";
+    targetExpressionRoot->accept(resolver, elementsMap);
+    target = resolver.getResult();
     extensionExpressionRoot->accept(resolver, elementsMap);
     extensionList = resolver.getResult();
     target->extend(extensionList);
@@ -234,6 +236,7 @@ bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     /// TODO: check if the selected index is within range, if not ask user to provide a valid index
     /// TODO: add player element to players list
     int chosen_index = std::stoi(player_input->at(player_connection));
+    
     player->setMapElement(result, choices[chosen_index]);
 
     alreadySentInput[player_connection] = false;

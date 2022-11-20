@@ -3,9 +3,12 @@
 #include <algorithm>
 
 class ExpressionTree{
-    public:
+private:
+        std::shared_ptr<ASTNode> root;
+        
+public:
     ExpressionTree() = default;
-    ExpressionTree(ElementMap gameListsMap, std::shared_ptr<ASTNode> root);
+    ExpressionTree(std::shared_ptr<ASTNode> root, ElementMap gameListsMap, std::shared_ptr<PlayerMap> playerMap);
 
     std::deque<std::string> split(std::string expression);
     void build(std::string expression);
@@ -14,12 +17,12 @@ class ExpressionTree{
     bool isOperator(std::string value);
     bool isBrace(std::string value);
     bool isBinary(std::string value);
-    std::vector<std::string> binaryOperators = {".", "upfrom", "sublist", "collect",
+    std::vector<std::string> binaryOperators = {".", "upfrom", "sublist", "collect", "contains", 
      "==", "!=", ">", ">=", "<=", "<"};
 
     int getPrecedence(std::string value);
     std::map<std::string, int> precedenceMap = {
-        {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 10}, {"collect", 10},
+        {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 10}, {"collect", 10}, {"contains", 10}, 
         {">", 50}, {">=", 50}, {"<", 50}, {"<=", 50}, {"==", 50}, {"!=", 50}, {"!", 5}, 
         {"(", 0}, {")", 0} 
     }; //higher precedence has prioirty
@@ -28,10 +31,9 @@ class ExpressionTree{
     std::vector<std::string> unaryOperators = {"size", "!"};
 
     ElementMap gameListsMap;
+    std::shared_ptr<PlayerMap> playerMap;
 
     std::shared_ptr<ASTNode> getRoot();
 
-    private:
-    std::shared_ptr<ASTNode> root;
 };
 

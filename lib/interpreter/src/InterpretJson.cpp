@@ -46,7 +46,7 @@ void InterpretJson::interpretWithRules(Game& game){
         {"per-audience", game.per_audience()}};
 
     std::shared_ptr<ASTNode> root;
-    expressionTree = ExpressionTree(gameListsMap, root);
+    expressionTree = ExpressionTree(root, gameListsMap, game._players);
 
     toRuleVec(game, rulesFromJson, rules);
     game.setRules(rules);
