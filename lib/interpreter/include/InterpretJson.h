@@ -3,13 +3,13 @@
 #include "game.h"
 #include <nlohmann/json.hpp>
 #include "rules.h"
-#include <chaiscript/chaiscript.hpp>
+// #include <chaiscript/chaiscript.hpp>
 #include "ASTVisitor.h"
 #include "ExpressionTree.h"
 
 using namespace std;
 using Json = nlohmann::json;
-using namespace chaiscript;
+// using namespace chaiscript;
 
 
 class InterpretJson{

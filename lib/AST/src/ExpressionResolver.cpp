@@ -1,5 +1,5 @@
 #include "ExpressionResolver.h"
-
+#include <cassert>
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 

@@ -1,5 +1,6 @@
 #include "TreePrinter.h"
 #include <iostream>
+#include <cassert>
 
 std::string TreePrinter::getResult() { return result; }
 
