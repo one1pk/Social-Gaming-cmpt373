@@ -71,7 +71,6 @@ bool is_number(std::string_view s) {
 }
 
 std::deque<Message> GlobalServerState::processGames() {
-    google::InitGoogleLogging("Serverstate::GlobalServerState");
     std::deque<Message> outgoing;
 
     auto game = game_instances.begin();

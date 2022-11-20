@@ -20,13 +20,13 @@ std::vector<Connection> newConnections;
 std::vector<Connection> lostConnections;
 
 void onConnect(Connection c) {
-    LOG(INFO) << "New connection: " << c.id << "\n";
+    LOG(INFO) << "New connection: " << c.id;
     newConnections.push_back(c);
 }
 
 // called when a client disconnects
 void onDisconnect(Connection c) {
-    LOG(INFO) << "Connection lost: " << c.id << "\n";
+    LOG(INFO) << "Connection lost: " << c.id;
     lostConnections.push_back(c);
 }
 
@@ -49,13 +49,13 @@ std::string getHTTPMessage(const char *htmlLocation) {
 }
 
 int main(int argc, char *argv[]) {    
-    google::InitGoogleLogging("Gameserver");
+    google::InitGoogleLogging(argv[0]);
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
         return 1;
     }
-    LOG(INFO) << "Setting up the server...\n";
+    LOG(INFO) << "Setting up the server...";
 
     /// TODO: extract the server configuration parameters from ./serverconfig.json
     // start a new session based on the configuration
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     CommandHandler commandHandler(globalState);
     MessageProcessor messageProcessor;
 
-    LOG(INFO) << "Game server is up!\n";
+    LOG(INFO) << "Game server is up!";
 
     // start listening for messages and serving content as appropriate
     while (true) {

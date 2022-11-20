@@ -12,7 +12,7 @@ Foreach::Foreach(ElementSptr _list, RuleVector _rules)
 }
 
 bool Foreach::executeImpl(ElementSptr) {
-    google::InitGoogleLogging("Rules::Foreach");
+    // google::InitGoogleLogging("Rules::Foreach");
     LOG(INFO) << "* Foreach Rule *\n";
 
     // initialize the elements vector from the dynamic list object
@@ -49,7 +49,7 @@ ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> _player_maps, RuleVector _ru
 }
 
 bool ParallelFor::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::ParallelFor");
+    // google::InitGoogleLogging("Rules::ParallelFor");
     LOG(INFO) << "* ParallelFor Rule *\n";
 
     // initialize the player rule iterators to the first rule
@@ -88,7 +88,7 @@ When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _
 }
 
 bool When::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::When");
+    // google::InitGoogleLogging("Rules::When");
     LOG(INFO) << "* When Rule *\n";
 
     // traverse the cases and execute the rules for the case condition that returns true
@@ -125,7 +125,7 @@ Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> exten
 }
 
 bool Extend::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::Extend");
+    // google::InitGoogleLogging("Rules::Extend");
     LOG(INFO) << "* Extend Rule *\n";
 
     target->extend(extension(element));
@@ -140,7 +140,7 @@ Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
 }
 
 bool Discard::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::Discard");
+    // google::InitGoogleLogging("Rules::Discard");
     LOG(INFO) << "* Discard Rule *\n";
 
     list->discard(count(element));
@@ -155,7 +155,7 @@ Add::Add(std::string to, ElementSptr value)
 }
 
 bool Add::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::Add");
+    // google::InitGoogleLogging("Rules::Add");
     LOG(INFO) << "* Add Rule *\n";
 
     element->getMapElement(to)->addInt(value->getInt());
@@ -192,7 +192,7 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string 
 }
 
 bool InputChoice::executeImpl(ElementSptr player) {
-    google::InitGoogleLogging("Rules::InputChoiceRequest");
+    // google::InitGoogleLogging("Rules::InputChoiceRequest");
     LOG(INFO) << "* InputChoiceRequest Rule *\n";
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
@@ -242,7 +242,7 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> g
 }
 
 bool GlobalMsg::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::GlobalMsg");
+    // google::InitGoogleLogging("Rules::GlobalMsg");
     LOG(INFO) << "* GlobalMsg Rule *\n";
 
     global_msgs->push_back(formatString(msg, element));
@@ -259,7 +259,7 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
 }
 
 bool Scores::executeImpl(ElementSptr element) {
-    google::InitGoogleLogging("Rules::Scores");
+    // google::InitGoogleLogging("Rules::Scores");
     LOG(INFO) << "* Scores Rule *\n";
 
     std::stringstream msg;

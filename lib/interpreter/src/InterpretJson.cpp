@@ -9,14 +9,14 @@ using json = nlohmann::json;
 
 
 InterpretJson::InterpretJson(string path) {
-    google::InitGoogleLogging("Interpreter::InterpretJson");
+    // google::InitGoogleLogging("Interpreter");
     try {
         ifstream f(path);
         json jData = json::parse(f);
         f.close();
         data = jData;
     } catch (std::exception& e) {
-        LOG(INFO) << "error reading file" << e.what() << endl;
+        std::cout << "error reading file" << e.what() << endl;
     }
 }
 
