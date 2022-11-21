@@ -234,7 +234,7 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
 RuleStatus Scores::execute(ElementSptr element) {
     LOG(INFO) << "* Scores Rule *\n";
     std::stringstream msg;
-    msg << "\nScores are " << (ascending? "(in ascedning order)\n" : "(in descedning order)\n");
+    msg << "\nScores are " << (ascending? "(in ascending order)\n" : "(in descending order)\n");
 
     std::vector<std::pair<int, uintptr_t>> scores;
     for (auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
