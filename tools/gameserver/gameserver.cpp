@@ -50,6 +50,8 @@ std::string getHTTPMessage(const char *htmlLocation) {
 
 int main(int argc, char *argv[]) {    
     google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
