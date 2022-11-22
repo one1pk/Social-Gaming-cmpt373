@@ -5,6 +5,7 @@ add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test_files")
 
 add_executable(runAllTests
   test-interpreter.cpp
+  test-list.cpp
 )
 set_target_properties(runAllTests
                     PROPERTIES
