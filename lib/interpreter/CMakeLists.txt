@@ -1,8 +1,7 @@
 add_library(interpreter
     src/InterpretJson.cpp
 )
-
-
+find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(interpreter
     PUBLIC
@@ -14,6 +13,7 @@ target_include_directories(interpreter
 
 target_link_libraries(interpreter
         game  
+        glog::glog
 )
 
 set_target_properties(interpreter

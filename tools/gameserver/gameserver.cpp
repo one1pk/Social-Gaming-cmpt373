@@ -4,6 +4,7 @@
 #include "messageProcessor.h"
 #include "server.h"
 #include "list.h"
+#include <glog/logging.h>
 
 #include <unistd.h>
 #include <chrono>
@@ -19,13 +20,13 @@ std::vector<Connection> newConnections;
 std::vector<Connection> lostConnections;
 
 void onConnect(Connection c) {
-    std::cout << "New connection: " << c.id << "\n";
+    LOG(INFO) << "New connection: " << c.id;
     newConnections.push_back(c);
 }
 
 // called when a client disconnects
 void onDisconnect(Connection c) {
-    std::cout << "Connection lost: " << c.id << "\n";
+    LOG(INFO) << "Connection lost: " << c.id;
     lostConnections.push_back(c);
 }
 
@@ -48,12 +49,15 @@ std::string getHTTPMessage(const char *htmlLocation) {
 }
 
 int main(int argc, char *argv[]) {    
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    
     if (argc < 3) {
         std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
         return 1;
     }
-    std::cout << "Setting up the server...\n";
+    LOG(INFO) << "Setting up the server...";
 
     /// TODO: extract the server configuration parameters from ./serverconfig.json
     // start a new session based on the configuration
@@ -67,7 +71,7 @@ int main(int argc, char *argv[]) {
     CommandHandler commandHandler(globalState);
     MessageProcessor messageProcessor;
 
-    std::cout << "Game server is up!\n";
+    LOG(INFO) << "Game server is up!";
 
     // start listening for messages and serving content as appropriate
     while (true) {
