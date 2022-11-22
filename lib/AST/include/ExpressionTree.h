@@ -17,7 +17,7 @@ public:
     bool isOperator(std::string value);
     bool isBrace(std::string value);
     bool isBinary(std::string value);
-    std::vector<std::string> binaryOperators = {".", "upfrom", "sublist", "collect", "contains", 
+    std::vector<std::string> binaryOperators = {".", "upfrom", "sublist", "contains", 
      "==", "!=", ">", ">=", "<=", "<"};
 
     int getPrecedence(std::string value);

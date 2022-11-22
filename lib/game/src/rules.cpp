@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include "TreePrinter.h"
 
 // Foreach //
 
@@ -97,12 +98,17 @@ bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
     // traverse the cases and execute the rules for the case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
     for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
-        rule = conditionExpression_rule_pair->second.begin();
-        RuleVector rules = conditionExpression_rule_pair->second;
-
         std::shared_ptr<ASTNode> conditionRoot = conditionExpression_rule_pair->first;
         conditionRoot->accept(resolver, elementsMap);
         bool caseMatch = resolver.getResult()->getBool();
+        TreePrinter treeP;
+        conditionRoot->accept(treeP, elementsMap);
+        std::cout << conditionExpression_rule_pair->second.size() << std::endl;
+
+        rule = conditionExpression_rule_pair->second.begin();
+        RuleVector rules = conditionExpression_rule_pair->second;
+
+        
 
         if (caseMatch) {
             std::cout << "Case Match!\nExecuting Case Rules\n";

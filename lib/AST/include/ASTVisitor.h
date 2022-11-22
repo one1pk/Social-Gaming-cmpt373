@@ -52,6 +52,18 @@ public:
     std::shared_ptr<ASTNode> right;
 };
 
+class CollectOperator : public ASTNode {
+    public:
+    CollectOperator(std::shared_ptr<ASTNode> left, std::shared_ptr<ASTNode> middle, std::shared_ptr<ASTNode> right)
+    : left(left), middle(middle), right(right) { }
+
+    void accept(ASTVisitor& visitor, ElementMap elements) override;
+
+    std::shared_ptr<ASTNode> left;
+    std::shared_ptr<ASTNode> middle;
+    std::shared_ptr<ASTNode> right;
+};
+
 class UnaryOperator : public ASTNode {
 public: 
     UnaryOperator(std::string kind, std::shared_ptr<ASTNode> operand)
@@ -71,6 +83,7 @@ class ASTVisitor {
     virtual void visit(ListNode& list, ElementMap elements) = 0;
     virtual void visit(PlayersNode& players, ElementMap elements) = 0;
     virtual void visit(BinaryOperator& bOp, ElementMap elements) = 0;
+    virtual void visit(CollectOperator& bOp, ElementMap elements) = 0;
     virtual void visit(UnaryOperator& uOp, ElementMap elements) = 0;
 };
 
@@ -87,6 +100,10 @@ inline void PlayersNode::accept(ASTVisitor& visitor, ElementMap elements) {
 }
 
 inline void BinaryOperator::accept(ASTVisitor& visitor, ElementMap elements) {
+    visitor.visit(*this, elements);
+}
+
+inline void CollectOperator::accept(ASTVisitor& visitor, ElementMap elements) {
     visitor.visit(*this, elements);
 }
 

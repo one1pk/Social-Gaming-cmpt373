@@ -145,7 +145,7 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
                 conditionExpressionRulePairs.push_back({conditionExpressionRoot, caseRules});
             }
 
-            ruleObject = std::make_shared<When>((conditionExpressionRulePairs));
+            ruleObject = std::make_shared<When>(conditionExpressionRulePairs);
         }
 
         rule_vec.push_back(ruleObject);

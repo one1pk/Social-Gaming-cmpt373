@@ -45,7 +45,7 @@ std::deque<std::string> ExpressionTree::split(std::string expression) {
     return splits;
 }
 bool ExpressionTree::isOperator(std::string value){
-    return isUnary(value) || isBinary(value) ;
+    return isUnary(value) || isBinary(value) || value == "collect";
 }
 bool ExpressionTree::isBrace(std::string value){
     return value == "(" || value == ")";
@@ -71,6 +71,19 @@ void ExpressionTree::buildOperatorNode(std::deque<std::string>& operatorStack, s
         
         operatorStack.pop_back();
         nodeStack.emplace_back(std::move(root));
+    }
+    else if(operatorStack.back() == "collect"){
+        auto right = nodeStack.back();
+        nodeStack.pop_back();
+        auto middle = nodeStack.back();
+        nodeStack.pop_back();
+        auto left= nodeStack.back();
+        nodeStack.pop_back();
+
+        root = std::make_shared<CollectOperator>(left, middle, right);
+        operatorStack.pop_back();
+        nodeStack.emplace_back(std::move(root));
+
     }
     else{
         auto right = nodeStack.back();
@@ -103,7 +116,7 @@ void ExpressionTree::build(std::string expression){
 
             //if token is a gameList name i.e. constants, variables, etc
             auto gameListIter = gameListsMap.find(token);
-            if(gameListIter != gameListsMap.end()){
+            if(gameListIter != gameListsMap.end() && prevToken != "collect"){
                 root = std::make_shared<ListNode>(token, gameListIter->second);
                 nodeStack.emplace_back(std::move(root));
             }

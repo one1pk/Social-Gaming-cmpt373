@@ -46,12 +46,32 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
     
 }
 
+void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
+    ElementVector collection;
+    cOp.left->accept(*this, elements);
+    auto left = result;
+    for(auto elementIter : left->getVector()){
+        ElementMap elementMap;
+        cOp.middle->accept(*this, elementMap);
+        std::string middle = result->getString();
+
+        /// TODO: allow for more complex middle
+        elements[middle] = elementIter;
+        cOp.right->accept(*this, elements);
+        ElementSptr right = result;
+        if(result->getBool())
+            collection.emplace_back(elementIter);
+    }
+    result = std::make_shared<Element<ElementVector>>(collection);
+}
+
 void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
+    std::string kind = bOp.kind;
     bOp.left->accept(*this, elements);
     ElementSptr left = result;
     bOp.right->accept(*this, elements);
     ElementSptr right = result;
-    std::string kind = bOp.kind;
+    
 
     if(kind == ".") {
         if(left->type == Type::VECTOR){
@@ -66,7 +86,7 @@ void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
 
     else if(kind == "contains")
         result = std::make_shared<Element<bool>>(left->contains(right));
-
+        
     //might make collect a trinary operator
     else if(kind == "collect")
         assert(false && "Collect not supported yet");
