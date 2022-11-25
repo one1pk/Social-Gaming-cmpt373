@@ -75,17 +75,17 @@ std::deque<Message> GlobalServerState::processGames() {
 
     auto game = game_instances.begin();
     while (game != game_instances.end()) {
-    // LOG(INFO) << "Game Check\n";
+        LOG(INFO) << "Game Check";
         switch (game->status()) {
             case GameStatus::AwaitingOutput: {
-            // LOG(INFO) << "AwaitingOutput\n";
+                LOG(INFO) << "AwaitingOutput";
                 processGameMsgs(*game, outgoing);
                 game->outputSent(); // changes the status to AwaitingInput
                 game++;
             }
             break;
             case GameStatus::AwaitingInput: {
-            // LOG(INFO) << "AwaitingInput\n";
+                LOG(INFO) << "AwaitingInput";
                 std::deque<InputRequest> input_requests = game->inputRequests();
                 for (auto input_request: input_requests) {
                     Connection user = input_request.user;
@@ -128,7 +128,7 @@ std::deque<Message> GlobalServerState::processGames() {
             }
             break;
             case GameStatus::Finished: {
-            // LOG(INFO) << "GameFinished\n";
+                LOG(INFO) << "GameFinished";
                 processGameMsgs(*game, outgoing);
                 outgoing.push_back({game->owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
                 std::deque<Message> finalMsgs = buildMsgsForOtherPlayers("\nGood game!\nYou are now back in the lobby\n\n", game->owner());
