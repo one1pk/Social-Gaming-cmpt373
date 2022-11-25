@@ -53,4 +53,21 @@ TEST(ElementTest, addIntTest) {
     EXPECT_EQ(test_element_int->getInt(), 199);
 }
 
-// TEST(ElementTest, )
+TEST(ElementTest, getVectorTest) {
+    vector<std::shared_ptr<ListElement>> temp_vector;
+    
+    ElementSptr test_element_int = make_shared<Element<int>>(1);
+    temp_vector.push_back(test_element_int);
+    test_element_int = make_shared<Element<int>>(2);
+    temp_vector.push_back(test_element_int);
+    test_element_int = make_shared<Element<int>>(3);
+    temp_vector.push_back(test_element_int);
+
+    ElementVector test_vector = temp_vector;
+    ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
+    EXPECT_EQ(
+        test_vector_ptr->getVector(), 
+        // TODO: What to compare?
+        // vector({make_shared<int>(1), make_shared<int>(2), make_shared<int>(3)})
+    );
+}
