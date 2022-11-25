@@ -18,3 +18,11 @@ TEST (ElementTest,setMapElementTest ){
 );
     EXPECT_EQ(test_map->getMapElement("first")->getString() ,"after_set");
 }
+TEST (ElementTest,getMapElementTest ){
+    ElementSptr test_element_string = make_shared<Element<std::string>>("this is a test");
+    map<string, shared_ptr<ListElement>>  map_sample {{"first",test_element_string}};
+    ElementMap temp_map=map_sample;
+    ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
+
+    EXPECT_EQ(test_map->getMapElement("first")->getString() ,"this is a test");
+}
