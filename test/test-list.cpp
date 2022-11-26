@@ -8,9 +8,10 @@ using namespace std;
 using namespace testing;
 using ::testing::AtLeast;
 
-/**
-Map elements
-*/
+
+//================================================================
+// Type: MAP
+//================================================================
 
 TEST (ElementTest, getMapElementTest) {
     ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
@@ -40,6 +41,11 @@ TEST (ElementTest, removeMapElementTest) {
     EXPECT_EQ(test_map->getMapElement("first"), nullptr);
 }
 
+
+//================================================================
+// Type: INT
+//================================================================
+
 TEST (ElementTest, getIntTest) {
     ElementSptr test_element_int = make_shared<Element<int>>(99);
     EXPECT_EQ(test_element_int->getInt(), 99);
@@ -57,6 +63,11 @@ TEST(ElementTest, addIntTest) {
     EXPECT_EQ(test_element_int->getInt(), 199);
 }
 
+
+//================================================================
+// Type: VECTOR
+//================================================================
+
 TEST(ElementTest, getVectorTest) {
     vector<std::shared_ptr<ListElement>> temp_vector;
     
@@ -69,10 +80,11 @@ TEST(ElementTest, getVectorTest) {
 
     ElementVector test_vector = temp_vector;
     ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
-    EXPECT_EQ(test_vector_ptr->getVector(), test_vector);}
+    EXPECT_EQ(test_vector_ptr->getVector(), test_vector);
+}
 
 
-// // TODO: The following test is failing
+// // TODO: This test does not compile
 
 // TEST(ElementTest, getSubListTest) {
 //     ElementVector vector_of_maps;
@@ -94,3 +106,51 @@ TEST(ElementTest, getVectorTest) {
 
 //     EXPECT_EQ(vector_of_maps.getSubList("test"), res_vector);
 // }
+
+
+TEST(ElementTest, extendTest) {
+    vector<std::shared_ptr<ListElement>> base_vector;
+    vector<std::shared_ptr<ListElement>> plus_vector;
+    vector<std::shared_ptr<ListElement>> res_vector;
+    
+    ElementSptr one   = make_shared<Element<int>>(1);
+    ElementSptr two   = make_shared<Element<int>>(2);
+    ElementSptr three = make_shared<Element<int>>(3);
+    ElementSptr four  = make_shared<Element<int>>(4);
+    
+    base_vector.push_back(one);
+    base_vector.push_back(two);
+
+    plus_vector.push_back(three);
+    plus_vector.push_back(four);
+
+    res_vector.push_back(one);
+    res_vector.push_back(two);
+    res_vector.push_back(three);
+    res_vector.push_back(four);
+
+    ElementSptr base_vector_ptr = make_shared<Element<ElementVector>>(base_vector);
+    ElementSptr plus_vector_ptr = make_shared<Element<ElementVector>>(plus_vector);
+    ElementSptr res_vector_ptr  = make_shared<Element<ElementVector>>(res_vector);
+    
+    base_vector_ptr->extend(plus_vector_ptr);
+    EXPECT_EQ(base_vector_ptr->getVector(), res_vector_ptr->getVector());
+}
+
+
+TEST(ElementTest, discardTest) {
+    vector<std::shared_ptr<ListElement>> test_vector;
+    
+    ElementSptr a = make_shared<Element<int>>(32);
+    ElementSptr b = make_shared<Element<int>>(2048);
+    ElementSptr c = make_shared<Element<int>>(64);
+    ElementSptr d = make_shared<Element<int>>(256);
+
+    ElementSptr to_extend_ptr = make_shared<Element<ElementVector>>(vector {a, b, c, d});
+    ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
+    test_vector_ptr->extend(to_extend_ptr);
+    test_vector_ptr->discard(2);
+
+    vector<std::shared_ptr<ListElement>> res_vector {a, b};
+    EXPECT_EQ(test_vector_ptr->getVector(), res_vector);
+}
