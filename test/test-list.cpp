@@ -51,7 +51,7 @@ TEST(ElementTest, mapCloneTest) {
     ElementMap my_map {{"ninety-nine", make_shared<Element<int>>(99)}};
     ElementSptr my_map_ptr = make_shared<Element<ElementMap>>(my_map);
     ElementSptr my_map_cloned_ptr = my_map_ptr->clone();
-    
+
     EXPECT_EQ(
         my_map_ptr->getMapElement("ninety-nine")->getInt(),
         my_map_cloned_ptr->getMapElement("ninety-nine")->getInt()
@@ -144,30 +144,27 @@ TEST(ElementTest, getSizeTest) {
     EXPECT_EQ(test_vector_ptr->getSize(), 3);
 }
 
+TEST(ElementTest, getSubListTest) {
+    ElementVector vector_of_maps;
 
-// // TODO: This test does not compile
-
-// TEST(ElementTest, getSubListTest) {
-//     ElementVector vector_of_maps;
-
-//     ElementSptr first_string = make_shared<Element<std::string>>("First string");
-//     map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
-//     auto first_map_ptr = make_shared<map<string, shared_ptr<ListElement>>>(first_map);
+    ElementSptr first_string = make_shared<Element<std::string>>("First string");
+    map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
+    ElementSptr first_map_ptr = make_shared<Element<ElementMap>>(first_map);
     
-//     ElementSptr second_string = make_shared<Element<std::string>>("Second string");
-//     map<string, shared_ptr<ListElement>> second_map {{"test", second_string}};
-//     auto second_map_ptr = make_shared<map<string, shared_ptr<ListElement>>>(second_map);
+    ElementSptr second_string = make_shared<Element<std::string>>("Second string");
+    map<string, shared_ptr<ListElement>> second_map {{"test", second_string}};
+    ElementSptr second_map_ptr = make_shared<Element<ElementMap>>(second_map);
 
-//     vector_of_maps.push_back(first_map_ptr);
-//     vector_of_maps.push_back(second_map_ptr);
+    vector_of_maps.push_back(first_map_ptr);
+    vector_of_maps.push_back(second_map_ptr);
+    ElementSptr vector_of_maps_ptr = make_shared<Element<ElementVector>>(vector_of_maps);
 
-//     ElementVector res_vector;
-//     res_vector.push_back(first_string);
-//     res_vector.push_back(second_string);
+    ElementVector res_vector;
+    res_vector.push_back(first_string);
+    res_vector.push_back(second_string);
 
-//     EXPECT_EQ(vector_of_maps.getSubList("test"), res_vector);
-// }
-
+    EXPECT_EQ(vector_of_maps_ptr->getSubList("test"), res_vector);
+}
 
 TEST(ElementTest, extendTest) {
     vector<std::shared_ptr<ListElement>> base_vector;
