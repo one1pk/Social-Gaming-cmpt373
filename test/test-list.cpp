@@ -13,6 +13,12 @@ using ::testing::AtLeast;
 // Type: MAP
 //================================================================
 
+TEST (ElementTest, getMapTest) {
+    ElementMap my_map {{"seventy-seven", make_shared<Element<int>>(77)}};
+    ElementSptr test_map = make_shared<Element<ElementMap>>(my_map);
+    EXPECT_EQ(test_map->getMap(), my_map);  
+}
+
 TEST (ElementTest, getMapElementTest) {
     ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
     map<string, shared_ptr<ListElement>> map_sample {{"first", test_element_string}};
