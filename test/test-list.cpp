@@ -1,6 +1,3 @@
-//
-// Created by DELL on 2022/11/14.
-//
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../lib/game/include/list.h"
