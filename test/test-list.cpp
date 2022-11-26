@@ -74,13 +74,16 @@ TEST(ElementTest, upfromTestBig) {
 TEST(ElementTest, upfromTestSmall) {
     ElementSptr test_element_int = make_shared<Element<int>>(99);
     ElementSptr small_start = test_element_int->upfrom(97);
-
+    ElementVector small_vec = small_start->getVector();
+    
     ElementVector small_res;
     small_res.push_back(make_shared<Element<int>>(97));
     small_res.push_back(make_shared<Element<int>>(98));
     small_res.push_back(make_shared<Element<int>>(99));
 
-    // TODO: Continue with this
+    EXPECT_EQ(small_vec[0]->getInt(), small_res[0]->getInt());
+    EXPECT_EQ(small_vec[1]->getInt(), small_res[1]->getInt());
+    EXPECT_EQ(small_vec[2]->getInt(), small_res[2]->getInt());
 }
 
 //================================================================
@@ -100,6 +103,21 @@ TEST(ElementTest, getVectorTest) {
     ElementVector test_vector = temp_vector;
     ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
     EXPECT_EQ(test_vector_ptr->getVector(), test_vector);
+}
+
+TEST(ElementTest, getSizeTest) {
+    vector<std::shared_ptr<ListElement>> temp_vector;
+    
+    ElementSptr test_element_int = make_shared<Element<int>>(1);
+    temp_vector.push_back(test_element_int);
+    test_element_int = make_shared<Element<int>>(2);
+    temp_vector.push_back(test_element_int);
+    test_element_int = make_shared<Element<int>>(3);
+    temp_vector.push_back(test_element_int);
+
+    ElementVector test_vector = temp_vector;
+    ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
+    EXPECT_EQ(test_vector_ptr->getSize(), 3);
 }
 
 
@@ -173,3 +191,4 @@ TEST(ElementTest, discardTest) {
     vector<std::shared_ptr<ListElement>> res_vector {a, b};
     EXPECT_EQ(test_vector_ptr->getVector(), res_vector);
 }
+
