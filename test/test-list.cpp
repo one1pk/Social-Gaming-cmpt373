@@ -63,6 +63,25 @@ TEST(ElementTest, addIntTest) {
     EXPECT_EQ(test_element_int->getInt(), 199);
 }
 
+TEST(ElementTest, upfromTestBig) {
+    ElementSptr test_element_int = make_shared<Element<int>>(99);
+    ElementSptr big_start = test_element_int->upfrom(101);
+
+    ElementVector big_res;
+    EXPECT_EQ(big_start->getVector(), big_res);
+}
+
+TEST(ElementTest, upfromTestSmall) {
+    ElementSptr test_element_int = make_shared<Element<int>>(99);
+    ElementSptr small_start = test_element_int->upfrom(97);
+
+    ElementVector small_res;
+    small_res.push_back(make_shared<Element<int>>(97));
+    small_res.push_back(make_shared<Element<int>>(98));
+    small_res.push_back(make_shared<Element<int>>(99));
+
+    // TODO: Continue with this
+}
 
 //================================================================
 // Type: VECTOR
