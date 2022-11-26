@@ -117,6 +117,17 @@ RuleStatus Discard::execute(ElementSptr element) {
     return RuleStatus::Done;
 }
 
+// Sort //
+
+Sort::Sort(ElementSptr list, std::optional<std::string> key)
+    : list(list), key(key) {   
+}
+
+RuleStatus Sort::execute(ElementSptr element) {
+    list->sortList(key);
+    return RuleStatus::Done;
+}
+
 // Add //
 
 Add::Add(std::string to, ElementSptr value)

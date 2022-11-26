@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-
+#include <algorithm>
 
 
 enum Type { // doesn't seem useful, might remove later 
@@ -56,6 +56,7 @@ public:
     // List Operations //
     virtual void extend(ElementSptr element) = 0;
     virtual void discard(unsigned count) = 0;
+    virtual void sortList(std::optional<std::string> key) = 0;
 
     virtual ElementSptr upfrom(int start) = 0;
 };
@@ -247,6 +248,22 @@ public:
         if constexpr (std::is_same_v<T, ElementVector>) {
             // discard <count> elements//
             for (unsigned i = 0; i < count; i++) _data.pop_back();
+        } else {
+            // throw error //
+        }
+    }
+
+    void sortList(std::optional<std::string> key) final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            struct by_key {
+                by_key(std::string key) { this->key = key; }
+                bool operator()(ElementSptr const &a, ElementSptr const &b) const {
+                    return a->getMapElement(key)->getString() < b->getMapElement(key)->getString();
+                }
+                std::string key;
+            };
+            // sort //
+            std::sort(_data.begin(), _data.end(), by_key(key.value()));
         } else {
             // throw error //
         }

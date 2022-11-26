@@ -98,6 +98,14 @@ public:
     RuleStatus execute(ElementSptr element) final;
 };
 
+class Sort : public Rule {
+    ElementSptr list;
+    std::optional<std::string> key;
+public:
+    Sort(ElementSptr list, std::optional<std::string> key);
+    RuleStatus execute(ElementSptr element) final;
+};
+
 // Arithmetic //
 
 class Add : public Rule {
