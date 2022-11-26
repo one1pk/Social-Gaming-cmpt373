@@ -18,7 +18,8 @@ TEST (ElementTest, getMapTest) {
     ElementSptr test_map = make_shared<Element<ElementMap>>(my_map);
     EXPECT_EQ(test_map->getMap(), my_map);  
 }
-TEST (ElementTest, getMapTpeErrorTest) {
+
+TEST (ElementTest, getMapTypeErrorTest) {
     ElementMap my_map;
     ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
     EXPECT_EQ(test_element_string->getMap(), my_map);
@@ -31,6 +32,7 @@ TEST (ElementTest, getMapElementTest) {
     ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
     EXPECT_EQ(test_map->getMapElement("first")->getString(), "This is a test");
 }
+
 TEST (ElementTest, getMapElementErrorTest) {
     ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
     EXPECT_EQ(test_element_string->getMapElement("first"), nullptr);
@@ -55,6 +57,7 @@ TEST (ElementTest, removeMapElementTest) {
     test_map->removeMapElement("first");
     EXPECT_EQ(test_map->getMapElement("first"), nullptr);
 }
+
 TEST (ElementTest, getSizeMapTest) {
     ElementSptr test_element_string_1 = make_shared<Element<string>>("This is a test 1");
     ElementSptr test_element_string_2 = make_shared<Element<string>>("This is a test 2");
@@ -85,6 +88,7 @@ TEST (ElementTest, getIntTest) {
     ElementSptr test_element_int = make_shared<Element<int>>(99);
     EXPECT_EQ(test_element_int->getInt(), 99);
 }
+
 TEST (ElementTest, getIntTypeErrorTest) {
     ElementSptr test_element_string = make_shared<Element<string>>("This is a test");
     EXPECT_EQ(test_element_string->getInt(), 0);
@@ -130,6 +134,7 @@ TEST(ElementTest, intCloneTest) {
     ElementSptr int_cloned_ptr = test_element_int->clone();
     EXPECT_EQ(int_cloned_ptr->getInt(), 7);
 }
+
 TEST(ElementTest, getSizeIntTest) {
     ElementSptr test_element_int = make_shared<Element<int>>(7);
     EXPECT_EQ(test_element_int->getSize(), 0);
@@ -153,6 +158,7 @@ TEST(ElementTest, getVectorTest) {
     ElementSptr test_vector_ptr = make_shared<Element<ElementVector>>(test_vector);
     EXPECT_EQ(test_vector_ptr->getVector(), test_vector);
 }
+
 TEST(ElementTest, getVectorTypeErrorTest) {
     ElementSptr test_element_int = make_shared<Element<int>>(7);
     ElementVector test_vector;
@@ -195,6 +201,7 @@ TEST(ElementTest, getSubListTest) {
 
     EXPECT_EQ(vector_of_maps_ptr->getSubList("test"), res_vector);
 }
+
 TEST(ElementTest, getSubListDataErrorTest) {
     ElementVector vector_of_maps;
 
@@ -212,12 +219,11 @@ TEST(ElementTest, getSubListDataErrorTest) {
 
     EXPECT_EQ(vector_of_maps_ptr->getSubList("").size(), 0);
 }
-TEST(ElementTest, getSubListTypeErrorTest) {
 
+TEST(ElementTest, getSubListTypeErrorTest) {
     ElementSptr first_string = make_shared<Element<std::string>>("First string");
     map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
     ElementSptr first_map_ptr = make_shared<Element<ElementMap>>(first_map);
-
 
     EXPECT_EQ(first_map_ptr->getSubList("").size(), 0);
 }
@@ -251,7 +257,6 @@ TEST(ElementTest, extendTest) {
     EXPECT_EQ(base_vector_ptr->getVector(), res_vector_ptr->getVector());
 }
 
-
 TEST(ElementTest, discardTest) {
     vector<std::shared_ptr<ListElement>> test_vector;
     
@@ -282,69 +287,79 @@ TEST(ElementTest, vectorCloneTest) {
     EXPECT_EQ(vec_to_clone[1]->getInt(), vec_cloned[1]->getInt());
     EXPECT_EQ(vec_to_clone[2]->getInt(), vec_cloned[2]->getInt());
 }
+
+
 //================================================================
 // Type: STRING
 //================================================================
+
 TEST (ElementTest, getStringTest) {
-string test_string="This is a test";
-ElementSptr test_element_string = make_shared<Element<std::string>>(test_string);
-EXPECT_EQ(test_element_string->getString(), "This is a test");
+    string test_string = "This is a test";
+    ElementSptr test_element_string = make_shared<Element<std::string>>(test_string);
+    EXPECT_EQ(test_element_string->getString(), "This is a test");
 }
+
 TEST (ElementTest, getStringIntegralTest) {
-    int test_int=0;
-    ElementSptr test_element_int= make_shared<Element<int>>(test_int);
+    int test_int = 0;
+    ElementSptr test_element_int = make_shared<Element<int>>(test_int);
     EXPECT_EQ(test_element_int->getString(), "0");
 }
+
 TEST (ElementTest, getStringTypeErrorTest) {
-    uintptr_t testId= 100000;
-    Connection testConnection;
-    testConnection.id=testId;
-    ElementSptr testElementConnection = make_shared<Element<Connection>>(testConnection);
-    EXPECT_EQ(testElementConnection->getString(), "{}");
+    uintptr_t test_id = 100000;
+    Connection test_connection;
+    test_connection.id = test_id;
+    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    EXPECT_EQ(test_element_connection->getString(), "{}");
 }
-TEST(ElementTest, stingCloneTest) {
-    string test_string="this is a test";
-    ElementSptr test_Element_string = make_shared<Element<string>>(test_string);
-    ElementSptr clone_Element_string= test_Element_string->clone();
-    EXPECT_EQ(test_Element_string->getString(),clone_Element_string->getString());
+
+TEST(ElementTest, stringCloneTest) {
+    string test_string = "this is a test";
+    ElementSptr test_element_string = make_shared<Element<string>>(test_string);
+    ElementSptr cloned_element_string = test_element_string->clone();
+    EXPECT_EQ(test_element_string->getString(), cloned_element_string->getString());
 }
-TEST(ElementTest, getSzeSgtringTest) {
-    string test_string="this is a test";
-    ElementSptr test_Element_string = make_shared<Element<string>>(test_string);
-    EXPECT_EQ(test_Element_string->getSize(), test_string.size());
+
+TEST(ElementTest, getSizeStringTest) {
+    string test_string = "this is a test";
+    ElementSptr test_element_string = make_shared<Element<string>>(test_string);
+    EXPECT_EQ(test_element_string->getSize(), test_string.size());
 }
+
 
 //================================================================
 // Type: CONNECTION
 //================================================================
+
 TEST (ElementTest, getConnectionTest) {
-    uintptr_t testId= 100000;
-    Connection testConnection;
-    testConnection.id=testId;
-    ElementSptr testElementConnection = make_shared<Element<Connection>>(testConnection);
-    EXPECT_EQ(testElementConnection ->getConnection(), testConnection);
+    uintptr_t test_id = 100000;
+    Connection test_connection;
+    test_connection.id = test_id;
+    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    EXPECT_EQ(test_element_connection->getConnection(), test_connection);
 }
-TEST (ElementTest, getConnectionTyprErrorTest) {
-    ElementSptr testElementString = make_shared<Element<string>>("this is a test");
-    uintptr_t testId= 0;
-    Connection testConnection;
-    testConnection.id=testId;
-    EXPECT_EQ(testElementString ->getConnection(),testConnection);
-}
-TEST(ElementTest, getSzeConnectionTest) {
-    uintptr_t testId= 10;
-    Connection testConnection;
-    testConnection.id=testId;
-    ElementSptr testElementConnection  = make_shared<Element<Connection>>(testConnection);
-    EXPECT_EQ(testElementConnection->getSize(), 0);
 
+TEST (ElementTest, getConnectionTypeErrorTest) {
+    ElementSptr test_element_string = make_shared<Element<string>>("this is a test");
+    uintptr_t test_id = 0;
+    Connection test_connection;
+    test_connection.id = test_id;
+    EXPECT_EQ(test_element_string->getConnection(), test_connection);
 }
+
+TEST(ElementTest, getSizeConnectionTest) {
+    uintptr_t test_id = 10;
+    Connection test_connection;
+    test_connection.id = test_id;
+    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    EXPECT_EQ(test_element_connection->getSize(), 0);
+}
+
 TEST(ElementTest, ConnectionCloneTest) {
-    uintptr_t testId= 100000;
-    Connection testConnection;
-    testConnection.id=testId;
-    ElementSptr testElementConnection  = make_shared<Element<Connection>>(testConnection);
-    ElementSptr cloneElementConnection=testElementConnection->clone();
-    EXPECT_EQ(testElementConnection->getConnection(), cloneElementConnection->getConnection());
-
+    uintptr_t test_id = 100000;
+    Connection test_connection;
+    test_connection.id = test_id;
+    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    ElementSptr cloned_element_connection = test_element_connection->clone();
+    EXPECT_EQ(test_element_connection->getConnection(), cloned_element_connection->getConnection());
 }
