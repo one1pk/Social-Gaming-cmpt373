@@ -47,6 +47,17 @@ TEST (ElementTest, removeMapElementTest) {
     EXPECT_EQ(test_map->getMapElement("first"), nullptr);
 }
 
+TEST(ElementTest, mapCloneTest) {
+    ElementMap my_map {{"ninety-nine", make_shared<Element<int>>(99)}};
+    ElementSptr my_map_ptr = make_shared<Element<ElementMap>>(my_map);
+    ElementSptr my_map_cloned_ptr = my_map_ptr->clone();
+    
+    EXPECT_EQ(
+        my_map_ptr->getMapElement("ninety-nine")->getInt(),
+        my_map_cloned_ptr->getMapElement("ninety-nine")->getInt()
+    );
+}
+
 
 //================================================================
 // Type: INT
@@ -91,6 +102,13 @@ TEST(ElementTest, upfromTestSmall) {
     EXPECT_EQ(small_vec[1]->getInt(), small_res[1]->getInt());
     EXPECT_EQ(small_vec[2]->getInt(), small_res[2]->getInt());
 }
+
+TEST(ElementTest, intCloneTest) {    
+    ElementSptr test_element_int = make_shared<Element<int>>(7);
+    ElementSptr int_cloned_ptr = test_element_int->clone();
+    EXPECT_EQ(int_cloned_ptr->getInt(), 7);
+}
+
 
 //================================================================
 // Type: VECTOR
@@ -198,3 +216,16 @@ TEST(ElementTest, discardTest) {
     EXPECT_EQ(test_vector_ptr->getVector(), res_vector);
 }
 
+TEST(ElementTest, vectorCloneTest) {    
+    ElementVector vec_to_clone;
+    vec_to_clone.push_back(make_shared<Element<int>>(33));
+    vec_to_clone.push_back(make_shared<Element<int>>(66));
+    vec_to_clone.push_back(make_shared<Element<int>>(99));
+    ElementSptr vec_to_clone_ptr = make_shared<Element<ElementVector>>(vec_to_clone);
+    ElementSptr vec_cloned_ptr = vec_to_clone_ptr->clone();
+    ElementVector vec_cloned = vec_cloned_ptr->getVector();
+
+    EXPECT_EQ(vec_to_clone[0]->getInt(), vec_cloned[0]->getInt());
+    EXPECT_EQ(vec_to_clone[1]->getInt(), vec_cloned[1]->getInt());
+    EXPECT_EQ(vec_to_clone[2]->getInt(), vec_cloned[2]->getInt());
+}
