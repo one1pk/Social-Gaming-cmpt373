@@ -255,15 +255,26 @@ public:
 
     void sortList(std::optional<std::string> key) final {
         if constexpr (std::is_same_v<T, ElementVector>) {
-            struct by_key {
-                by_key(std::string key) { this->key = key; }
-                bool operator()(ElementSptr const &a, ElementSptr const &b) const {
-                    return a->getMapElement(key)->getString() < b->getMapElement(key)->getString();
-                }
+            if (key.has_value()) {
+                struct by_key {
+                    by_key(std::string key) { this->key = key; }
+                    bool operator()(ElementSptr const &a, ElementSptr const &b) const {
+                        return a->getMapElement(key)->getString() < b->getMapElement(key)->getString();
+                    }
                 std::string key;
-            };
+                };
             // sort //
             std::sort(_data.begin(), _data.end(), by_key(key.value()));
+            }
+            else {
+                struct by_int {
+                    bool operator()(ElementSptr const &a, ElementSptr const &b) const {
+                        return a->getInt() < b->getInt();
+                    }
+                };
+                std::sort(_data.begin(), _data.end(), by_int());
+            }
+            
         } else {
             // throw error //
         }

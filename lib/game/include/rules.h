@@ -102,7 +102,7 @@ class Sort : public Rule {
     ElementSptr list;
     std::optional<std::string> key;
 public:
-    Sort(ElementSptr list, std::optional<std::string> key);
+    Sort(ElementSptr list, std::optional<std::string> key = std::nullopt);
     RuleStatus execute(ElementSptr element) final;
 };
 
