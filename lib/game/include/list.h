@@ -57,6 +57,7 @@ public:
     virtual void extend(ElementSptr element) = 0;
     virtual void discard(unsigned count) = 0;
     virtual void sortList(std::optional<std::string> key) = 0;
+    virtual void deal(ElementSptr to, int count) = 0;
 
     virtual ElementSptr upfrom(int start) = 0;
 };
@@ -281,7 +282,19 @@ public:
             }
             
         } else {
-            // throw error //
+            throw std::invalid_argument("You can only sort an ElementVector");
+        }
+    }
+
+    void deal(ElementSptr to, int count) final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            // deal <count> elements//
+            for (int i = 0; i < count; i++) {
+                to = _data.back()->clone();
+                _data.pop_back();
+            }
+        } else {
+            throw std::invalid_argument("You can only deal from an ElementVector");
         }
     }
 

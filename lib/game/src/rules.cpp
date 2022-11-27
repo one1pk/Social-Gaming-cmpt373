@@ -128,6 +128,17 @@ RuleStatus Sort::execute(ElementSptr element) {
     return RuleStatus::Done;
 }
 
+// Deal //
+
+Deal::Deal(ElementSptr from, ElementSptr to, int count)
+    : from(from), to(to), count(count) {
+}
+
+RuleStatus Deal::execute(ElementSptr element) {
+    from->deal(to, count);
+    return RuleStatus::Done;
+}
+
 // Add //
 
 Add::Add(std::string to, ElementSptr value)

@@ -106,6 +106,15 @@ public:
     RuleStatus execute(ElementSptr element) final;
 };
 
+class Deal : public Rule {
+    ElementSptr from;
+    ElementSptr to;
+    int count;
+public:
+    Deal(ElementSptr from, ElementSptr to, int count);
+    RuleStatus execute(ElementSptr element) final;
+};
+
 // Arithmetic //
 
 class Add : public Rule {
