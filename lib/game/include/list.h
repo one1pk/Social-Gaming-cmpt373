@@ -267,12 +267,17 @@ public:
             std::sort(_data.begin(), _data.end(), by_key(key.value()));
             }
             else {
-                struct by_int {
+                struct by_type {
                     bool operator()(ElementSptr const &a, ElementSptr const &b) const {
-                        return a->getInt() < b->getInt();
+                        if (a->type == Type::INT) {
+                            return a->getInt() < b->getInt();
+                        }
+                        else {
+                            return a->getString() < b->getString();
+                        }
                     }
                 };
-                std::sort(_data.begin(), _data.end(), by_int());
+                std::sort(_data.begin(), _data.end(), by_type());
             }
             
         } else {

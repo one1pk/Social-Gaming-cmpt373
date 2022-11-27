@@ -34,7 +34,7 @@ TEST (RulesTests, SortWithKey){
     EXPECT_EQ(stest_list->getVector()[3]->getMapElement("question")->getString(), "What is the capital of Canada?");
 }
 
-TEST (RulesTests, SortWithoutKey){
+TEST (RulesTests, SortWithoutKey_Int){
     ElementVector test_list;
     test_list.push_back(make_shared<Element<int>>(5));
     test_list.push_back(make_shared<Element<int>>(1));
@@ -47,4 +47,14 @@ TEST (RulesTests, SortWithoutKey){
     EXPECT_EQ(stest_list->getVector()[1]->getInt(), 3);
     EXPECT_EQ(stest_list->getVector()[2]->getInt(), 4);
     EXPECT_EQ(stest_list->getVector()[3]->getInt(), 5);
+}
+
+TEST (RulesTests, SortWithoutKey_String){
+    ElementVector test_list;
+    test_list.push_back(make_shared<Element<std::string>>("dbc"));
+    test_list.push_back(make_shared<Element<std::string>>("abc"));
+    ElementSptr stest_list =  std::make_shared<Element<ElementVector>>(test_list);
+    std::make_unique<Sort>(stest_list)->execute(stest_list);
+    EXPECT_EQ(stest_list->getVector()[0]->getString(), "abc");
+    EXPECT_EQ(stest_list->getVector()[1]->getString(), "dbc");
 }
