@@ -22,7 +22,8 @@ std::string WELCOME_MESSAGE = (
         "  * To create a new game from the options enter: create <game_index>\n"
         "  * To join a game with an invitation code enter: join <invitation_code>\n"
         "  * To exit the server enter: exit\n"
-        "  * To display help information again enter: help\n\n");
+        "  * To display help information again enter: help\n\n"
+        "  * Please enter a name to proceed: name <your game name>\n\n");
 
 int main(int argc, char* argv[]) {
     
@@ -30,8 +31,8 @@ int main(int argc, char* argv[]) {
     // and connect to the server
 
     if (argc < 3) {
-        std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port> <your game name>\n"
-                << "  e.g. " << argv[0] << " localhost 4002 John\n";
+        std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port>\n"
+                << "  e.g. " << argv[0] << " localhost 4002\n";
         return 1;
     }
     Client client{argv[1], argv[2]};

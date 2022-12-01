@@ -178,7 +178,7 @@ std::string formatString(std::string_view str, ElementSptr element) {
 
 InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string result, 
     std::shared_ptr<std::deque<InputRequest>> input_requests,
-    std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+    std::shared_ptr<std::map<User, InputResponse>> player_input,
     unsigned timeout_s)
     : prompt(prompt), choices(choices), result(result), 
     input_requests(input_requests), player_input(player_input), timeout_s(timeout_s) {
@@ -186,7 +186,7 @@ InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string 
 
 bool InputChoice::executeImpl(ElementSptr player) {
     std::cout << "* InputChoiceRequest Rule *\n";
-    Connection player_connection = player->getMapElement("connection")->getConnection();
+    User player_connection = player->getMapElement("user")->getConnection();
 
     if (!awaitingInput[player_connection]) {
         std::stringstream formatted_prompt(formatString(prompt, player));

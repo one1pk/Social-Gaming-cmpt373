@@ -15,17 +15,17 @@
 #include <vector>
 #include <map>
 
-std::vector<Connection> newConnections;
-std::vector<Connection> lostConnections;
+std::vector<User> newConnections;
+std::vector<User> lostConnections;
 
-void onConnect(Connection c) {
-    std::cout << "New connection: " << c.id << "\n";
+void onConnect(User c) {
+    std::cout << "New user: " << c.id << "\n";
     newConnections.push_back(c);
 }
 
 // called when a client disconnects
-void onDisconnect(Connection c) {
-    std::cout << "Connection lost: " << c.id << "\n";
+void onDisconnect(User c) {
+    std::cout << "User lost: " << c.id << "\n";
     lostConnections.push_back(c);
 }
 
@@ -87,8 +87,8 @@ int main(int argc, char *argv[]) {
         std::deque<Message> outgoingGameMsgs = globalState.processGames();
         server.send(outgoingGameMsgs);
 
-        globalState.addNewConnections(newConnections);
-        std::deque<Message> outgoingDisconnectionMsgs = commandHandler.handleLostConnections(lostConnections);
+        globalState.addNewUsers(newConnections);
+        std::deque<Message> outgoingDisconnectionMsgs = commandHandler.handleLostUsers(lostConnections);
         server.send(outgoingDisconnectionMsgs);
 
         if (errorWhileUpdating) {

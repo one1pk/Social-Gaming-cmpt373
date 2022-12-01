@@ -3,16 +3,16 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////      HELPER FUNCTIONS      ////////////////////////
 
-void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outgoing, Connection connection) {
+void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outgoing, User user) {
     std::stringstream notification;
-    notification << "\nUser " << connection.id << " left\n\n" ; 
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), connection);
+    notification << "\n" << globalState.getName(user) << " left\n\n" ; 
+    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), user);
     for (auto message : messages) {
         outgoing.push_back(message);
     }
     
-    Connection owner = globalState.getGameOwner(connection);
-    globalState.removeClientFromGame(connection);
+    User owner = globalState.getGameOwner(user);
+    globalState.removeClientFromGame(user);
 
     if (globalState.isOngoingGame(owner) && !globalState.gameHasEnoughPlayers(owner)) {
         std::deque<Message> messages = globalState.buildMsgsForAllPlayersAndOwner("\nNot enough players left, ending game.\n\n", owner);
@@ -29,7 +29,7 @@ void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outg
 //////////////////////////      CREATE GAME      ///////////////////////////
 
 CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
     if (processedMessage.arguments.empty()) {
@@ -47,31 +47,31 @@ CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_GAME_INDEX;
     }
 
-    uintptr_t invitationCode = globalState.createGame(gameIndex, processedMessage.connection);
+    uintptr_t invitationCode = globalState.createGame(gameIndex, processedMessage.user);
 
     std::stringstream notification;
     notification << "Game Successfully Created! \nInvitationCode = " << invitationCode << "\n\n";
-    outgoing.push_back({processedMessage.connection, notification.str()});
+    outgoing.push_back({processedMessage.user, notification.str()});
 
     return CommandResult::SUCCESS;
 }
 
 //////////////////////////      LIST GAMES      //////////////////////////
 CommandResult ListGamesCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
-    outgoing.push_back({processedMessage.connection, globalState.getGameNamesAsString()});
+    outgoing.push_back({processedMessage.user, globalState.getGameNamesAsString()});
     return CommandResult::SUCCESS;
 }
 
 //////////////////////////      HELP      //////////////////////////
 
 CommandResult ListHelpCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isOwner(processedMessage.connection)) {
+    if (globalState.isOwner(processedMessage.user)) {
         return CommandResult::STRING_INGAME_OWNER_HELP;
     }
-    if (globalState.isInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.user)) {
         return CommandResult::STRING_INGAME_PLAYER_HELP;
     }
     return CommandResult::STRING_SERVER_HELP;
@@ -83,10 +83,10 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
     if (processedMessage.arguments.empty()) {
         return CommandResult::ERROR_INCORRECT_COMMAND_FORMAT;
     }
-    if (globalState.isOwner(processedMessage.connection)) {
+    if (globalState.isOwner(processedMessage.user)) {
         return CommandResult::ERROR_OWNER_CANNOT_JOIN_FROM_SAME_DEVICE;
     }
-    if (globalState.isInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
 
@@ -98,20 +98,20 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_GAME_HAS_STARTED;
     }
 
-    globalState.addClientToGame(processedMessage.connection, invitationCode);
-    int playerCount = globalState.getPlayerCount(processedMessage.connection);
+    globalState.addClientToGame(processedMessage.user, invitationCode);
+    int playerCount = globalState.getPlayerCount(processedMessage.user);
 
     std::stringstream notification;
-    notification << "\nUser " << processedMessage.connection.id << " joined the game!\n\n";
+    notification << "\n" << globalState.getName(processedMessage.user) << " joined the game!\n\n";
 
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), processedMessage.connection);
+    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(notification.str(), processedMessage.user);
     for (auto message : messages) {
         outgoing.push_back(message);
     }
 
     notification << "Player Count : " << playerCount << "\n\n";
-    // FIX: Establish owner as connection in game rather than uintptr_t
-    // outgoing.push_back({globalState.getGameOwnerConnection(processedMessage.connection), notification.str()});
+    // FIX: Establish owner as user in game rather than uintptr_t
+    outgoing.push_back({globalState.getGameOwner(processedMessage.user), notification.str()});
 
     return CommandResult::SUCCESS_GAME_JOIN;
 }
@@ -121,25 +121,25 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
 //////////////////////////      START GAME      //////////////////////////
 
 CommandResult StartGameCommand::execute(ProcessedMessage &processedMessage) {
-    if (!globalState.isInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
-    if (!globalState.isOwner(processedMessage.connection)) {
+    if (!globalState.isOwner(processedMessage.user)) {
         return CommandResult::ERROR_NOT_AN_OWNER;
     }
-    if (globalState.isOngoingGame(processedMessage.connection)) {
+    if (globalState.isOngoingGame(processedMessage.user)) {
         return CommandResult::ERROR_GAME_HAS_STARTED;
     }
-    if (!globalState.gameHasEnoughPlayers(processedMessage.connection)) {
+    if (!globalState.gameHasEnoughPlayers(processedMessage.user)) {
         return CommandResult::ERROR_NOT_ENOUGH_PLAYERS;
     }
 
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers("\nGame Started!\n\n", processedMessage.connection);
+    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers("\nGame Started!\n\n", processedMessage.user);
     for (auto message : messages) {
         outgoing.push_back(message);
     }
 
-    globalState.startGame(processedMessage.connection);
+    globalState.startGame(processedMessage.user);
 
     return CommandResult::SUCCESS_GAME_START;
 }
@@ -147,19 +147,19 @@ CommandResult StartGameCommand::execute(ProcessedMessage &processedMessage) {
 //////////////////////////      END GAME      //////////////////////////
 
 CommandResult EndGameCommand::execute(ProcessedMessage &processedMessage) {
-    if (!globalState.isInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
-    if (!globalState.isOwner(processedMessage.connection)) {
+    if (!globalState.isOwner(processedMessage.user)) {
         return CommandResult::ERROR_NOT_AN_OWNER;
     }
 
-    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers("\nGame Ended!\n\n", processedMessage.connection);
+    std::deque<Message> messages = globalState.buildMsgsForOtherPlayers("\nGame Ended!\n\n", processedMessage.user);
     for (auto message : messages) {
         outgoing.push_back(message);
     }
 
-    globalState.endGame(processedMessage.connection);
+    globalState.endGame(processedMessage.user);
 
     return CommandResult::SUCCESS_GAME_END;
 }
@@ -169,14 +169,14 @@ CommandResult EndGameCommand::execute(ProcessedMessage &processedMessage) {
 //////////////////////////      LEAVE GAME      //////////////////////////
 
 CommandResult LeaveGameCommand::execute(ProcessedMessage &processedMessage) {
-    if (!globalState.isInGame(processedMessage.connection)) {
+    if (!globalState.isInGame(processedMessage.user)) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
-    if (globalState.isOwner(processedMessage.connection)) {
+    if (globalState.isOwner(processedMessage.user)) {
         return CommandResult::ERROR_OWNER_CANNOT_LEAVE;
     }
 
-    handlePlayerLeave(globalState, outgoing, processedMessage.connection);
+    handlePlayerLeave(globalState, outgoing, processedMessage.user);
 
     return CommandResult::SUCCESS_GAME_LEAVE;
 }
@@ -184,36 +184,53 @@ CommandResult LeaveGameCommand::execute(ProcessedMessage &processedMessage) {
 //////////////////////////      EXIT SERVER      //////////////////////////
 
 CommandResult ExitServerCommand::execute(ProcessedMessage &processedMessage) {
-    if (globalState.isOwner(processedMessage.connection)) {
+    if (globalState.isOwner(processedMessage.user)) {
         return executeOwnerImpl(processedMessage);
     }
-    if (globalState.isInGame(processedMessage.connection)) {
+    if (globalState.isInGame(processedMessage.user)) {
         return executePlayerImpl(processedMessage);
     }
 
     return CommandResult::SUCCESS;
 }
 
-// FIX: DRY Violation
 CommandResult ExitServerCommand::executePlayerImpl(ProcessedMessage &processedMessage) {
-    handlePlayerLeave(globalState, outgoing, processedMessage.connection);
-    globalState.disconnectConnection(processedMessage.connection);
+    handlePlayerLeave(globalState, outgoing, processedMessage.user);
+    globalState.disconnectUser(processedMessage.user);
 
     return CommandResult::SUCCESS;
 }
 
-// FIX: DRY Violation
 CommandResult ExitServerCommand::executeOwnerImpl(ProcessedMessage &processedMessage) {
     std::deque<Message> messages = globalState.buildMsgsForOtherPlayers(
         "\nOwner left the server. Game Ended!\n\n",
-        processedMessage.connection
+        processedMessage.user
     );
     for (auto message : messages) {
         outgoing.push_back(message);
     }
 
-    globalState.endGame(processedMessage.connection);
-    globalState.disconnectConnection(processedMessage.connection);
+    globalState.endGame(processedMessage.user);
+    globalState.disconnectUser(processedMessage.user);
 
     return CommandResult::SUCCESS;
+}
+
+//////////////////////////      SET OR CHANGE USERNAME      //////////////////////////
+
+CommandResult UserNameCommand::execute(ProcessedMessage &processedMessage) {
+    if (processedMessage.arguments.empty()) {
+        return CommandResult::ERROR_INCORRECT_COMMAND_FORMAT;
+    }
+
+    if (globalState.isInGame(processedMessage.user)) {
+        return CommandResult::ERROR_INVALID_COMMAND;
+    }
+
+    if (!globalState.isInLobby(processedMessage.user)) {
+        globalState.addClientToLobby(processedMessage.user);
+    }
+    globalState.setName(processedMessage.user, processedMessage.arguments[0]);
+
+    return CommandResult::SUCCESS_USERNAME;
 }

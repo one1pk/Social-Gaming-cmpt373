@@ -22,7 +22,7 @@ class ListElement;
 using ElementSptr = std::shared_ptr<ListElement>;
 using ElementVector = std::vector<std::shared_ptr<ListElement>>;
 using ElementMap = std::map<std::string, std::shared_ptr<ListElement>>;
-using PlayerMap = std::map<Connection, std::shared_ptr<ListElement>>;
+using PlayerMap = std::map<User, std::shared_ptr<ListElement>>;
 
 // INTERFACE
 // The building block for all Lists
@@ -51,7 +51,7 @@ public:
     
     virtual size_t getSize() = 0;
 
-    virtual Connection getConnection() = 0;
+    virtual User getConnection() = 0;
 
     // List Operations //
     virtual void extend(ElementSptr element) = 0;
@@ -69,7 +69,7 @@ public:
     Element(std::string data)      : _data(data) { type = Type::STRING; }
     Element(ElementVector data)    : _data(data) { type = Type::VECTOR; }
     Element(ElementMap data)       : _data(data) { type = Type::MAP; }
-    Element(Connection data)       : _data(data) { type = Type::CONNECTION; }
+    Element(User data)       : _data(data) { type = Type::CONNECTION; }
 
     ElementSptr clone() final {
         if constexpr (std::is_same_v<T, ElementVector>) {
@@ -208,7 +208,7 @@ public:
     size_t getSize() final {
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
         
-        if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection>) {
+        if constexpr (std::is_integral_v<T> || std::is_same_v<T, User>) {
             // throw error //
             return 0;
         } else {
@@ -216,10 +216,10 @@ public:
         }
     }
 
-    Connection getConnection() final {
-        // static_assert(std::is_same_v<T, Connection>, "getConnection() must be called on an Connection element");
+    User getConnection() final {
+        // static_assert(std::is_same_v<T, User>, "getConnection() must be called on an User element");
 
-        if constexpr (std::is_same_v<T, Connection>) {
+        if constexpr (std::is_same_v<T, User>) {
             return _data;
         } else {
             // throw error //

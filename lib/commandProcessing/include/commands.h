@@ -21,7 +21,7 @@ enum class CommandResult {
     ERROR_OWNER_CANNOT_LEAVE,
     ERROR_OWNER_CANNOT_JOIN_FROM_SAME_DEVICE,
     ERROR_INVALID_COMMAND,
-    ERROR,
+    ERROR_NO_USERNAME,
 
     SUCCESS,
     SUCCESS_GAME_CREATION,
@@ -29,6 +29,7 @@ enum class CommandResult {
     SUCCESS_GAME_START,
     SUCCESS_GAME_END,
     SUCCESS_GAME_LEAVE,
+    SUCCESS_USERNAME,
 
     STRING_SERVER_HELP,
     STRING_INGAME_PLAYER_HELP,
@@ -192,4 +193,21 @@ public:
 private:
     CommandResult executePlayerImpl(ProcessedMessage &);
     CommandResult executeOwnerImpl(ProcessedMessage &);
+};
+
+/**
+ * Names and Renames the users
+ * 
+ * Required before entering the main lobby at connect.
+ * 
+ * Allow name change when the client is in lobby
+ * 
+*/
+
+class UserNameCommand : public Command {
+    public:
+    UserNameCommand(GlobalServerState &globalState,
+    std::deque<Message> &outgoing)
+    : Command(globalState, outgoing) {}
+    CommandResult execute(ProcessedMessage &) override;
 };

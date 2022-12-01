@@ -26,11 +26,11 @@ public:
     std::deque<Message> getOutgoingMessages(const std::deque<ProcessedMessage> &incomingProcessedMessages);
 
     /**
-     * Handles any lost connections that didn't disconenct properly 
+     * Handles any lost users that didn't disconenct properly 
      * calls commands *leave*, *exit*, & *end* artficially as required
-     * NOTE: clears the connections vector after its done
+     * NOTE: clears the users vector after its done
      */
-    std::deque<Message> handleLostConnections(std::vector<Connection> &connections); 
+    std::deque<Message> handleLostUsers(std::vector<User> &users); 
 
 private:
     GlobalServerState &globalState;

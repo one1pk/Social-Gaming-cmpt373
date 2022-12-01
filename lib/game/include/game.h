@@ -25,7 +25,7 @@ class Game {
 public:
     Game();
     Game(
-        std::string name, Connection owner, 
+        std::string name, User owner, 
         unsigned min_players, unsigned max_players, bool has_audience,
         ElementSptr setup,
         ElementSptr constants, ElementSptr variables,
@@ -34,20 +34,20 @@ public:
         RuleVector rules,
         std::shared_ptr<std::deque<std::string>> global_msgs,
         std::shared_ptr<std::deque<InputRequest>> input_requests,
-        std::shared_ptr<std::map<Connection, InputResponse>> player_input
+        std::shared_ptr<std::map<User, InputResponse>> player_input
     );
 
     void run();
     GameStatus status();
 
     std::string name();
-    Connection owner();
+    User owner();
     uintptr_t id();
 
-    bool addPlayer(Connection playerID);
-    bool removePlayer(Connection playerID);
-    bool hasPlayer(Connection playerID);
-    std::vector<Connection> players();
+    bool addPlayer(User playerID);
+    bool removePlayer(User playerID);
+    bool hasPlayer(User playerID);
+    std::vector<User> players();
     unsigned numPlayers();
     bool hasEnoughPlayers();
 
@@ -55,8 +55,8 @@ public:
     std::deque<InputRequest> inputRequests();
 
     void outputSent();
-    void registerPlayerInput(Connection player, std::string input);
-    void inputRequestTimedout(Connection player);
+    void registerPlayerInput(User player, std::string input);
+    void inputRequestTimedout(User player);
 
     ElementSptr setup();
     ElementSptr constants();
@@ -71,7 +71,7 @@ public:
 private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
-    Connection _owner;
+    User _owner;
     GameStatus _status;
 
     //Bounds of player given in json file
@@ -97,7 +97,7 @@ private:
 
     std::shared_ptr<std::deque<std::string>> _global_msgs;
     std::shared_ptr<std::deque<InputRequest>> _input_requests;
-    std::shared_ptr<std::map<Connection, InputResponse>> _player_input;
+    std::shared_ptr<std::map<User, InputResponse>> _player_input;
 
     //allows from_json and to_json to access private fields
     friend void from_json(const json &j, Game &g);

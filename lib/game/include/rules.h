@@ -17,7 +17,7 @@ enum InputType {
 };
 
 struct InputRequest {
-    Connection user;
+    User user;
     std::string prompt;
     InputType type;
     unsigned num_choices; // doesn't apply for InputType::Text
@@ -74,7 +74,7 @@ public:
 class ParallelFor : public Rule {
     std::shared_ptr<PlayerMap> player_maps;
     RuleVector rules;
-    std::map<Connection, RuleVector::iterator> player_rule_it;
+    std::map<User, RuleVector::iterator> player_rule_it;
     bool initialized = false;
 public:
     ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules);
@@ -131,14 +131,14 @@ class InputChoice : public Rule {
     ElementVector choices;
     std::string result;
     std::shared_ptr<std::deque<InputRequest>> input_requests;
-    std::shared_ptr<std::map<Connection, InputResponse>> player_input;
+    std::shared_ptr<std::map<User, InputResponse>> player_input;
     unsigned timeout_s; // in seconds
 
-    std::map<Connection, bool> awaitingInput;
+    std::map<User, bool> awaitingInput;
 public:
     InputChoice(std::string prompt, ElementVector choices, std::string result,
                 std::shared_ptr<std::deque<InputRequest>> input_requests,
-                std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                std::shared_ptr<std::map<User, InputResponse>> player_input,
                 unsigned timeout_s = 0);
     bool executeImpl(ElementSptr element) final;
 };

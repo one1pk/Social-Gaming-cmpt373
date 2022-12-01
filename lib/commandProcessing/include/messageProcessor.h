@@ -19,19 +19,20 @@ enum UserCommand {
     START,
     LEAVE,
     END,
+    USERNAME,
 };
 
 /**
  * Object that has been created by processing raw messages from the users. Contains:
  * - isCommand : whether the user message was a command or not 
- * - Connection : unique user identifier
+ * - User : unique user identifier
  * - commandType : Type of command (by default a INPUT)
  * - Arguments : The arguments provided for that particular command as tokens
  * - input : IF NOT COMMAND, the message text 
  */
 struct ProcessedMessage {
     bool isCommand = false;
-    Connection connection;
+    User user;
     UserCommand commandType;
     std::vector<std::string> arguments;
     std::string input;
