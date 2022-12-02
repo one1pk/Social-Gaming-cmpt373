@@ -4,6 +4,7 @@
 #include "messageProcessor.h"
 #include "server.h"
 #include "list.h"
+#include <glog/logging.h>
 
 #include <unistd.h>
 #include <chrono>
@@ -41,19 +42,22 @@ std::string getHTTPMessage(const char *htmlLocation) {
         return std::string{std::istreambuf_iterator<char>(infile),
                            std::istreambuf_iterator<char>()};
     } else {
-        std::cerr << "Unable to open HTML index file:\n"
-                  << htmlLocation << "\n";
+        LOG(ERROR) << "Unable to open HTML index file:\n"
+                   << htmlLocation << "\n";
         std::exit(-1);
     }
 }
 
 int main(int argc, char *argv[]) {    
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    
     if (argc < 3) {
-        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
-                  << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
+        LOG(ERROR) << "Usage:\n  " << argv[0] << " <port> <html response>\n"
+                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
         return 1;
     }
-    std::cout << "Setting up the server...\n";
+    LOG(INFO) << "Setting up the server...";
 
     /// TODO: extract the server configuration parameters from ./serverconfig.json
     // start a new session based on the configuration
@@ -67,7 +71,7 @@ int main(int argc, char *argv[]) {
     CommandHandler commandHandler(globalState);
     MessageProcessor messageProcessor;
 
-    std::cout << "Game server is up!\n";
+    LOG(INFO) << "Game server is up!";
 
     // start listening for messages and serving content as appropriate
     while (true) {
@@ -75,8 +79,8 @@ int main(int argc, char *argv[]) {
         try {
             server.update();
         } catch (std::exception &e) {
-            std::cerr << "Exception from Server update:\n"
-                      << " " << e.what() << "\n\n";
+            LOG(ERROR) << "Exception from Server update:\n"
+                       << " " << e.what() << std::endl;
             errorWhileUpdating = true;
         }
 

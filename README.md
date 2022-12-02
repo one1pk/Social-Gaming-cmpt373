@@ -8,7 +8,9 @@
 * Boost (>= 1.72)
     *  `sudo apt-get install libboost-all-dev`
 * nlohmann json (>= 3.2.0)
-    * `sudo apt-get install nlohmann-json3-dev `
+    * `sudo apt-get install nlohmann-json3-dev`
+* GLog (>= 0.4.0)
+    * `sudo apt-get install libgoogle-glog-dev`
 
 ### Build with CMake
 1) Clone the repo

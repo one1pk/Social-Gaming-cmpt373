@@ -1,4 +1,5 @@
 #include "globalState.h"
+#include <glog/logging.h>
 
 void GlobalServerState::addNewUsers(std::vector<User>& users) {
     clients.insert(clients.end(), users.begin(), users.end());
@@ -78,17 +79,17 @@ std::deque<Message> GlobalServerState::processGames() {
 
     auto game = game_instances.begin();
     while (game != game_instances.end()) {
-    // std::cout << "Game Check\n";
+        LOG(INFO) << "Game Check";
         switch (game->status()) {
             case GameStatus::AwaitingOutput: {
-            // std::cout << "AwaitingOutput\n";
+                LOG(INFO) << "AwaitingOutput";
                 processGameMsgs(*game, outgoing);
                 game->outputSent(); // changes the status to AwaitingInput
                 game++;
             }
             break;
             case GameStatus::AwaitingInput: {
-            // std::cout << "AwaitingInput\n";
+                LOG(INFO) << "AwaitingInput";
                 std::deque<InputRequest> input_requests = game->inputRequests();
                 for (auto input_request: input_requests) {
                     User user = input_request.user;
@@ -131,7 +132,7 @@ std::deque<Message> GlobalServerState::processGames() {
             }
             break;
             case GameStatus::Finished: {
-            // std::cout << "GameFinished\n";
+                LOG(INFO) << "GameFinished";
                 processGameMsgs(*game, outgoing);
                 outgoing.push_back({game->owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
                 std::deque<Message> finalMsgs = buildMsgsForOtherPlayers("\nGood game!\nYou are now back in the lobby\n\n", game->owner());

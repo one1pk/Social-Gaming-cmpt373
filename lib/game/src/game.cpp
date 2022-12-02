@@ -34,7 +34,7 @@ void Game::run() {
     _status = GameStatus::Running;
 
     for (auto rule: _rules) {
-        if (!rule->execute()) {
+        if (rule->execute() == RuleStatus::InputRequired) {
             _status = GameStatus::AwaitingOutput;
             return;
         }

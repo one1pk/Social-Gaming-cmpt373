@@ -1,5 +1,6 @@
 #include "client.h"
 #include "ChatWindow.h"
+#include <glog/logging.h>
 
 #include <iostream>
 
@@ -26,6 +27,8 @@ std::string WELCOME_MESSAGE = (
         "  * Please enter a name to proceed: name <your game name>\n\n");
 
 int main(int argc, char* argv[]) {
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
     
     // verify that the cmdline arguments provided describe a game server
     // and connect to the server
