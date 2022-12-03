@@ -68,8 +68,8 @@
                     "rules": [
   
                       { "rule": "extend",
-                        "target": "winners",
-                        "list": "players.collect(player, player.weapon == weapon.beats)"
+                        "target": "variables.winners",
+                        "list": "players.collect(player player.weapon == weapon.beats)"
                       }
   
                     ]  

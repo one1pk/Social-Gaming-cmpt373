@@ -76,18 +76,20 @@ public:
 };
 
 class When : public Rule {
+    std::shared_ptr<ASTNode> conditionRoot;
     // a vector of condtion-rules pairs
     // containes a rule list for every case
     // a condition is the root of the expression tree for that condition
-    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pairs;
-    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>::iterator conditionExpression_rule_pair;
+    
+    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>::iterator condition_rule_pair;
     
     RuleVector::iterator rule;
     bool match = false;
 
 public: 
-    When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> case_rules);
-    When(std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditonExpression_rule_pairs);
+    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> condition_rule_pairs;
+    When() = default;
+    void set();
     bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
     void resetImpl() final;
 };

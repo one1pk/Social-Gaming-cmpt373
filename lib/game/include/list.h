@@ -109,7 +109,7 @@ public:
 
     ElementSptr getMapElement(std::string key) final {
         // static_assert(std::is_same_v<T, ElementMap>, "getMapElement() must be called on a map");
-        
+    
         if constexpr (std::is_same_v<T, ElementMap>) {
             if (_data.find(key) != _data.end()){
                 return _data[key];
@@ -135,6 +135,7 @@ public:
         }
     }
 
+    
     ElementVector getSubList(std::string key) final {
         // static_assert(std::is_same_v<T, ElementVector>, "getSubList() must be called on a vector of maps");
         ElementVector sublist;
@@ -187,6 +188,7 @@ public:
             return "{}";
         }
     }
+
 
     void addInt(int value) final {
         // static_assert(std::is_integral_v<T>, "getInt() must be called on an int element");
@@ -307,7 +309,9 @@ public:
 
     bool contains(ElementSptr element){
         if constexpr (std::is_same_v<T, ElementVector>){
-            return std::find(_data.begin(), _data.end(), element) != _data.end();
+            return std::find_if(_data.begin(), _data.end(), [&element](auto& e){
+                return e->getString() == element->getString();
+            }) != _data.end();
         }
         else if constexpr (std::is_same_v<T, ElementMap>){
             return _data.find(element->getString()) != _data.end();

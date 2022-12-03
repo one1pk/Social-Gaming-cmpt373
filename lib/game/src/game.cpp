@@ -38,6 +38,7 @@ void Game::run() {
 
     for (auto rule: _rules) {
         ElementMap elementsMap;
+       
         if (!rule->execute(elementsMap)) {
             _status = GameStatus::AwaitingOutput;
             return;

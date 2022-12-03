@@ -86,10 +86,9 @@ void ParallelFor::resetImpl() {
 
 // When //
 
-When::When(std::vector<std::pair<std::shared_ptr<ASTNode>,RuleVector>> conditionExpression_rule_pairs)
-    : conditionExpression_rule_pairs(conditionExpression_rule_pairs), 
-    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
-    rule(conditionExpression_rule_pair->second.begin()) {
+void When::set(){
+    condition_rule_pair = condition_rule_pairs.begin();
+    rule = condition_rule_pair->second.begin(); 
 }
 
 bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
@@ -97,16 +96,20 @@ bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
     
     // traverse the cases and execute the rules for the case condition that returns true
     // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
-    for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
-        std::shared_ptr<ASTNode> conditionRoot = conditionExpression_rule_pair->first;
+  
+        
+    
+    for (; condition_rule_pair != condition_rule_pairs.end(); condition_rule_pair++) {
+        std::cout << "SIZE FROM RULES =" << condition_rule_pairs.size() << std::endl;
+        std::cout << elementsMap.at("weapon")->getMapElement("name")->getString() << std::endl;
+        conditionRoot = condition_rule_pair->first;
         conditionRoot->accept(resolver, elementsMap);
-        bool caseMatch = resolver.getResult()->getBool();
-        TreePrinter treeP;
-        conditionRoot->accept(treeP, elementsMap);
-        std::cout << conditionExpression_rule_pair->second.size() << std::endl;
 
-        rule = conditionExpression_rule_pair->second.begin();
-        RuleVector rules = conditionExpression_rule_pair->second;
+        
+        bool caseMatch = resolver.getResult()->getBool();
+
+        rule = condition_rule_pair->second.begin();
+        RuleVector rules = condition_rule_pair->second;
 
         
 
@@ -130,8 +133,8 @@ bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
 }
 
 void When::resetImpl() {
-    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
-    rule = conditionExpression_rule_pair->second.begin();
+    condition_rule_pair = condition_rule_pairs.begin();
+    rule = condition_rule_pair->second.begin();
 }
 
 // Extend //
@@ -220,7 +223,7 @@ InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExp
 bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     std::cout << "* InputChoiceRequest Rule *\n";
     
-    /// TODO: for choices, weapons.name should resolve to weapons.sublist.name
+   
     choicesExpressionRoot->accept(resolver, elementsMap);
     choices = resolver.getResult()->getVector();
     Connection player_connection = player->getMapElement("connection")->getConnection();

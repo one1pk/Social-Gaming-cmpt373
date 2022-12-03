@@ -49,6 +49,7 @@ inline void from_json(const Json& j,  Game& g){
     j.at("variables").get_to(g._variables);
     j.at("per-player").get_to(g._per_player);
     j.at("per-audience").get_to(g._per_audience);
+    j.at("rules").get_to(g.rulesFromJson2);
 }
 
 inline void to_json(Json& j, const ElementSptr& e){
@@ -85,6 +86,7 @@ inline void to_json( Json& j, const Game& g){
     j["constants"] = g._constants;
     j["per-player"] = g._per_player;
     j["per-audience"] = g._per_audience;
+    j["rules"] = g.rulesFromJson2;
 }
 
 

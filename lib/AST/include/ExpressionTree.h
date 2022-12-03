@@ -23,7 +23,7 @@ public:
     int getPrecedence(std::string value);
     std::map<std::string, int> precedenceMap = {
         {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 10}, {"collect", 10}, {"contains", 10}, 
-        {">", 50}, {">=", 50}, {"<", 50}, {"<=", 50}, {"==", 50}, {"!=", 50}, {"!", 5}, 
+        {">", 10}, {">=", 10}, {"<", 10}, {"<=", 10}, {"==", 10}, {"!=", 10}, {"!", 5}, 
         {"(", 0}, {")", 0} 
     }; //higher precedence has prioirty
 
@@ -33,7 +33,7 @@ public:
     ElementMap gameListsMap;
     std::shared_ptr<PlayerMap> playerMap;
 
-    std::shared_ptr<ASTNode> getRoot();
+    std::shared_ptr<ASTNode>& getRoot();
 
 };
 

@@ -21,7 +21,13 @@ void TreePrinter::visit(PlayersNode& playerNode, ElementMap elements) {
 }
 
 void TreePrinter::visit(CollectOperator& cOp, ElementMap elements) {
-    std::cout << "collect";
+   
+    std::cout << '(';
+    cOp.left->accept(*this, elements);
+    std::cout << ' ' << "collect" << ' ';
+    cOp.right->accept(*this, elements);
+    std::cout << ')';
+
 }
 
 void TreePrinter::visit(UnaryOperator& uOp, ElementMap elements) {

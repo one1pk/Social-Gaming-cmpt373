@@ -1,6 +1,7 @@
 #include "ExpressionResolver.h"
 #include <cassert>
 #include <algorithm>
+#include <iostream>
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 
@@ -12,10 +13,13 @@ void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
 /// TODO: if "{}" it should return element refered to inside brackets
 /// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
 void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
+    std::cout << "name" << nameNode.name << std::endl;
     auto elementIter = elements.find(nameNode.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
-    if(elementIter != elements.end())
+    if(elementIter != elements.end()){
+        std::cout << "name" << nameNode.name << std::endl;
         result = elementIter->second;
+    }
         
     //otherwise, name is just a string
     else
@@ -23,11 +27,13 @@ void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
+    std::cout << "list" << std::endl;
     result = listNode.list;
 }
 
 void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
     ElementVector players;
+    std::cout << "players" << std::endl;
     for(auto playerMap : *(playersNode.connectionPlayerPairs)){
         players.emplace_back(playerMap.second);
     }
@@ -38,6 +44,7 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
     uOp.operand->accept(*this, elements);
     ElementSptr operand = result;
     std::string kind = uOp.kind;
+    std::cout << kind << std::endl;
 
     if(kind == "!")
         result = std::make_shared<Element<bool>>(!operand->getBool());
@@ -47,6 +54,7 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
+    std::cout << "collect" << std::endl;
     ElementVector collection;
     cOp.left->accept(*this, elements);
     auto left = result;
@@ -67,6 +75,7 @@ void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
 
 void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
     std::string kind = bOp.kind;
+    std::cout << kind << std::endl;
     bOp.left->accept(*this, elements);
     ElementSptr left = result;
     bOp.right->accept(*this, elements);

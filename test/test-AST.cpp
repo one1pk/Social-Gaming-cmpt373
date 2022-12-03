@@ -43,7 +43,7 @@ static void resolve(Game& game, ExpressionResolver& resolver, std::string expres
     
     TreePrinter treePrinter;
     ElementMap elementsMap;
-
+    
     expressionRoot->accept(resolver, elementsMap);
 
     std::cout << std::endl;
@@ -55,8 +55,11 @@ TEST(ASTTest, ResolverTest){
     Game game;
     std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
     InterpretJson j(path);
-    j.interpret(game);
+    j.interpretWithRules(game);
 
+    Json g = game;
+
+    //std::cout << setw(4) << g << std::endl;
     
     std::string expression = "variables.winners.size";
     ExpressionResolver resolver;
@@ -67,7 +70,7 @@ TEST(ASTTest, ResolverTest){
     expression = "setup.Rounds.upfrom(1)";
     auto expected = game.setup()->getMapElement("Rounds")->upfrom(1)->getVector();
     resolve(game, resolver, expression);
-    EXPECT_EQ(4, expected.size());
+    EXPECT_EQ(4, resolver.getResult()->getVector().size());
     
     expression = "constants.weapons.name";
     auto choices = game.constants()->getMapElement("weapons")->getSubList("name");
@@ -97,8 +100,12 @@ TEST(ASTTest, ResolverTest){
     EXPECT_EQ(resolver.getResult()->getVector(), weapons);
     EXPECT_EQ(resolver.getResult()->getSizeAsInt(), 3);
 
-    expression = "!players.weapon.contains(pap)";
+    expression = "!players.weapon.contains(rock)";
     resolve(game, resolver, expression);
     EXPECT_EQ(resolver.getResult()->getBool(), false);
+
+   
+    
 }
+
 

@@ -103,6 +103,7 @@ public:
 
     ElementSptr _per_player; // a map template for players
     ElementSptr _per_audience; // a map template for audience members
+    ElementSptr rulesFromJson2;
     RuleVector _rules;
 
     std::shared_ptr<PlayerMap> _players = std::make_shared<PlayerMap>(PlayerMap{}); // maps each player to their game map

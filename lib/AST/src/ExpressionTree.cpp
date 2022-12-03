@@ -3,7 +3,7 @@
 ExpressionTree::ExpressionTree(std::shared_ptr<ASTNode> root, ElementMap gameListsMap, std::shared_ptr<PlayerMap> playerMap)
     : root(root), gameListsMap(gameListsMap), playerMap(playerMap) { }
 
-std::shared_ptr<ASTNode> ExpressionTree::getRoot(){
+std::shared_ptr<ASTNode>& ExpressionTree::getRoot(){
     return root;
 }
 std::deque<std::string> ExpressionTree::split(std::string expression) {
