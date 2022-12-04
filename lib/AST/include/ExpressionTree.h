@@ -22,7 +22,7 @@ public:
 
     int getPrecedence(std::string value);
     std::map<std::string, int> precedenceMap = {
-        {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 10}, {"collect", 10}, {"contains", 10}, 
+        {".", 100}, {"upfrom", 10}, {"sublist", 10}, {"size", 15}, {"collect", 10}, {"contains", 10}, 
         {">", 10}, {">=", 10}, {"<", 10}, {"<=", 10}, {"==", 10}, {"!=", 10}, {"!", 5}, 
         {"(", 0}, {")", 0} 
     }; //higher precedence has prioirty

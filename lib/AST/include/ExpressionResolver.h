@@ -9,6 +9,8 @@ public:
     
     void visit(NameNode& name, ElementMap elements) override;
 
+    void visit(NumberNode& num, ElementMap elements) override;
+
     void visit(ListNode& listNode, ElementMap elements) override;
 
     void visit(PlayersNode& playersNode, ElementMap elements) override;

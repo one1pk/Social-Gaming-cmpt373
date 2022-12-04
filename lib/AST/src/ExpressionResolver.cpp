@@ -13,11 +13,9 @@ void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
 /// TODO: if "{}" it should return element refered to inside brackets
 /// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
 void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
-    std::cout << "name" << nameNode.name << std::endl;
     auto elementIter = elements.find(nameNode.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
     if(elementIter != elements.end()){
-        std::cout << "name" << nameNode.name << std::endl;
         result = elementIter->second;
     }
         
@@ -26,14 +24,16 @@ void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
         result = std::make_shared<Element<std::string>>(nameNode.name);
 }
 
+void ExpressionResolver::visit(NumberNode& numNode, ElementMap elements){
+    result = std::make_shared<Element<int>>(numNode.num);
+}
+
 void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
-    std::cout << "list" << std::endl;
     result = listNode.list;
 }
 
 void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
     ElementVector players;
-    std::cout << "players" << std::endl;
     for(auto playerMap : *(playersNode.connectionPlayerPairs)){
         players.emplace_back(playerMap.second);
     }
@@ -41,11 +41,10 @@ void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
+    std::string kind = uOp.kind;
     uOp.operand->accept(*this, elements);
     ElementSptr operand = result;
-    std::string kind = uOp.kind;
-    std::cout << kind << std::endl;
-
+    
     if(kind == "!")
         result = std::make_shared<Element<bool>>(!operand->getBool());
     else if(kind == "size")
@@ -54,13 +53,14 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
 }
 
 void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
-    std::cout << "collect" << std::endl;
     ElementVector collection;
     cOp.left->accept(*this, elements);
     auto left = result;
+
     for(auto elementIter : left->getVector()){
-        ElementMap elementMap;
-        cOp.middle->accept(*this, elementMap);
+        //middle node should always be string and not found in elementMap
+        ElementMap emptyMap;
+        cOp.middle->accept(*this, emptyMap);
         std::string middle = result->getString();
 
         /// TODO: allow for more complex middle
@@ -75,81 +75,74 @@ void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
 
 void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
     std::string kind = bOp.kind;
-    std::cout << kind << std::endl;
     bOp.left->accept(*this, elements);
     ElementSptr left = result;
+
+    if(kind == ".") {
+        //In case of dot operator, RHS should always be string an never be found in elementMap otherwise player.weapon will be the same weapon as in weapon.name
+        ElementMap emptyMap;
+        bOp.right->accept(*this, emptyMap);
+        ElementSptr right = result;
+
+        if(left->type == Type::VECTOR){
+            result = std::make_shared<Element<ElementVector>>(left->getSubList(right->getString()));
+        }
+        else {
+            result = left->getMapElement(right->getString());
+        }
+        return;
+    }
+
+    
     bOp.right->accept(*this, elements);
     ElementSptr right = result;
     
 
-    if(kind == ".") {
-        if(left->type == Type::VECTOR){
-            result = std::make_shared<Element<ElementVector>>(left->getSubList(right->getString()));
-        }
-        else 
-            result = left->getMapElement(right->getString());
-    }
-
-    else if(kind == "upfrom")
+    if(kind == "upfrom")
         result = left->upfrom(stoi(right->getString()));
 
     else if(kind == "contains")
         result = std::make_shared<Element<bool>>(left->contains(right));
-        
-    //might make collect a trinary operator
-    else if(kind == "collect")
-        assert(false && "Collect not supported yet");
 
     else if(kind == "==") {
-        if(left->type == Type::STRING && right->type == Type::STRING)
+        if(left->type == right->type){
             result = std::make_shared<Element<bool>>(left->getString() == right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() == right->getInt());
+        }
         else 
             assert(false && "Invalid node during evaluation");
     }
 
-    else if(kind == "!-") {
-        if(left->type == Type::STRING && right->type == Type::STRING)
+    else if(kind == "!=") {
+        if(left->type == right->type)
             result = std::make_shared<Element<bool>>(left->getString() != right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() != right->getInt());
         else 
             assert(false && "Invalid node during evaluation");
     }
 
     else if(kind == ">") {
-        if(left->type == Type::STRING && right->type == Type::STRING)
+        if(left->type == right->type)
             result = std::make_shared<Element<bool>>(left->getString() > right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() > right->getInt());
         else 
             assert(false && "Invalid node during evaluation");
     }
 
     else if(kind == "<") {
-        if(left->type == Type::STRING && right->type == Type::STRING)
+        if(left->type == right->type)
             result = std::make_shared<Element<bool>>(left->getString() < right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() < right->getInt());
         else 
             assert(false && "Invalid node during evaluation");
     }
 
     else if(kind == "<=") {
-        if(left->type == Type::STRING && right->type == Type::STRING)
+        if(left->type == right->type)
             result = std::make_shared<Element<bool>>(left->getString() <= right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() <= right->getInt());
         else 
             assert(false && "Invalid node during evaluation");
     }
     
     else if(kind == ">="){
-        if(left->type == Type::STRING && right->type == Type::STRING)
+        if(left->type == right->type)
             result = std::make_shared<Element<bool>>(left->getString() >= right->getString());
-        else if(left->type == Type::INT && right->type == Type::INT)
-            result = std::make_shared<Element<bool>>(left->getInt() >= right->getInt());
         else 
             assert(false && "Invalid node during evaluation");
     }

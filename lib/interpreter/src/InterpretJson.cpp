@@ -117,9 +117,12 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         }
 
         else if (ruleName == "add"){
-            auto to = rule->getMapElement("to")->getString();
+            auto toString = rule->getMapElement("to")->getString();
+            expressionTree.build(toString);
+            std::shared_ptr<ASTNode> toExpressionRoot = expressionTree.getRoot();
+
             auto value = rule->getMapElement("value");
-            ruleObject = std::make_shared<Add>(to, value);
+            ruleObject = std::make_shared<Add>(toExpressionRoot, value);
         }
 
         else if (ruleName == "scores"){
@@ -136,7 +139,7 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             std::string countString = rule->getMapElement("count")->getString();
             expressionTree.build(countString);
             std::shared_ptr<ASTNode> countExpressionRoot = expressionTree.getRoot();
-            ruleObject = std::make_shared<Extend>(fromExpressionRoot, countExpressionRoot);
+            ruleObject = std::make_shared<Discard>(fromExpressionRoot, countExpressionRoot);
         }
 
         else if (ruleName == "extend"){

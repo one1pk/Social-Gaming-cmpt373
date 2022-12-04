@@ -12,6 +12,10 @@ void TreePrinter::visit(NameNode& nameNode, ElementMap elements) {
     std::cout << nameNode.name ;
 }
 
+void TreePrinter::visit(NumberNode& numNode, ElementMap elements) {
+    std::cout << numNode.num ;
+}
+
 void TreePrinter::visit(ListNode& listNode, ElementMap elements) {
     std::cout << listNode.nameOfList;
 }

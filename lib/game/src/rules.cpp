@@ -100,23 +100,20 @@ bool When::executeImpl(ElementSptr element, ElementMap elementsMap) {
         
     
     for (; condition_rule_pair != condition_rule_pairs.end(); condition_rule_pair++) {
-        std::cout << "SIZE FROM RULES =" << condition_rule_pairs.size() << std::endl;
-        std::cout << elementsMap.at("weapon")->getMapElement("name")->getString() << std::endl;
+        rule = condition_rule_pair->second.begin();
         conditionRoot = condition_rule_pair->first;
         conditionRoot->accept(resolver, elementsMap);
 
         
         bool caseMatch = resolver.getResult()->getBool();
+    
 
-        rule = condition_rule_pair->second.begin();
-        RuleVector rules = condition_rule_pair->second;
-
-        
-
+    
         if (caseMatch) {
             std::cout << "Case Match!\nExecuting Case Rules\n";
+            
+            for (; rule != condition_rule_pair->second.end(); rule++) {
 
-            for (; rule != rules.end(); rule++) {
                 if (!(*rule)->execute(elementsMap, element)) {
                     return false;
                 }
@@ -147,9 +144,12 @@ bool Extend::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Extend Rule *\n";
     targetExpressionRoot->accept(resolver, elementsMap);
     target = resolver.getResult();
+
     extensionExpressionRoot->accept(resolver, elementsMap);
     extensionList = resolver.getResult();
+    
     target->extend(extensionList);
+
     executed = true;
     return true;
 }
@@ -176,14 +176,15 @@ bool Discard::executeImpl(ElementSptr element, ElementMap elementsMap) {
 
 // Add //
 
-Add::Add(std::string to, ElementSptr value)
-    : to(to), value(value) {
+Add::Add(std::shared_ptr<ASTNode> toExpressionRoot, ElementSptr value)
+    : toExpressionRoot(toExpressionRoot), value(value) {
 }
 
 bool Add::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Add Rule *\n";
-
-    element->getMapElement(to)->addInt(value->getInt());
+    toExpressionRoot->accept(resolver, elementsMap);
+    to = resolver.getResult();
+    to->addInt(value->getInt());
     executed = true;
     return true;
 }
@@ -277,7 +278,7 @@ bool Scores::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* Scores Rule *\n";
 
     std::stringstream msg;
-    msg << "\nScores are " << (ascending? "(in ascedning order)\n" : "(in descedning order)\n");
+    msg << "\nScores are " << (ascending? "(in ascending order)\n" : "(in descending order)\n");
 
     std::vector<std::pair<int, uintptr_t>> scores;
     for (auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {

@@ -105,7 +105,9 @@ TEST(ASTTest, ResolverTest){
     EXPECT_EQ(resolver.getResult()->getBool(), false);
 
    
-    
+    expression = "variables.winners.size == 0";
+    resolve(game, resolver, expression);
+    EXPECT_EQ(resolver.getResult()->getBool(), true);
 }
 
 

@@ -122,10 +122,11 @@ public:
 // Arithmetic //
 
 class Add : public Rule {
-    std::string to;
+    std::shared_ptr<ASTNode> toExpressionRoot;
+    ElementSptr to;
     ElementSptr value;
 public: 
-    Add(std::string to, ElementSptr value);
+    Add(std::shared_ptr<ASTNode> toExpressionRoot, ElementSptr value);
     bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 

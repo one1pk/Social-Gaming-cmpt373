@@ -20,6 +20,15 @@ public:
     std::string name;
 };
 
+class NumberNode : public ASTNode {
+public:
+    NumberNode(int num) : num(num) { }
+
+    void accept(ASTVisitor& visitor, ElementMap elements) override;
+    
+    int num;
+};
+
 class ListNode : public ASTNode { 
 public:
     ListNode(std::string nameOfList, ElementSptr list) : nameOfList(nameOfList), list(list) { }
@@ -80,6 +89,7 @@ class ASTVisitor {
     public:
     virtual void visit(ASTNode& node, ElementMap elements) = 0;
     virtual void visit(NameNode& name, ElementMap elements) = 0;
+    virtual void visit(NumberNode& num, ElementMap elements) = 0;
     virtual void visit(ListNode& list, ElementMap elements) = 0;
     virtual void visit(PlayersNode& players, ElementMap elements) = 0;
     virtual void visit(BinaryOperator& bOp, ElementMap elements) = 0;
@@ -88,6 +98,10 @@ class ASTVisitor {
 };
 
 inline void NameNode::accept(ASTVisitor& visitor, ElementMap elements) {
+    visitor.visit(*this, elements);
+}
+
+inline void NumberNode::accept(ASTVisitor& visitor, ElementMap elements) {
     visitor.visit(*this, elements);
 }
 

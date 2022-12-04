@@ -63,6 +63,14 @@ int ExpressionTree::getPrecedence(std::string key){
     return precedenceMap.at(key);
 }
 
+bool isNum(std::string value){
+    for(int i = 0; i < value.length(); i++){
+        if(!isdigit(value[i]))
+            return false;
+    }
+    return true;
+}
+
 void ExpressionTree::buildOperatorNode(std::deque<std::string>& operatorStack, std::deque<std::shared_ptr<ASTNode>>& nodeStack, std::shared_ptr<ASTNode>& root) {
     if(isUnary(operatorStack.back())){
         auto operand = nodeStack.back();
@@ -116,7 +124,7 @@ void ExpressionTree::build(std::string expression){
 
             //if token is a gameList name i.e. constants, variables, etc
             auto gameListIter = gameListsMap.find(token);
-            if(gameListIter != gameListsMap.end() && prevToken != "collect"){
+            if(gameListIter != gameListsMap.end()){
                 root = std::make_shared<ListNode>(token, gameListIter->second);
                 nodeStack.emplace_back(std::move(root));
             }
@@ -125,7 +133,12 @@ void ExpressionTree::build(std::string expression){
                 root = std::make_shared<PlayersNode>(playerMap);
                 nodeStack.emplace_back(std::move(root));
             }
-                
+            
+            else if(isNum(token)){
+                int num = stoi(token);
+                root = std::make_shared<NumberNode>(num);
+                nodeStack.emplace_back(std::move(root));
+            }
             //else it is just a string
             else {
                 root = std::make_shared<NameNode>(token);

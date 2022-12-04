@@ -225,10 +225,17 @@ public:
         
         if constexpr (std::is_same_v<T, bool>) {
             return _data;
+        } 
+        else if constexpr (std::is_same_v<T, std::string>){
+            if(_data == "true")
+                return true;
+            else if(_data == "false")
+                return false;
         } else {
             // throw error //
             return 0;
         }
+        return 0;
     }
 
     size_t getSize() final {
