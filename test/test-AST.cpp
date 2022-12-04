@@ -108,6 +108,11 @@ TEST(ASTTest, ResolverTest){
     expression = "variables.winners.size == 0";
     resolve(game, resolver, expression);
     EXPECT_EQ(resolver.getResult()->getBool(), true);
+
+    expression = "players.name";
+    resolve(game, resolver, expression);
+    for(auto it : resolver.getResult()->getVector())
+        std::cout << it->getString() << std::endl;
 }
 
 

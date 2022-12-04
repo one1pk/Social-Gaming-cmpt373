@@ -43,7 +43,7 @@
   
               { "rule": "input-choice",
                 "to": "player",
-                "prompt": "{name}, choose your weapon!",
+                "prompt": "{player.name}, choose your weapon!",
                 "choices": "constants.weapons.name",
                 "result": "weapon",
                 "timeout": 10
@@ -69,7 +69,7 @@
   
                       { "rule": "extend",
                         "target": "variables.winners",
-                        "list": "players.collect(player player.weapon == weapon.beats)"
+                        "list": "players.collect(player, player.weapon == weapon.beats)"
                       }
   
                     ]  

@@ -134,6 +134,7 @@ public:
 
 class InputChoice : public Rule {
     std::string prompt;
+    std::shared_ptr<ASTNode> elementToReplace;
     
     std::shared_ptr<ASTNode> choicesExpressionRoot;
     ElementVector choices;
@@ -145,7 +146,7 @@ class InputChoice : public Rule {
     std::map<Connection, bool> alreadySentInput;
 
 public:
-    InputChoice(std::string prompt, std::shared_ptr<ASTNode> expressionRoot, 
+    InputChoice(std::string prompt, std::shared_ptr<ASTNode> elementToReplace, std::shared_ptr<ASTNode> expressionRoot, 
                 unsigned timeout_s, std::string result,
                 std::shared_ptr<std::deque<Message>> player_msgs,
                 std::shared_ptr<std::map<Connection, std::string>> player_input);
@@ -155,9 +156,11 @@ public:
 class GlobalMsg : public Rule {
     std::string msg;
     std::shared_ptr<std::deque<std::string>> global_msgs;
+    std::shared_ptr<ASTNode> elementToReplace;
 public:
     GlobalMsg(std::string msg,
-              std::shared_ptr<std::deque<std::string>> global_msgs);
+              std::shared_ptr<std::deque<std::string>> global_msgs, 
+              std::shared_ptr<ASTNode> elementToReplace);
     bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
 };
 

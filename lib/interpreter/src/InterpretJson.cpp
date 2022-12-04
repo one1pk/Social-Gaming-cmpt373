@@ -56,6 +56,15 @@ void InterpretJson::interpretWithRules(Game& game){
     game.setStatusCreated();
 }
 
+void InterpretJson::extractFromBraces(std::string msg, std::shared_ptr<ASTNode>& elementToReplace) {
+    size_t openBrace = 0; 
+        if ((openBrace = msg.find("{", openBrace)) != std::string::npos) {
+            size_t closeBrace = msg.find("}", openBrace);
+            std::string elementToReplaceString = msg.substr(openBrace, closeBrace - openBrace + 1);
+            expressionTree.build(elementToReplaceString);
+            elementToReplace = expressionTree.getRoot();
+        }
+}
 
 //Interpret Rules
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
@@ -76,8 +85,10 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         }
 
         else if(ruleName == "global-message"){
-            auto msg = rule->getMapElement("value")->getString();
-            ruleObject = std::make_shared<GlobalMsg>(msg, game._global_msgs);
+            auto msgString = rule->getMapElement("value")->getString();
+            std::shared_ptr<ASTNode> elementToReplace;
+            extractFromBraces(msgString, elementToReplace);
+            ruleObject = std::make_shared<GlobalMsg>(msgString, game._global_msgs, elementToReplace);
         }
 
         else if(ruleName == "parallelfor"){
@@ -92,10 +103,9 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             
             ElementVector cases = rule->getMapElement("cases")->getVector();
             for(auto& caseRulePair : cases){
-                std::cout << caseRulePair->getMapElement("condition")->getString() << std::endl;
-                std::string conditionString = caseRulePair->getMapElement("condition")->getString();
+                auto conditionString = caseRulePair->getMapElement("condition")->getString();
                 expressionTree.build(conditionString);
-                std::shared_ptr<ASTNode> conditionExpressionRoot = expressionTree.getRoot();
+                auto conditionExpressionRoot = expressionTree.getRoot();
 
                 RuleVector caseRules;
                 toRuleVec(game, caseRulePair->getMapElement("rules"), caseRules);
@@ -106,20 +116,23 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         }
 
         else if(ruleName == "input-choice"){
-            std::string choicesString = rule->getMapElement("choices")->getString();
-            expressionTree.build(choicesString);
-            std::shared_ptr<ASTNode> choicesExpressionRoot = expressionTree.getRoot();
-
             auto prompt = rule->getMapElement("prompt")->getString();
+            std::shared_ptr<ASTNode> elementToReplace;
+            extractFromBraces(prompt, elementToReplace);
+
+            auto choicesString = rule->getMapElement("choices")->getString();
+            expressionTree.build(choicesString);
+            auto choicesExpressionRoot = expressionTree.getRoot();
+
             auto result = rule->getMapElement("result")->getString();
             auto timeout = rule->getMapElement("timeout")->getInt();
-            ruleObject = std::make_shared<InputChoice>(prompt, choicesExpressionRoot, timeout, result, game._player_msgs, game._player_input);
+            ruleObject = std::make_shared<InputChoice>(prompt, elementToReplace, choicesExpressionRoot, timeout, result, game._player_msgs, game._player_input);
         }
 
         else if (ruleName == "add"){
             auto toString = rule->getMapElement("to")->getString();
             expressionTree.build(toString);
-            std::shared_ptr<ASTNode> toExpressionRoot = expressionTree.getRoot();
+            auto toExpressionRoot = expressionTree.getRoot();
 
             auto value = rule->getMapElement("value");
             ruleObject = std::make_shared<Add>(toExpressionRoot, value);
@@ -132,24 +145,24 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         }
 
         else if (ruleName == "discard"){
-            std::string fromString = rule->getMapElement("from")->getString();
+            auto fromString = rule->getMapElement("from")->getString();
             expressionTree.build(fromString);
-            std::shared_ptr<ASTNode> fromExpressionRoot = expressionTree.getRoot();
+            auto fromExpressionRoot = expressionTree.getRoot();
 
-            std::string countString = rule->getMapElement("count")->getString();
+            auto countString = rule->getMapElement("count")->getString();
             expressionTree.build(countString);
-            std::shared_ptr<ASTNode> countExpressionRoot = expressionTree.getRoot();
+            auto countExpressionRoot = expressionTree.getRoot();
             ruleObject = std::make_shared<Discard>(fromExpressionRoot, countExpressionRoot);
         }
 
         else if (ruleName == "extend"){
-            std::string targetString = rule->getMapElement("target")->getString();
+            auto targetString = rule->getMapElement("target")->getString();
             expressionTree.build(targetString);
-            std::shared_ptr<ASTNode> targetExpressionRoot = expressionTree.getRoot();
+            auto targetExpressionRoot = expressionTree.getRoot();
 
-            std::string listString = rule->getMapElement("list")->getString();
+            auto listString = rule->getMapElement("list")->getString();
             expressionTree.build(listString);
-            std::shared_ptr<ASTNode> listExpressionRoot = expressionTree.getRoot();
+            auto listExpressionRoot = expressionTree.getRoot();
             ruleObject = std::make_shared<Extend>(targetExpressionRoot, listExpressionRoot);
         }
 

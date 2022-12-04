@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include "TreePrinter.h"
-
+#include "ExpressionTree.h"
 // Foreach //
 
 Foreach::Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules, std::string elementName)
@@ -191,33 +191,36 @@ bool Add::executeImpl(ElementSptr element, ElementMap elementsMap) {
 
 // InputChoice //
 
-std::string formatString(std::string_view str, ElementSptr element) {
-    std::string res(str);
-    if (element) {
-        size_t open_brace = 0; 
-        while ((open_brace = res.find("{", open_brace)) != std::string::npos) {
-            size_t close_brace = res.find("}", open_brace);
+std::string formatString(std::string_view msgView, std::shared_ptr<ASTNode> elementToReplace, ExpressionResolver& resolver, ElementMap elementsMap) {
+    std::string msg(msgView);
+    size_t open_brace = 0; 
+    
+    if ((open_brace = msg.find("{", open_brace)) != std::string::npos) {
+        size_t close_brace = msg.find("}", open_brace);
+        elementToReplace->accept(resolver, elementsMap);
+        std::string resolvedString;
 
-            if (close_brace == open_brace+1) {
-                res.replace(open_brace, 2, element->getString());
-            } else {
-                    if(element->type == Type::INT)
-                        res.replace(open_brace, close_brace-open_brace+1, element->getString());
-                    else{
-                        std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
-                        res.replace(open_brace, close_brace-open_brace+1, value_str);
-                    }
+        if(resolver.getResult()->type == VECTOR){
+            ElementVector resolvedStringVector = resolver.getResult()->getVector();
+            for(auto it = resolvedStringVector.begin(); it != resolvedStringVector.end(); it++){
+                if(it != resolvedStringVector.begin())
+                    resolvedString += ", ";
+                resolvedString += (*it)->getString();
             }
         }
+        else
+            resolvedString = resolver.getResult()->getString();
+
+        msg.replace(open_brace, close_brace - open_brace + 1, resolvedString);
     }
-    return res;
+    return msg;
 }
 
-InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> choicesExpressionRoot, 
+InputChoice::InputChoice(std::string prompt, std::shared_ptr<ASTNode> elementToReplace, std::shared_ptr<ASTNode> choicesExpressionRoot, 
                 unsigned timeout_s, std::string result,
                 std::shared_ptr<std::deque<Message>> player_msgs,
                 std::shared_ptr<std::map<Connection, std::string>> player_input)
-    : prompt(prompt), choicesExpressionRoot(choicesExpressionRoot), timeout_s(timeout_s),
+    : prompt(prompt), elementToReplace(elementToReplace), choicesExpressionRoot(choicesExpressionRoot), timeout_s(timeout_s),
       result(result), player_msgs(player_msgs), player_input(player_input) {
 }
 
@@ -230,8 +233,9 @@ bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     Connection player_connection = player->getMapElement("connection")->getConnection();
 
     if (!alreadySentInput[player_connection]) {
-        std::stringstream msg(formatString(prompt, player));
-        msg << "Enter an index to select:\n";
+        std::string formattedMsg = formatString(prompt, elementToReplace, resolver, elementsMap);
+        std::stringstream msg(formattedMsg);
+        msg << msg.str() << std::endl << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
             msg << "["<<i<<"] " << choices[i]->getString() << "\n";
         }
@@ -253,15 +257,18 @@ bool InputChoice::executeImpl(ElementSptr player, ElementMap elementsMap) {
     return true;
 }
 
+
 // GlobalMsg //
 
-GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> global_msgs)
-    : msg(msg), global_msgs(global_msgs) {
+GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> global_msgs, std::shared_ptr<ASTNode> elementToReplace)
+    : msg(msg), global_msgs(global_msgs), elementToReplace(elementToReplace) {
 }
 
 bool GlobalMsg::executeImpl(ElementSptr element, ElementMap elementsMap) {
     std::cout << "* GlobalMsg Rule *\n";
-    global_msgs->push_back(formatString(msg, element));
+    std::string formattedMsg = formatString(msg, elementToReplace, resolver, elementsMap);
+    formattedMsg += "\n";
+    global_msgs->push_back(formattedMsg);
     executed = true;
     return true;
 }

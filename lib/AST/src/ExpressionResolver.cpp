@@ -70,6 +70,7 @@ void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
         if(result->getBool())
             collection.emplace_back(elementIter);
     }
+
     result = std::make_shared<Element<ElementVector>>(collection);
 }
 

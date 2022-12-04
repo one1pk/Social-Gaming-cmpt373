@@ -27,6 +27,7 @@ class InterpretJson{
     
         Json data;
         ExpressionTree expressionTree;
+        void extractFromBraces(std::string msg, std::shared_ptr<ASTNode>& elementToReplace);
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
 };
 
