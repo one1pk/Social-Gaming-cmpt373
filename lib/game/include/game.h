@@ -9,9 +9,6 @@
 #include <map>
 #include <memory>
 #include <stack>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
 
 enum GameStatus {
     Created,
@@ -25,13 +22,17 @@ class Game {
 public:
     Game();
     Game(
+        std::string name, Connection owner, ElementMap game_state,
+        ElementSptr per_player, ElementSptr per_audience
+    );
+    Game(
         std::string name, Connection owner, 
         unsigned min_players, unsigned max_players, bool has_audience,
         ElementSptr setup,
         ElementSptr constants, ElementSptr variables,
         ElementSptr per_player, ElementSptr per_audience, 
-        std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
         RuleVector rules,
+        std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
         std::shared_ptr<std::deque<std::string>> global_msgs,
         std::shared_ptr<std::deque<InputRequest>> input_requests,
         std::shared_ptr<std::map<Connection, InputResponse>> player_input
@@ -63,12 +64,20 @@ public:
     ElementSptr variables();
     ElementSptr per_player();
     ElementSptr per_audience();
-    bool audience(){
-        return _has_audience;
+    RuleVector& rules();
+
+    ///TEMP: for interpreter
+    void setOwner(Connection owner){ _owner = owner; }
+    bool audience(){ return _has_audience; }
+    void setName(std::string name) { _name = name; }
+    void setStatusCreated() { _status = GameStatus::Created; }
+    void setRules(RuleVector rules) { _rules = rules; }
+    void setID(){
+         static uintptr_t shared_id_counter = 1; // gameIDs start at 1
+        _id = shared_id_counter++;
     }
 
-
-private:
+// private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
     Connection _owner;
@@ -88,19 +97,15 @@ private:
     ElementSptr _constants;
     ElementSptr _variables;
 
+    ElementMap _game_state;
+
     ElementSptr _per_player; // a map template for players
     ElementSptr _per_audience; // a map template for audience members
-    std::shared_ptr<PlayerMap> _players;  // maps each player to their game map
-    std::shared_ptr<PlayerMap> _audience; // maps each audience to their game map
-
     RuleVector _rules;
 
-    std::shared_ptr<std::deque<std::string>> _global_msgs;
-    std::shared_ptr<std::deque<InputRequest>> _input_requests;
-    std::shared_ptr<std::map<Connection, InputResponse>> _player_input;
-
-    //allows from_json and to_json to access private fields
-    friend void from_json(const json &j, Game &g);
-    friend void to_json(json &j, const Game &g);
-
+    std::shared_ptr<PlayerMap> _players = std::make_shared<PlayerMap>(PlayerMap{}); // maps each player to their game map
+    std::shared_ptr<PlayerMap> _audience = std::make_shared<PlayerMap>(PlayerMap{}); // maps each audience to their game map
+    std::shared_ptr<std::deque<std::string>> _global_msgs = std::make_shared<std::deque<std::string>>();
+    std::shared_ptr<std::deque<InputRequest>> _input_requests = std::make_shared<std::deque<InputRequest>>();
+    std::shared_ptr<std::map<Connection, InputResponse>> _player_input = std::make_shared<std::map<Connection, InputResponse>>();
 };

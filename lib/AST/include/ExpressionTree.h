@@ -4,7 +4,7 @@
 
 class ExpressionTree{
 private:
-        std::shared_ptr<ASTNode> root;
+    std::shared_ptr<ASTNode> root;
         
 public:
     ExpressionTree() = default;

@@ -12,18 +12,11 @@ using Json = nlohmann::json;
 
 class InterpretJson{
     public:
-        InterpretJson() = default;
-        InterpretJson(string path);
-        InterpretJson(Json j);
-        
-        void interpret(Game& obj );
-
-        //TEMP: just fo testing purposes
-        void interpretWithRules(Game& obj );
-
-        Json getData();
+        InterpretJson(string game_name);
+        Game interpret(Connection owner);
     
         Json data;
+        std::string game_name;
         ExpressionTree expressionTree;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
 };
@@ -49,41 +42,41 @@ inline void from_json(const Json& j,  Game& g){
     j.at("per-audience").get_to(g._per_audience);
 }
 
-inline void to_json(Json& j, const ElementSptr& e){
-    switch(e->type) {
-		case Type::STRING:
-			j = e->getString();
-			break;
-		case Type::INT:
-			j = e->getInt();
-			break;
-        case Type::BOOL:
-			j = e->getBool();
-			break;
-        case Type::MAP:{
-            j = e->getMap();;
-            break;
-        }
-        case Type::VECTOR:{
-            j = e->getVector();
-            break;
-        }
-        default:
-            break;
-	}
-}
+// inline void to_json(Json& j, const ElementSptr& e){
+//     switch(e->type) {
+// 		case Type::STRING:
+// 			j = e->getString();
+// 			break;
+// 		case Type::INT:
+// 			j = e->getInt();
+// 			break;
+//         case Type::BOOL:
+// 			j = e->getBool();
+// 			break;
+//         case Type::MAP:{
+//             j = e->getMap();;
+//             break;
+//         }
+//         case Type::VECTOR:{
+//             j = e->getVector();
+//             break;
+//         }
+//         default:
+//             break;
+// 	}
+// }
 
-inline void to_json( Json& j, const Game& g){
-    j["configuration"]["name"] = g._name;
-    j["configuration"]["audience"] = g._has_audience;
-    j["configuration"]["player count"]["min"] = g._player_count.min;
-    j["configuration"]["player count"]["max"] = g._player_count.max;
-    j["configuration"]["setup"] = g._setup;
-    j["variables"] = g._variables;
-    j["constants"] = g._constants;
-    j["per-player"] = g._per_player;
-    j["per-audience"] = g._per_audience;
-}
+// inline void to_json( Json& j, const Game& g){
+//     j["configuration"]["name"] = g._name;
+//     j["configuration"]["audience"] = g._has_audience;
+//     j["configuration"]["player count"]["min"] = g._player_count.min;
+//     j["configuration"]["player count"]["max"] = g._player_count.max;
+//     j["configuration"]["setup"] = g._setup;
+//     j["variables"] = g._variables;
+//     j["constants"] = g._constants;
+//     j["per-player"] = g._per_player;
+//     j["per-audience"] = g._per_audience;
+// }
 
 
 

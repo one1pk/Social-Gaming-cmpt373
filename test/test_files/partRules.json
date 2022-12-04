@@ -1,0 +1,68 @@
+{
+    "configuration": {
+        "name": "Rock, Paper, Scissors",
+        "player count": {"min": 2, "max": 4},
+        "audience": false,
+        "setup": {
+            "Rounds": 4
+        }
+    },
+    "constants": {
+        "weapons": [
+          { "name": "Rock",     "beats": "Scissors"},
+          { "name": "Paper",    "beats": "Rock"},
+          { "name": "Scissors", "beats": "Paper"}
+        ]
+      },
+    
+      "variables": {
+        "winners": [
+          {
+            "wins": {}
+        },
+        {
+          "wins": {}
+        }
+      ]
+      },
+    
+      "per-player": {
+        "wins": 0,
+        "weapon": ""
+      },
+    
+      "per-audience": {},
+      
+      "rules": [
+        { "rule": "foreach",
+          "list": "setup.Rounds.upfrom(1)",
+          "element": "round",
+          "rules": [
+    
+            { "rule": "global-message",
+              "value": "Round {round}. Choose your weapon!"
+            },
+            { "rule": "parallelfor",
+              "list": "players",
+              "element": "player",
+              "rules": [
+              ]
+            },
+            { "rule": "foreach",
+              "list": "variables.winners",
+              "element": "winner",
+              "rules": [
+                { "rule": "add",
+                  "to": "wins",
+                  "value": 1
+                }
+              ]
+            },
+            { "rule": "scores",
+              "score": "wins",
+              "ascending": false
+            }
+          ]
+        }
+      ]
+}

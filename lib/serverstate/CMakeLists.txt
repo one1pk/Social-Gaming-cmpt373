@@ -1,7 +1,7 @@
 add_library(serverstate
     src/globalState.cpp
 )
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../tools/gameserver/gameconfigs/rock_paper_scissors.json")
+
 find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(serverstate

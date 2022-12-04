@@ -1,90 +1,57 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include "InterpretJson.h"
-#include "game.h"
 #include <glog/logging.h>
-
-using namespace std;
-using json = nlohmann::json;
-
-
-InterpretJson::InterpretJson(string path) {
-    try {
-        ifstream f(path);
-        json jData = json::parse(f);
-        f.close();
-        data = jData;
-    } catch (std::exception& e) {
-        LOG(ERROR) << "Error reading file" << e.what() << endl;
-    }
-}
-
-
-void InterpretJson::interpret(Game& obj) {
-    obj = data.get<Game>();
-}
-
-
-#include <fstream>
-#include <iostream>
-#include "InterpretJson.h"
 
 using namespace std;
 using Json = nlohmann::json;
 
-InterpretJson::InterpretJson(string path){
-    try{
-    ifstream f(path);
-    Json jData = Json::parse(f);
-    f.close();
-    data = jData;
+InterpretJson::InterpretJson(string game_name) 
+    : game_name(game_name) {
+    try {
+        ifstream f(PATH_TO_JSON + game_name + ".json");
+        Json jData = Json::parse(f);
+        f.close();
+        data = jData;
     } catch (std::exception& e){
-        //TODO: Integrate glog instead of using cout
-        cout << "error reading file" << e.what() << endl;
+        LOG(ERROR) << "error reading file" << e.what() << endl;
     }
 }
 
-InterpretJson::InterpretJson(Json j){
-    data = j;
-}
-
-Json InterpretJson::getData(){
-    return data;
-}
-
-void InterpretJson::interpret(Game& game){
-    game = data.get<Game>();
-}
-
-void InterpretJson::interpretWithRules(Game& game){
-    game = data.get<Game>();
-
-    //This stores all the content of the rules as strings
-    ElementSptr rulesFromJson;
-    data.at("rules").get_to(rulesFromJson);
-
-    //convert ElementSptr to rule vector containing rule objects
-    RuleVector rules;
-
-    ElementMap gameListsMap = {
-        {"constants", game.constants()},
-        {"variables", game.variables()},
-        {"setup", game.setup()},
-        {"per-player", game.per_player()},
-        {"per-audience", game.per_audience()}
+Game InterpretJson::interpret(Connection owner) {
+    ElementMap game_state = {
+        {"setup", data.at("configuration").get<ElementSptr>()},
+        {"constants", data.at("constants").get<ElementSptr>()},
+        {"variables", data.at("constants").get<ElementSptr>()}
     };
 
+    Game game(
+        game_name, owner, game_state,
+        data.at("per-player").get<ElementSptr>(),
+        data.at("per-audience").get<ElementSptr>()
+    );
+
     std::shared_ptr<ASTNode> root;
-    expressionTree = ExpressionTree(root, gameListsMap, game._players);
+    expressionTree = ExpressionTree(root, game._game_state, game._players);
 
-    toRuleVec(game, rulesFromJson, rules);
-    game.setRules(rules);
+    // This stores all the content of the rules as strings
+    ElementSptr rule_structure;
+    data.at("rules").get_to(rule_structure);
+    // then convert ElementSptr to rule vector containing rule objects
+    RuleVector rules;
+    toRuleVec(game, rule_structure, rules);
 
-    game.setID();
-    game.setName("TestGame");
-    game.setStatusCreated();
+    return game;
 }
 
+std::string getTextExpression(std::string str) {
+    size_t open_brace = 0; 
+    if ((open_brace = str.find("{", open_brace)) != std::string::npos) {
+        size_t close_brace = str.find("}", open_brace);
+        return str.substr(open_brace+1, close_brace-open_brace-1);
+    }
+    return "";
+}
 
 //Interpret Rules
 void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec) {
@@ -101,12 +68,14 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             RuleVector subRules;
             toRuleVec(game, rule->getMapElement("rules"), subRules);
             auto elementName = rule->getMapElement("element")->getString();
-            ruleObject = std::make_shared<Foreach>(listExpressionRoot, subRules, elementName);
+            ruleObject = std::make_shared<Foreach>(listExpressionRoot, elementName, subRules);
         }
 
         else if(ruleName == "global-message"){
             auto msg = rule->getMapElement("value")->getString();
-            ruleObject = std::make_shared<GlobalMsg>(msg, game._global_msgs);
+            expressionTree.build(getTextExpression(msg));
+            std::shared_ptr<ASTNode> textExpressionRoot = expressionTree.getRoot();
+            ruleObject = std::make_shared<GlobalMsg>(msg, textExpressionRoot, game._global_msgs);
         }
 
         else if(ruleName == "parallelfor"){
@@ -122,15 +91,27 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             std::shared_ptr<ASTNode> choicesExpressionRoot = expressionTree.getRoot();
 
             auto prompt = rule->getMapElement("prompt")->getString();
+            expressionTree.build(getTextExpression(prompt));
+            std::shared_ptr<ASTNode> textExpressionRoot = expressionTree.getRoot();
+
             auto result = rule->getMapElement("result")->getString();
             auto timeout = rule->getMapElement("timeout")->getInt();
-            ruleObject = std::make_shared<InputChoice>(prompt, choicesExpressionRoot, timeout, result, game._player_msgs, game._player_input);
+            ruleObject = std::make_shared<InputChoice>(
+                prompt, textExpressionRoot, choicesExpressionRoot, 
+                game._input_requests, game._player_input, result, timeout
+            );
         }
 
         else if (ruleName == "add"){
             auto to = rule->getMapElement("to")->getString();
-            auto value = rule->getMapElement("value");
-            ruleObject = std::make_shared<Add>(to, value);
+            expressionTree.build(to);
+            std::shared_ptr<ASTNode> elementExpressionRoot = expressionTree.getRoot();
+
+            auto value = rule->getMapElement("value")->getString();
+            expressionTree.build(value);
+            std::shared_ptr<ASTNode> valueExpressionRoot = expressionTree.getRoot();
+
+            ruleObject = std::make_shared<Add>(elementExpressionRoot, valueExpressionRoot);
         }
 
         else if (ruleName == "scores"){
