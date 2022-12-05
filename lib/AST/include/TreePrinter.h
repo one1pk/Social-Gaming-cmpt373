@@ -17,7 +17,7 @@ public:
 
     void visit(UnaryOperator& uOp, ElementMap& elements) override;
 
-    void visit(CollectOperator& uOp, ElementMap& elements) override;
+    void visit(TernaryOperator& uOp, ElementMap& elements) override;
 
     void visit(BinaryOperator& bOp, ElementMap& elements) override;
 

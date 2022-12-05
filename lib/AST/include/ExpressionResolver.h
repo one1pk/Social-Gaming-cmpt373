@@ -19,7 +19,7 @@ public:
 
     void visit(BinaryOperator& bOp, ElementMap& elements) override;
 
-    void visit(CollectOperator& bOp, ElementMap& elements) override;
+    void visit(TernaryOperator& bOp, ElementMap& elements) override;
 
     ElementSptr getResult();
 

@@ -307,7 +307,7 @@ TEST (ElementTest, getStringTypeErrorTest) {
     Connection test_connection;
     test_connection.id = test_id;
     ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
-    EXPECT_EQ(test_element_connection->getString(), "{}");
+    EXPECT_EQ(test_element_connection->getString(), "");
 }
 
 TEST(ElementTest, stringCloneTest) {

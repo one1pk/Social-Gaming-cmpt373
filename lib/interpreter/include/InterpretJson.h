@@ -21,7 +21,6 @@ class InterpretJson{
         Connection owner;
         ExpressionTree expressionTree;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
-        void extractFromBraces(std::string msg, std::shared_ptr<ASTNode>& elementToReplace);
 };
 
 //recursively maps Json data to list element
@@ -70,13 +69,13 @@ inline void from_json(const Json& j,  Game& g){
  }
 
  inline void to_json( Json& j, const Game& g){
-     j["configuration"]["name"] = g._name;
-     j["configuration"]["audience"] = g._has_audience;
-     j["configuration"]["player count"]["min"] = g._player_count.min;
-     j["configuration"]["player count"]["max"] = g._player_count.max;
-    //  j["configuration"]["setup"] = g._game_state["setup"];
-    //  j["variables"] = g._game_state["variables"];
-    //  j["constants"] = g._game_state["constants"];
-     j["per-player"] = g._per_player;
-     j["per-audience"] = g._per_audience;
+    j["configuration"]["name"] = g._name;
+    j["configuration"]["audience"] = g._has_audience;
+    j["configuration"]["player count"]["min"] = g._player_count.min;
+    j["configuration"]["player count"]["max"] = g._player_count.max;
+    //j["configuration"]["setup"] = g._game_state["setup"];
+    //j["variables"] = g._game_state["variables"];
+    //j["constants"] = g._game_state["constants"];
+    j["per-player"] = g._per_player;
+    j["per-audience"] = g._per_audience;
  }

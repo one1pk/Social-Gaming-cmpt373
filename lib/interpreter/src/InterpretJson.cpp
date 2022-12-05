@@ -55,23 +55,13 @@ Game InterpretJson::interpret() {
     return game;
 }
 
-std::string getTextExpression(std::string str) {
+std::string getTextToReplace(std::string str) {
     size_t open_brace = 0; 
     if ((open_brace = str.find("{", open_brace)) != std::string::npos) {
         size_t close_brace = str.find("}", open_brace);
-        return str.substr(open_brace+1, close_brace - open_brace + 1);
+        return str.substr(open_brace, close_brace - open_brace + 1);
     }
     return "";
-}
-
-void InterpretJson::extractFromBraces(std::string msg, std::shared_ptr<ASTNode>& elementToReplace) {
-    size_t openBrace = 0; 
-        if ((openBrace = msg.find("{", openBrace)) != std::string::npos) {
-            size_t closeBrace = msg.find("}", openBrace);
-            std::string elementToReplaceString = msg.substr(openBrace, closeBrace - openBrace + 1);
-            expressionTree.build(elementToReplaceString);
-            elementToReplace = expressionTree.getRoot();
-        }
 }
 
 //Interpret Rules
@@ -95,7 +85,9 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
         else if(ruleName == "global-message"){
             auto msgString = rule->getMapElement("value")->getString();
             std::shared_ptr<ASTNode> elementToReplace;
-            extractFromBraces(msgString, elementToReplace);
+            expressionTree.build(getTextToReplace(msgString));
+            elementToReplace = expressionTree.getRoot();
+
             ruleObject = std::make_shared<GlobalMsg>(msgString, elementToReplace, game._global_msgs);
         }
 
@@ -108,8 +100,10 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
 
         else if(ruleName == "input-choice"){
             auto prompt = rule->getMapElement("prompt")->getString();
-            std::shared_ptr<ASTNode> elementToReplace;
-            extractFromBraces(prompt, elementToReplace);
+            
+            expressionTree.build(getTextToReplace(prompt));
+            auto elementToReplace = expressionTree.getRoot();
+            
 
             auto choicesString = rule->getMapElement("choices")->getString();
             expressionTree.build(choicesString);

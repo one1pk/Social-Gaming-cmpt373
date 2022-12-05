@@ -1,6 +1,12 @@
+## Iteration 3 - Notes
+* The game config and rules are now fully interpreted from json into a game object
+* Any game which uses the rules supported currently (rules used in Rock, Paper, Scissors), can be created and run
+* Complex strings from json such as 'when conditions' and deep lists (eg.- variables.winners, players.weapon, etc) are built into an expression tree in the interpreter and resolved dynamically, using a visitor, when the rule executes
+
+
 ## Iteration 2 - Notes
 
-* multiple instances of the Rock, Paper, Scissors game can now be played on the server in parallel (there still remains many unhandled cases/errors but the basic functionality should be correct)
+* Multiple instances of the Rock, Paper, Scissors game can now be played on the server in parallel (there still remains many unhandled cases/errors but the basic functionality should be correct)
 
 # Social Gaming
 

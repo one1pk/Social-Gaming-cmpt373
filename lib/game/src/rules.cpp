@@ -176,13 +176,12 @@ RuleStatus Add::execute(ElementMap& game_state) {
 
 // InputChoice //
 
-std::string formatString(std::string_view msgView, std::shared_ptr<ASTNode> elementToReplace, ExpressionResolver& resolver, ElementMap elementsMap) {
-    std::string msg(msgView);
+//replaces string in {} with element
+std::string formatString(std::string msg, ExpressionResolver& resolver) {
     size_t open_brace = 0; 
     
     if ((open_brace = msg.find("{", open_brace)) != std::string::npos) {
         size_t close_brace = msg.find("}", open_brace);
-        elementToReplace->accept(resolver, elementsMap);
         std::string resolvedString;
 
         if(resolver.getResult()->type == VECTOR){
@@ -198,7 +197,7 @@ std::string formatString(std::string_view msgView, std::shared_ptr<ASTNode> elem
 
         msg.replace(open_brace, close_brace - open_brace + 1, resolvedString);
     }
-    return msg;
+    return msg + "\n";
 }
 
 InputChoice::InputChoice(std::string prompt, 
@@ -226,9 +225,10 @@ RuleStatus InputChoice::execute(ElementMap& game_state) {
         choices = resolver.getResult()->getVector();
 
         // format the input prompt
-        std::string formatted_msg = formatString(prompt, element_to_replace_root, resolver, game_state);
-        std::stringstream formatted_prompt(formatted_msg);
-        formatted_prompt << formatted_prompt.str() << std::endl << "Enter an index to select:\n";
+        element_to_replace_root->accept(resolver, game_state);
+
+        std::stringstream formatted_prompt = std::stringstream(formatString(prompt, resolver));
+        formatted_prompt << formatted_prompt.str() << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
             formatted_prompt << "["<<i<<"] " << choices[i]->getString() << "\n";
         }
@@ -272,8 +272,10 @@ GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<ASTNode> element_to_replac
 
 RuleStatus GlobalMsg::execute(ElementMap& game_state) {
     LOG(INFO) << "* GlobalMsg Rule *";
-    std::string formatted_msg = formatString(msg, element_to_replace_root, resolver, game_state) + "\n";
-    global_msgs->push_back(formatted_msg);
+
+    element_to_replace_root->accept(resolver, game_state);
+    
+    global_msgs->push_back(formatString(msg, resolver));
     return RuleStatus::Done;
 }
 

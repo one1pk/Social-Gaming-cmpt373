@@ -106,16 +106,10 @@ public:
 
     ElementSptr getMapElement(std::string key) final {      
         if constexpr (std::is_same_v<T, ElementMap>) {
-            if (_data.find(key) != _data.end()){
+            if (_data.find(key) != _data.end())
                 return _data[key];
-            } else {
-                std::cout << "No element named: " << key << "in map" << std::endl;
-                return nullptr;
-            }
-        } else {
-            // throw error //
-            return nullptr;
-        }
+        } 
+        return nullptr;
     }
 
     void removeMapElement(std::string key) final {        
@@ -161,7 +155,6 @@ public:
         if constexpr (std::is_same_v<T, ElementMap>) {
             return _data;
         } else {
-            // throw error //
             return {};
         }
     }
@@ -171,9 +164,15 @@ public:
             return _data;
         } else if constexpr (std::is_integral_v<T>) {
             return std::to_string(_data);
+        } else if constexpr (std::is_same_v<T, bool>){
+            std::string boolString;
+            if(_data == true)
+                boolString = "true";
+            else
+                boolString = "false";
+            return boolString;
         } else {
-            // throw error //
-            return "{}";
+            return "";
         }
     }
 
@@ -207,16 +206,13 @@ public:
         if constexpr (std::is_same_v<T, bool>) {
             return _data;
         } 
-        else if constexpr (std::is_same_v<T, std::string>){
-            if(_data == "true")
+        else if constexpr (std::is_integral_v<T>){
+            if(_data == 1)
                 return true;
-            else if(_data == "false")
+            else if(_data == 0)
                 return false;
-        } else {
-            // throw error //
-            return 0;
-        }
-        return 0;
+        } 
+        return false;
     }
 
 

@@ -24,12 +24,11 @@ void TreePrinter::visit(PlayersNode& playerNode, ElementMap& elements) {
     std::cout << "players";
 }
 
-void TreePrinter::visit(CollectOperator& cOp, ElementMap& elements) {
-   
+void TreePrinter::visit(TernaryOperator& tOp, ElementMap& elements) {
     std::cout << '(';
-    cOp.left->accept(*this, elements);
-    std::cout << ' ' << "collect" << ' ';
-    cOp.right->accept(*this, elements);
+    tOp.left->accept(*this, elements);
+    std::cout << ' ' << tOp.kind << ' ';
+    tOp.right->accept(*this, elements);
     std::cout << ')';
 
 }

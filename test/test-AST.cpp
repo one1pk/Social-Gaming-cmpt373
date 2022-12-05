@@ -11,30 +11,36 @@
 #include <algorithm>
 #include "TreePrinter.h"
 
+class ASTTest : public ::testing::Test{
+protected:
+    void SetUp() override{
+        std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
+        InterpretJson j(path);
+        game = j.interpret();
+        Connection c1;
+        Connection c2;
+        Connection c3;
+        c1.id = 1;
+        c2.id = 2;
+        c3.id = 3;
+        game.addPlayer(c1);
+        game.addPlayer(c2);
+        game.addPlayer(c3);
+    }
 
-TEST(ASTTest, TestSplit){
-    ExpressionTree expressionTree;
-    std::deque<std::string> expected = {"constants",  "weapon", "!=", "player", ".", "weapon"};
-    auto splits = expressionTree.split("constants->weapon != player.weapon");
+public:
+    Game game;
+    std::string expression;
+    ExpressionResolver resolver;
+    void resolve();
+};
 
-}
-
-static void resolve(Game& game, ExpressionResolver& resolver, std::string expression){
+void ASTTest::resolve(){
     ElementMap gameListsMap = {{"constants", game.constants()},
         {"variables", game.variables()},
         {"setup", game.setup()},
         {"per-player", game.per_player()},
         {"per-audience", game.per_audience()}};
-
-    Connection c1;
-    Connection c2;
-    Connection c3;
-    c1.id = 1;
-    c2.id = 2;
-    c3.id = 3;
-    game.addPlayer(c1);
-    game.addPlayer(c2);
-    game.addPlayer(c3);
 
     
     ExpressionTree expressionTree(gameListsMap, game._players);
@@ -50,32 +56,36 @@ static void resolve(Game& game, ExpressionResolver& resolver, std::string expres
     std::cout << std::endl;
 }
 
-TEST(ASTTest, ResolverTest){
-    std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
-    InterpretJson j(path);
-    Game game = j.interpret();
+TEST_F(ASTTest, TestSplit){
+    ExpressionTree expressionTree;
+    std::deque<std::string> expected = {"constants",  "weapon", "!=", "player", ".", "weapon"};
+    auto splits = expressionTree.splitString("constants->weapon != player.weapon");
 
-    
-    std::string expression = "variables.winners.size";
-    ExpressionResolver resolver;
-    resolve( game, resolver, expression);
+}
+
+TEST_F(ASTTest, TestOperationResolution){
+    expression = "variables.winners.size";
+    resolve();
     EXPECT_EQ(0, resolver.getResult()->getVector().size());
-
 
     expression = "setup.Rounds.upfrom(1)";
     auto expected = game.setup()->getMapElement("Rounds")->upfrom(1)->getVector();
-    resolve(game, resolver, expression);
+    resolve();
     EXPECT_EQ(4, resolver.getResult()->getVector().size());
     
     expression = "constants.weapons.name";
     auto choices = game.constants()->getMapElement("weapons")->getSubList("name");
-    resolve(game, resolver, expression);
+    resolve();
     EXPECT_EQ(resolver.getResult()->getVector(), choices);
     EXPECT_EQ(resolver.getResult()->getVector()[1]->getString(), "Paper");
 
 
+    expression = "variables.winners.size == 0";
+    resolve();
+    EXPECT_EQ(resolver.getResult()->getBool(), true);
+}
 
-    //testing players list resolving
+TEST_F(ASTTest, TestPlayersListResolution){
     std::string str = "rock";
     auto element = std::make_shared<Element<std::string>>(str);
     auto players = game._players;
@@ -84,8 +94,7 @@ TEST(ASTTest, ResolverTest){
     }
     
     expression = "players.weapon";
-    resolve(game, resolver, expression);
-    
+    resolve();
     
     ElementVector weapons;
     for(auto it : *players){
@@ -96,16 +105,11 @@ TEST(ASTTest, ResolverTest){
     EXPECT_EQ(resolver.getResult()->getSizeAsInt(), 3);
 
     expression = "!players.weapon.contains(rock)";
-    resolve(game, resolver, expression);
+    resolve();
     EXPECT_EQ(resolver.getResult()->getBool(), false);
 
-   
-    expression = "variables.winners.size == 0";
-    resolve(game, resolver, expression);
-    EXPECT_EQ(resolver.getResult()->getBool(), true);
-
     expression = "players.name";
-    resolve(game, resolver, expression);
+    resolve();
     for(auto it : resolver.getResult()->getVector())
         std::cout << it->getString() << std::endl;
 }

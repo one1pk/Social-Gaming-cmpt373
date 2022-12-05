@@ -6,33 +6,35 @@
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 
+//ASTNode
 void ExpressionResolver::visit(ASTNode& node, ElementMap& elements)  {
     assert(false && "Invalid node during evaluation");
 }
 
-/// TODO: resolver should have a map of game lists so that if provided a name, it can search constants, variables etc so you can just provide it "wins" instead of "variables.wins"
-/// TODO: if "{}" it should return element refered to inside brackets
-/// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
+//NameNode
 void ExpressionResolver::visit(NameNode& nameNode, ElementMap& elements)  {
-    auto elementIter = elements.find(nameNode.name);
+    auto name = nameNode.name;
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
+    auto elementIter = elements.find(name);
     if(elementIter != elements.end()){
         result = elementIter->second;
     }
-        
     //otherwise, name is just a string
     else
-        result = std::make_shared<Element<std::string>>(nameNode.name);
+        result = std::make_shared<Element<std::string>>(name);
 }
 
+//NumberNode
 void ExpressionResolver::visit(NumberNode& numNode, ElementMap& elements){
     result = std::make_shared<Element<int>>(numNode.num);
 }
 
+//ListNode
 void ExpressionResolver::visit(ListNode& listNode, ElementMap& elements)  {
     result = listNode.list;
 }
 
+//PlayersNode
 void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap& elements)  {
     ElementVector players;
     for(auto playerMap : *(playersNode.connectionPlayerPairs)){
@@ -41,6 +43,7 @@ void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap& elements)  
     result = std::make_shared<Element<ElementVector>>(players);
 }
 
+//UnaryOperator
 void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap& elements)  {
     std::string kind = uOp.kind;
     uOp.operand->accept(*this, elements);
@@ -53,26 +56,26 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap& elements)  {
     
 }
 
-void ExpressionResolver::visit(CollectOperator& cOp, ElementMap& elements) {
-    ElementVector collection;
-    cOp.left->accept(*this, elements);
-    auto left = result;
+//TernaryOperator
+void ExpressionResolver::visit(TernaryOperator& tOp, ElementMap& elements) {
+    if(tOp.kind == "collect"){
+        ElementVector collection;
+        tOp.left->accept(*this, elements);
+        auto left = result;
 
-    for(auto elementIter : left->getVector()){
-        //middle node should always be string and not found in elementMap
-        ElementMap emptyMap;
-        cOp.middle->accept(*this, emptyMap);
-        std::string middle = result->getString();
+        for(auto elementIter : left->getVector()){
+            //middle node should always be string and not found in elementMap
+            std::string middle = tOp.middle->getName();
+            elements[middle] = elementIter;
 
-        /// TODO: allow for more complex middle
-        elements[middle] = elementIter;
-        cOp.right->accept(*this, elements);
-        ElementSptr right = result;
-        if(result->getBool())
-            collection.emplace_back(elementIter);
+            tOp.right->accept(*this, elements);
+            ElementSptr right = result;
+            if(result->getBool())
+                collection.emplace_back(elementIter);
+        }
+
+        result = std::make_shared<Element<ElementVector>>(collection);
     }
-
-    result = std::make_shared<Element<ElementVector>>(collection);
 }
 
 void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap& elements)  {
@@ -81,33 +84,29 @@ void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap& elements)  {
     ElementSptr left = result;
 
     if(kind == ".") {
-        //In case of dot operator, RHS should always be string an never be found in elementMap otherwise player.weapon will be the same weapon as in weapon.name
-        ElementMap emptyMap;
-        bOp.right->accept(*this, emptyMap);
-        ElementSptr right = result;
-
+        //since '.' before an operator is always ignored in expressionTree.build(),
+        //rhs of '.' will always be a NameNode or ListNode and we just want the string/name to pass to sublist/getMapElement
         if(left->type == Type::VECTOR){
-            result = std::make_shared<Element<ElementVector>>(left->getSubList(right->getString()));
+            result = std::make_shared<Element<ElementVector>>(left->getSubList(bOp.right->getName()));
         }
         else {
-            result = left->getMapElement(right->getString());
+            result = left->getMapElement(bOp.right->getName());
         }
         return;
     }
 
-    
     bOp.right->accept(*this, elements);
     ElementSptr right = result;
     
-
     if(kind == "upfrom")
-        result = left->upfrom(stoi(right->getString()));
+        result = left->upfrom(right->getInt());
 
     else if(kind == "contains")
         result = std::make_shared<Element<bool>>(left->contains(right));
 
     else if(kind == "==") {
         if(left->type == right->type){
+            //getString() already turns integer to string
             result = std::make_shared<Element<bool>>(left->getString() == right->getString());
         }
         else 

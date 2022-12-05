@@ -20,15 +20,14 @@
     },
   
     "per-player": {
-      "wins": 0,
-      "weapon": ""
+      "wins": 0
     },
   
     "per-audience": {},
   
     "rules": [
       { "rule": "foreach",
-        "list": "setup.Rounds.upfrom(1)",
+        "list": "Rounds.upfrom(1)",
         "element": "round",
         "rules": [
   
@@ -44,7 +43,7 @@
               { "rule": "input-choice",
                 "to": "player",
                 "prompt": "{player.name}, choose your weapon!",
-                "choices": "constants.weapons.name",
+                "choices": "weapons.name",
                 "result": "weapon",
                 "timeout": 10
               }
@@ -53,12 +52,12 @@
           },
   
           { "rule": "discard",
-            "from": "variables.winners",
-            "count": "variables.winners.size"
+            "from": "winners",
+            "count": "winners.size"
           },
   
           { "rule": "foreach",
-            "list": "constants.weapons",
+            "list": "weapons",
             "element": "weapon",
             "rules": [
   
@@ -68,7 +67,7 @@
                     "rules": [
   
                       { "rule": "extend",
-                        "target": "variables.winners",
+                        "target": "winners",
                         "list": "players.collect(player, player.weapon == weapon.beats)"
                       }
   
@@ -82,27 +81,27 @@
   
           { "rule": "when",
             "cases": [
-              { "condition": "variables.winners.size == players.size",
+              { "condition": "winners.size == players.size",
                 "rules": [
                   { "rule": "global-message",
                     "value": "Tie game!"
                   }
                 ]
               },
-              { "condition": "variables.winners.size == 0",
+              { "condition": "winners.size == 0",
                 "rules": [
                   { "rule": "global-message",
                     "value": "Tie game!"
                   }
                 ]
               },
-              { "condition": "true",
+              { "condition": true,
                 "rules": [
                   { "rule": "global-message",
                     "value": "Winners: {variables.winners.name}"
                   },
                   { "rule": "foreach",
-                    "list": "variables.winners",
+                    "list": "winners",
                     "element": "winner",
                     "rules": [
                       { "rule": "add",
