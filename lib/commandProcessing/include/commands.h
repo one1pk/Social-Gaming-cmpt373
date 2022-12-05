@@ -10,12 +10,13 @@
 /**
  * Possible results that different commands can produce. Returned in the execution of each command
  */
-enum class commandResult {
+enum class CommandResult {
     ERROR_INCORRECT_COMMAND_FORMAT,
     ERROR_INVALID_GAME_INDEX,
     ERROR_INVALID_INVITATION_CODE,
-    ERROR_INVALID_START_GAME_COMMAND,
+    ERROR_GAME_HAS_STARTED,
     ERROR_GAME_NOT_STARTED,
+    ERROR_NOT_ENOUGH_PLAYERS,
     ERROR_NOT_AN_OWNER,
     ERROR_OWNER_CANNOT_LEAVE,
     ERROR_OWNER_CANNOT_JOIN_FROM_SAME_DEVICE,
@@ -56,16 +57,12 @@ public:
         : globalState(globalState), outgoing(outgoing) 
     {}
     virtual ~Command() = default;
-    virtual commandResult execute(ProcessedMessage &);
-
-private:
-    virtual commandResult executeImpl(ProcessedMessage &) = 0;
+    virtual CommandResult execute(ProcessedMessage &) = 0;
 
 protected:
     GlobalServerState &globalState;
     std::deque<Message> &outgoing;
 };
-
 
 /////////////////////       SERVER COMMANDS       /////////////////////
 
@@ -84,10 +81,7 @@ class CreateGameCommand : public Command {
 public:
     CreateGameCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /**
@@ -97,10 +91,7 @@ class ListGamesCommand : public Command {
 public:
     ListGamesCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /**
@@ -111,12 +102,7 @@ class ListHelpCommand : public Command {
 public:
     ListHelpCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
-    commandResult executeIngameOwnerImpl(ProcessedMessage &);
-    commandResult executeIngamePlayerImpl(ProcessedMessage &);
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /**
@@ -132,10 +118,7 @@ class JoinGameCommand : public Command {
 public:
     JoinGameCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /////////////////////       IN GAME COMMANDS - OWNER      /////////////////////
@@ -152,10 +135,7 @@ class StartGameCommand : public Command {
 public:
     StartGameCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /**
@@ -169,10 +149,7 @@ class EndGameCommand : public Command {
 public:
     EndGameCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 /////////////////////       IN GAME COMMANDS - PLAYER      /////////////////////
@@ -188,10 +165,7 @@ class LeaveGameCommand : public Command {
 public:
     LeaveGameCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
-
-private:
-    commandResult executeImpl(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 };
 
 
@@ -213,31 +187,9 @@ class ExitServerCommand : public Command {
 public:
     ExitServerCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
         : Command(globalState, outgoing) {}
-    commandResult execute(ProcessedMessage &) override;
+    CommandResult execute(ProcessedMessage &) override;
 
 private:
-    commandResult executeImpl(ProcessedMessage &) override;
-    commandResult executePlayerImpl(ProcessedMessage &);
-    commandResult executeOwnerImpl(ProcessedMessage &);
+    CommandResult executePlayerImpl(ProcessedMessage &);
+    CommandResult executeOwnerImpl(ProcessedMessage &);
 };
-
-
-
-// /////////////////////////       NON-COMMAND INPUT       /////////////////////////////
-// /**
-//  * Broadcasts messages to other users based on where the sender is: in lobby or in game
-//  * Doesn't broadcast to the owner (if an in game message) however broadcasts each of owner's message
-//  * to the players in game lobby!
-//  *
-//  * Any messages not mapped to commands are by default treated as chat commands
-//  */
-// class ChatCommand : public Command {
-// public:
-//     ChatCommand(GlobalServerState &globalState, std::deque<Message> &outgoing)
-//         : Command(globalState, outgoing) {}
-//     commandResult execute(ProcessedMessage &) override;
-
-// private:
-//     commandResult executeImpl(ProcessedMessage &) override;
-//     commandResult executeInGameImpl(ProcessedMessage &);
-// };

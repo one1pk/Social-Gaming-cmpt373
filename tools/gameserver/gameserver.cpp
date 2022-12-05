@@ -2,7 +2,9 @@
 #include "globalState.h"
 #include "messageProcessor.h"
 #include "server.h"
+#include <glog/logging.h>
 
+#include <unistd.h>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -12,19 +14,18 @@
 #include <vector>
 #include <map>
 
+std::vector<Connection> newConnections;
+std::vector<Connection> lostConnections;
 
-GlobalServerState globalState;
-
-// FIX: Resolve stuff here, REMOVE OR ADD CONNECTION FROM GLOBAL STATE
 void onConnect(Connection c) {
-    std::cout << "New connection: " << c.id << "\n";
-    globalState.addConnection(c);
+    LOG(INFO) << "New connection: " << c.id;
+    newConnections.push_back(c);
 }
 
 // called when a client disconnects
 void onDisconnect(Connection c) {
-    std::cout << "Connection lost: " << c.id << "\n";
-    // globalState->disconnectConnection(c);
+    LOG(INFO) << "Connection lost: " << c.id;
+    lostConnections.push_back(c);
 }
 
 // extracts the port number from ./serverconfig.json
@@ -33,39 +34,42 @@ unsigned short getPort() {
     return 4040;
 }
 
-// #include <unistd.h>
-// std::string getHTTPMessage(const char *htmlLocation) {
-//     if (access(htmlLocation, R_OK) != -1) {
-//         std::ifstream infile{htmlLocation};
-//         return std::string{std::istreambuf_iterator<char>(infile),
-//                            std::istreambuf_iterator<char>()};
-//     } else {
-//         std::cerr << "Unable to open HTML index file:\n"
-//                   << htmlLocation << "\n";
-//         std::exit(-1);
-//     }
-// }
-
+std::string getHTTPMessage(const char *htmlLocation) {
+    if (access(htmlLocation, R_OK) != -1) {
+        std::ifstream infile{htmlLocation};
+        return std::string{std::istreambuf_iterator<char>(infile),
+                           std::istreambuf_iterator<char>()};
+    } else {
+        LOG(ERROR) << "Unable to open HTML index file:\n"
+                   << htmlLocation << "\n";
+        std::exit(-1);
+    }
+}
 
 int main(int argc, char *argv[]) {    
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    
     if (argc < 3) {
-        std::cerr << "Usage:\n  " << argv[0] << " <port> <html response>\n"
-                  << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
+        LOG(ERROR) << "Usage:\n  " << argv[0] << " port html_response\n"
+                   << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
         return 1;
     }
-    std::cout << "Setting up the server...\n";
+    LOG(INFO) << "Setting up the server...";
 
     /// TODO: extract the server configuration parameters from ./serverconfig.json
     // start a new session based on the configuration
     // (for now we take them as cmdline args)
 
+    unsigned update_interval = 300;
     unsigned short port = std::stoi(argv[1]);
+    Server server{port, getHTTPMessage(argv[2]), onConnect, onDisconnect};
 
-    Server server{port, ""/*getHTTPMessage(argv[2])*/, onConnect, onDisconnect};
-    MessageProcessor messageProcessor;
+    GlobalServerState globalState(update_interval);
     CommandHandler commandHandler(globalState);
+    MessageProcessor messageProcessor;
 
-    std::cout << "Game server is up!\n";
+    LOG(INFO) << "Game server is up!";
 
     // start listening for messages and serving content as appropriate
     while (true) {
@@ -73,18 +77,21 @@ int main(int argc, char *argv[]) {
         try {
             server.update();
         } catch (std::exception &e) {
-            std::cerr << "Exception from Server update:\n"
-                      << " " << e.what() << "\n\n";
+            LOG(ERROR) << "Exception from Server update:\n"
+                       << " " << e.what() << std::endl;
             errorWhileUpdating = true;
         }
 
         std::deque<ProcessedMessage> processedIncomingMessages = messageProcessor.getProcessedMessages(server.receive());
-
         std::deque<Message> outgoingMsgs = commandHandler.getOutgoingMessages(processedIncomingMessages);
         server.send(outgoingMsgs);
 
         std::deque<Message> outgoingGameMsgs = globalState.processGames();
         server.send(outgoingGameMsgs);
+
+        globalState.addNewConnections(newConnections);
+        std::deque<Message> outgoingDisconnectionMsgs = commandHandler.handleLostConnections(lostConnections);
+        server.send(outgoingDisconnectionMsgs);
 
         if (errorWhileUpdating) {
             break;

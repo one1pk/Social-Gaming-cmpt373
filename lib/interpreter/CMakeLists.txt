@@ -1,10 +1,10 @@
 add_library(interpreter
     src/InterpretJson.cpp
 )
-
-# find_path(CHAISCRIPT_INCLUDE_DIRS "chaiscript/chaiscript.hpp")
+add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../tools/gameserver/gameconfigs/")
 
 find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(interpreter
     PUBLIC
@@ -12,13 +12,13 @@ target_include_directories(interpreter
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        # ${CHAISCRIPT_INCLUDE_DIRS}
 )
 
 target_link_libraries(interpreter
         nlohmann_json::nlohmann_json
         AST
-        game
+        game  
+        glog::glog
 )
 
 set_target_properties(interpreter

@@ -1,8 +1,8 @@
 add_library(serverstate
     src/globalState.cpp
 )
-add_definitions(-DPATH_TO_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../../tools/gameserver/gameconfigs")
 
+find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(serverstate
     PUBLIC
@@ -17,6 +17,7 @@ target_link_libraries(serverstate
     networking
     game
     interpreter
+    glog::glog
 )
 
 set_target_properties(serverstate

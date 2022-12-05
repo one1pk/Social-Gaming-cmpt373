@@ -36,14 +36,13 @@ static void resolve(Game& game, ExpressionResolver& resolver, std::string expres
     game.addPlayer(c2);
     game.addPlayer(c3);
 
-    std::shared_ptr<ASTNode> root;
-    ExpressionTree expressionTree(root, gameListsMap, game._players);
+    
+    ExpressionTree expressionTree(gameListsMap, game._players);
     expressionTree.build(expression);
     auto expressionRoot = expressionTree.getRoot();
     
     TreePrinter treePrinter;
     ElementMap elementsMap;
-    
     expressionRoot->accept(resolver, elementsMap);
 
     std::cout << std::endl;
@@ -52,14 +51,10 @@ static void resolve(Game& game, ExpressionResolver& resolver, std::string expres
 }
 
 TEST(ASTTest, ResolverTest){
-    Game game;
     std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
     InterpretJson j(path);
-    j.interpretWithRules(game);
+    Game game = j.interpret();
 
-    Json g = game;
-
-    //std::cout << setw(4) << g << std::endl;
     
     std::string expression = "variables.winners.size";
     ExpressionResolver resolver;

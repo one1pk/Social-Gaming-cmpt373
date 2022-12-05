@@ -3,43 +3,46 @@
 #include <iostream>
 #include <algorithm>
 
-Game::Game(){}
+Game::Game()
+    : _status(GameStatus::Created){
+    std::cout<< "GAME CONSTRUCTOR 1\n"; 
+}
 
-Game::Game(
-    std::string name, Connection owner, 
-    unsigned min_players, unsigned max_players, bool has_audience,
-    ElementSptr setup,
-    ElementSptr constants, ElementSptr variables,
-    ElementSptr per_player, ElementSptr per_audience, 
-    std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
-    RuleVector rules,
-    std::shared_ptr<std::deque<Message>> player_msgs,
-    std::shared_ptr<std::deque<std::string>> global_msgs,
-    std::shared_ptr<std::map<Connection, std::string>> player_input
-) : _name(name), _owner(owner), _status(GameStatus::Created),
-    _player_count{ min_players, max_players }, _has_audience(has_audience),
-    _setup(setup),
-    _constants{constants}, _variables(variables),
-    _per_player(per_player), _per_audience(per_audience),
-    _rules(rules),
-    _players(players),
-    _audience(audience), 
-    _player_msgs(player_msgs), _global_msgs(global_msgs),
-    _player_input(player_input)  {
+Game::Game(std::string name, Connection owner)
+    : _name(name), _owner(owner), _status(GameStatus::Created) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
+    std::cout<< "GAME CONSTRUCTOR 2\n"; 
 }
+
+// Game::Game( std::string name, Connection owner, 
+//             unsigned min_players, unsigned max_players, bool has_audience,
+//             ElementSptr setup,
+//             ElementSptr constants, ElementSptr variables,
+//             ElementSptr per_player, ElementSptr per_audience, 
+//             RuleVector rules,
+//             std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
+//             std::shared_ptr<std::deque<std::string>> global_msgs,
+//             std::shared_ptr<std::deque<InputRequest>> input_requests,
+//             std::shared_ptr<std::map<Connection, InputResponse>> player_input
+// ) : _name(name), _owner(owner), _status(GameStatus::Created),
+//     _player_count{ min_players, max_players }, _has_audience(has_audience),
+//     _setup(setup),
+//     _constants{constants}, _variables(variables),
+//     _per_player(per_player), _per_audience(per_audience),
+//     _rules(rules),
+//     _players(players), _audience(audience),
+//     _global_msgs(global_msgs), 
+//     _input_requests(input_requests), _player_input(player_input)  {
+//     _id = shared_id_counter++;
+// }
 
 // starts the game execution
 void Game::run() {
-    // TODO: Check if num_players > player_count.max
-
     _status = GameStatus::Running;
 
     for (auto rule: _rules) {
-        ElementMap elementsMap;
-       
-        if (!rule->execute(elementsMap)) {
+        if (rule->execute(_game_state) == RuleStatus::InputRequired) {
             _status = GameStatus::AwaitingOutput;
             return;
         }
@@ -90,8 +93,12 @@ std::vector<Connection> Game::players() {
 }
 
 // returns the number of players in the game
-size_t Game::numPlayers() {
+unsigned Game::numPlayers() {
     return _players->size();
+}
+
+bool Game::hasEnoughPlayers() {
+    return numPlayers() >= _player_count.min;
 }
 
 // returns the name of the game
@@ -107,27 +114,36 @@ uintptr_t Game::id() {
     return _id;
 }
 
-std::deque<Message> Game::playerMsgs() {
-    return *_player_msgs;
-}
-
 std::deque<std::string> Game::globalMsgs() {
     std::deque<std::string> tmp = *_global_msgs;
     _global_msgs->clear();
     return tmp;
 }
 
+std::deque<InputRequest> Game::inputRequests() {
+    return *_input_requests;
+}
+
 void Game::outputSent() {
     _status = GameStatus::AwaitingInput;
 }
 
-void Game::registerPlayerInput(Connection player, std::string input) {
-    _player_input->insert_or_assign(player, input);
-    _player_msgs->erase(std::remove_if(_player_msgs->begin(), _player_msgs->end(),
-        [player](Message player_msg) {
-                return player_msg.connection == player;
+void eraseRequest(std::shared_ptr<std::deque<InputRequest>>& input_requests, Connection player) {
+    input_requests->erase(std::remove_if(input_requests->begin(), input_requests->end(),
+        [player](InputRequest input_request) {
+            return input_request.user == player;
         }
     ));
+}
+
+void Game::registerPlayerInput(Connection player, std::string input) {
+    _player_input->insert_or_assign(player, InputResponse{input});
+    eraseRequest(_input_requests, player);
+}
+
+void Game::inputRequestTimedout(Connection player) {
+    _player_input->insert_or_assign(player, InputResponse{"0", true});
+    eraseRequest(_input_requests, player);
 }
 
 ElementSptr Game::setup(){

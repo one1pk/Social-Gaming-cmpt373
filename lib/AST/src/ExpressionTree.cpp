@@ -1,9 +1,9 @@
 #include "ExpressionTree.h"
 #include <iostream>
-ExpressionTree::ExpressionTree(std::shared_ptr<ASTNode> root, ElementMap gameListsMap, std::shared_ptr<PlayerMap> playerMap)
-    : root(root), gameListsMap(gameListsMap), playerMap(playerMap) { }
+ExpressionTree::ExpressionTree(ElementMap gameState, std::shared_ptr<PlayerMap> playerMap)
+    : gameState(gameState), playerMap(playerMap) { }
 
-std::shared_ptr<ASTNode>& ExpressionTree::getRoot(){
+std::shared_ptr<ASTNode> ExpressionTree::getRoot(){
     return root;
 }
 std::deque<std::string> ExpressionTree::split(std::string expression) {
@@ -123,9 +123,9 @@ void ExpressionTree::build(std::string expression){
         else if ( !isOperator(token) && !isBrace(token)) {
 
             //if token is a gameList name i.e. constants, variables, etc
-            auto gameListIter = gameListsMap.find(token);
-            if(gameListIter != gameListsMap.end()){
-                root = std::make_shared<ListNode>(token, gameListIter->second);
+            auto gameStateIter = gameState.find(token);
+            if(gameStateIter != gameState.end()){
+                root = std::make_shared<ListNode>(token, gameStateIter->second);
                 nodeStack.emplace_back(std::move(root));
             }
 

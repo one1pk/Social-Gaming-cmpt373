@@ -3,6 +3,7 @@ add_executable(gameserver
 )
 
 find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(glog 0.4.0 REQUIRED)
 
 set_target_properties(gameserver
                     PROPERTIES
@@ -17,6 +18,7 @@ target_link_libraries(gameserver
 PRIVATE
     networking
     commandProcessing
+    glog::glog
     ${CMAKE_THREAD_LIBS_INIT}
 )
 

@@ -2,17 +2,18 @@
 #include <cassert>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 ElementSptr ExpressionResolver::getResult() { return result; }
 
-void ExpressionResolver::visit(ASTNode& node, ElementMap elements)  {
+void ExpressionResolver::visit(ASTNode& node, ElementMap& elements)  {
     assert(false && "Invalid node during evaluation");
 }
 
 /// TODO: resolver should have a map of game lists so that if provided a name, it can search constants, variables etc so you can just provide it "wins" instead of "variables.wins"
 /// TODO: if "{}" it should return element refered to inside brackets
 /// TODO: in input choice, "to:" should also be expression tree to facilitate sending to only certain players
-void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
+void ExpressionResolver::visit(NameNode& nameNode, ElementMap& elements)  {
     auto elementIter = elements.find(nameNode.name);
     //if name is an element passed down from parent rule (eg. player, weapon, etc)
     if(elementIter != elements.end()){
@@ -24,15 +25,15 @@ void ExpressionResolver::visit(NameNode& nameNode, ElementMap elements)  {
         result = std::make_shared<Element<std::string>>(nameNode.name);
 }
 
-void ExpressionResolver::visit(NumberNode& numNode, ElementMap elements){
+void ExpressionResolver::visit(NumberNode& numNode, ElementMap& elements){
     result = std::make_shared<Element<int>>(numNode.num);
 }
 
-void ExpressionResolver::visit(ListNode& listNode, ElementMap elements)  {
+void ExpressionResolver::visit(ListNode& listNode, ElementMap& elements)  {
     result = listNode.list;
 }
 
-void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
+void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap& elements)  {
     ElementVector players;
     for(auto playerMap : *(playersNode.connectionPlayerPairs)){
         players.emplace_back(playerMap.second);
@@ -40,7 +41,7 @@ void ExpressionResolver::visit(PlayersNode& playersNode, ElementMap elements)  {
     result = std::make_shared<Element<ElementVector>>(players);
 }
 
-void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
+void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap& elements)  {
     std::string kind = uOp.kind;
     uOp.operand->accept(*this, elements);
     ElementSptr operand = result;
@@ -52,7 +53,7 @@ void ExpressionResolver::visit(UnaryOperator& uOp, ElementMap elements)  {
     
 }
 
-void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
+void ExpressionResolver::visit(CollectOperator& cOp, ElementMap& elements) {
     ElementVector collection;
     cOp.left->accept(*this, elements);
     auto left = result;
@@ -74,7 +75,7 @@ void ExpressionResolver::visit(CollectOperator& cOp, ElementMap elements) {
     result = std::make_shared<Element<ElementVector>>(collection);
 }
 
-void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap elements)  {
+void ExpressionResolver::visit(BinaryOperator& bOp, ElementMap& elements)  {
     std::string kind = bOp.kind;
     bOp.left->accept(*this, elements);
     ElementSptr left = result;

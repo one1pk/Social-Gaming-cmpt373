@@ -8,47 +8,59 @@
 #include "ExpressionResolver.h"
 
 class Rule;
-typedef std::shared_ptr<Rule> RuleSptr; // shared pointer to a rule object
-typedef std::vector<std::shared_ptr<Rule>> RuleVector; // a vector of shared pointers to rule objects
+using RuleSptr = std::shared_ptr<Rule>;
+using RuleVector = std::vector<RuleSptr>;
+
+enum RuleStatus {
+    Done,
+    InputRequired,
+};
+
+enum InputType {
+    Choice,
+    Text,
+    Vote,
+};
+
+struct InputRequest {
+    InputRequest(Connection user, std::string prompt, InputType type,
+                 unsigned num_choices, bool has_timeout = false, unsigned timeout_ms = 0)
+        : user(user), prompt(prompt), type(type), 
+        num_choices(num_choices), has_timeout(has_timeout), timeout_ms(timeout_ms) {
+    }
+    Connection user;
+    std::string prompt;
+    InputType type;
+    unsigned num_choices; // doesn't apply for InputType::Text
+    bool has_timeout = false;
+    unsigned timeout_ms = 0;
+};
+
+struct InputResponse {
+    std::string response;
+    bool timedout = false;
+};
 
 // Rule Interface //
 
 class Rule {
 public:
     virtual ~Rule() {}
-
-    bool execute(ElementMap elementsMap, ElementSptr element = nullptr) {
-        if (executed) {
-            return true;
-        }
-        return executeImpl(element, elementsMap);
-    }
-    void reset() {
-        executed = false;
-        resetImpl();
-    }
-
-//for testing
-ElementSptr getList();
-
-ExpressionResolver resolver;
-
-private:
-    virtual bool executeImpl(ElementSptr element, ElementMap elementsMap) = 0;
-    virtual void resetImpl() {}
+    virtual RuleStatus execute(ElementMap& game_state) = 0;
     
 protected:
-    bool executed = false;
+    ExpressionResolver resolver;
 };
 
 // Control Structures//
 
 class Foreach : public Rule {
 private:
-    std::shared_ptr<ASTNode> listExpressionRoot;
+    std::shared_ptr<ASTNode> list_expression_root;
+    std::string element_name;
+
     ElementSptr list;
     RuleVector rules;
-    std::string elementName;
 
     ElementVector elements;
     ElementVector::iterator element;
@@ -56,112 +68,101 @@ private:
     bool initialized = false;
 
 public:
-    Foreach(std::shared_ptr<ASTNode> listExpressionRoot, RuleVector _rules, std::string elementName);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
-    void resetImpl() final;
+    Foreach(std::shared_ptr<ASTNode> list_expression_root, std::string element_name, RuleVector rules);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class ParallelFor : public Rule {
     std::shared_ptr<PlayerMap> player_maps;
     RuleVector rules;
-    std::string elementName;
+    std::string element_name;
 
     std::map<Connection, RuleVector::iterator> player_rule_it;
     bool initialized = false;
 
 public:
-    ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string elementName);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
-    void resetImpl() final;
+    ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string element_name);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class When : public Rule {
-    std::shared_ptr<ASTNode> conditionRoot;
-    // a vector of condtion-rules pairs
+    using Condition_Rules = std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>;
+    // a vector of case-rules pairs
     // containes a rule list for every case
-    // a condition is the root of the expression tree for that condition
-    
-    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>::iterator condition_rule_pair;
-    
+    // a case is a function (lambda) that returns a bool
+    Condition_Rules::iterator conditionExpression_rule_pair;
     RuleVector::iterator rule;
-    bool match = false;
-
 public: 
-    std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> condition_rule_pairs;
     When() = default;
     void set();
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
-    void resetImpl() final;
+    Condition_Rules conditionExpression_rule_pairs;
+
+    RuleStatus execute(ElementMap& game_state) final; 
 };
 
 // List Operations //
 
 class Extend : public Rule {
-    std::shared_ptr<ASTNode> targetExpressionRoot;
-    ElementSptr target;
-
-    std::shared_ptr<ASTNode> extensionExpressionRoot;
-    ElementSptr extensionList;
-
+    std::shared_ptr<ASTNode> target_expression_root;
+    std::shared_ptr<ASTNode> extension_expression_root;
 public:
-    Extend(std::shared_ptr<ASTNode> targetExpressionRoot, std::shared_ptr<ASTNode> extensionExpressionRoot);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    Extend(std::shared_ptr<ASTNode> target_expression_root, std::shared_ptr<ASTNode> extension_expression_root);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class Discard : public Rule {
-    std::shared_ptr<ASTNode> listExpressionRoot;
-    ElementSptr list;
-    std::shared_ptr<ASTNode> countExpressionRoot;
-    int resolvedCount;
-
+    std::shared_ptr<ASTNode> list_expression_root;
+    std::shared_ptr<ASTNode> count_expression_root;
 public:
-    Discard(std::shared_ptr<ASTNode> listExpressionRoot,  std::shared_ptr<ASTNode> countExpressionRoot);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    Discard(std::shared_ptr<ASTNode> list_expression_root,  std::shared_ptr<ASTNode> count_expression_root);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 // Arithmetic //
 
 class Add : public Rule {
-    std::shared_ptr<ASTNode> toExpressionRoot;
-    ElementSptr to;
-    ElementSptr value;
+    std::shared_ptr<ASTNode> element_expression_root;
+    std::shared_ptr<ASTNode> value_expression_root;
 public: 
-    Add(std::shared_ptr<ASTNode> toExpressionRoot, ElementSptr value);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    Add(std::shared_ptr<ASTNode> element_expression_root,  std::shared_ptr<ASTNode> value_expression_root);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 // Input/ Output //
 
 class InputChoice : public Rule {
     std::string prompt;
-    std::shared_ptr<ASTNode> elementToReplace;
-    
-    std::shared_ptr<ASTNode> choicesExpressionRoot;
+    std::shared_ptr<ASTNode> element_to_replace_root;
+
+    std::shared_ptr<ASTNode> choices_expression_root;
     ElementVector choices;
 
-    unsigned timeout_s; // in seconds
+    std::shared_ptr<std::deque<InputRequest>> input_requests;
+    std::shared_ptr<std::map<Connection, InputResponse>> player_input;
+    
     std::string result;
-    std::shared_ptr<std::deque<Message>> player_msgs;
-    std::shared_ptr<std::map<Connection, std::string>> player_input;
-    std::map<Connection, bool> alreadySentInput;
+    unsigned timeout_s; // in seconds
 
+    std::map<Connection, bool> awaiting_input;
 public:
-    InputChoice(std::string prompt, std::shared_ptr<ASTNode> elementToReplace, std::shared_ptr<ASTNode> expressionRoot, 
-                unsigned timeout_s, std::string result,
-                std::shared_ptr<std::deque<Message>> player_msgs,
-                std::shared_ptr<std::map<Connection, std::string>> player_input);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    InputChoice(std::string prompt, 
+                std::shared_ptr<ASTNode> element_to_replace_root,
+                std::shared_ptr<ASTNode> choices_expression_root,
+                std::shared_ptr<std::deque<InputRequest>> input_requests,
+                std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                std::string result, unsigned timeout_s = 0);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class GlobalMsg : public Rule {
     std::string msg;
+    std::shared_ptr<ASTNode> element_to_replace_root;
     std::shared_ptr<std::deque<std::string>> global_msgs;
-    std::shared_ptr<ASTNode> elementToReplace;
+    
 public:
-    GlobalMsg(std::string msg,
-              std::shared_ptr<std::deque<std::string>> global_msgs, 
-              std::shared_ptr<ASTNode> elementToReplace);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    GlobalMsg(std::string msg, std::shared_ptr<ASTNode> element_to_replace_root,
+              std::shared_ptr<std::deque<std::string>> global_msgs);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class Scores : public Rule {
@@ -172,5 +173,5 @@ class Scores : public Rule {
 public:
     Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key, 
            bool ascending, std::shared_ptr<std::deque<std::string>> global_msgs);
-    bool executeImpl(ElementSptr element, ElementMap elementsMap) final;
+    RuleStatus execute(ElementMap& game_state) final;
 };

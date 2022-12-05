@@ -4,12 +4,13 @@ add_library(game
     src/list.cpp
 )
 
+find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(game
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
@@ -20,9 +21,10 @@ set_target_properties(game
 )
 
 target_link_libraries(game
-        networking    
         AST
         interpreter
+        glog::glog
+        networking
 )
 
 install(TARGETS game

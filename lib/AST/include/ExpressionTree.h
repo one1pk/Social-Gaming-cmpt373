@@ -4,11 +4,11 @@
 
 class ExpressionTree{
 private:
-        std::shared_ptr<ASTNode> root;
+    std::shared_ptr<ASTNode> root;
         
 public:
     ExpressionTree() = default;
-    ExpressionTree(std::shared_ptr<ASTNode> root, ElementMap gameListsMap, std::shared_ptr<PlayerMap> playerMap);
+    ExpressionTree(ElementMap gameState, std::shared_ptr<PlayerMap> playerMap);
 
     std::deque<std::string> split(std::string expression);
     void build(std::string expression);
@@ -30,10 +30,10 @@ public:
     bool isUnary(std::string value);
     std::vector<std::string> unaryOperators = {"size", "!"};
 
-    ElementMap gameListsMap;
+    ElementMap gameState;
     std::shared_ptr<PlayerMap> playerMap;
 
-    std::shared_ptr<ASTNode>& getRoot();
+    std::shared_ptr<ASTNode> getRoot();
 
 };
 

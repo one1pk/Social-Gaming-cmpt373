@@ -12,11 +12,13 @@ set_target_properties(gameclient
 
 find_package(Curses REQUIRED)
 find_package(Threads REQUIRED)
+find_package(glog 0.4.0 REQUIRED)
 
 target_link_libraries(gameclient
     networking
     ${CURSES_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
+    glog::glog
 )
 
 install(TARGETS gameclient
