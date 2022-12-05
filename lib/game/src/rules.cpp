@@ -7,16 +7,18 @@
 
 // Foreach //
 
-Foreach::Foreach(ElementSptr list, RuleVector rules) 
-    : list(list), rules(rules) {
+Foreach::Foreach(std::shared_ptr<ASTNode> list_expression_root, std::string element_name, RuleVector rules) 
+    : list_expression_root(list_expression_root), element_name(element_name), rules(rules) {
 }
 
-RuleStatus Foreach::execute(ElementSptr) {
-    // initialize the elements vector from the dynamic list object
-    // initialize the rule and list iterators
+RuleStatus Foreach::execute(ElementMap& game_state) {
     LOG(INFO) << "* Foreach Rule *";
 
+    // initialize the elements vector from the dynamic list object
+    // initialize the rule and list iterators
     if (!initialized) {
+        list_expression_root->accept(resolver, game_state);
+        list = resolver.getResult();
         elements = list->getVector();
         element = elements.begin();
         rule = rules.begin();
@@ -25,8 +27,11 @@ RuleStatus Foreach::execute(ElementSptr) {
 
     // execute the child rules for each element until input is required
     for (; element != elements.end(); element++) {
+        // add element to game_state so that subrules can find it (eg. round, weapon, etc)
+        game_state[element_name] = *element;
+
         for (; rule != rules.end(); rule++) {
-            if ((*rule)->execute(*element) == RuleStatus::InputRequired) {
+            if ((*rule)->execute(game_state) == RuleStatus::InputRequired) {
                 return RuleStatus::InputRequired;
             }
         }
@@ -40,16 +45,17 @@ RuleStatus Foreach::execute(ElementSptr) {
 
 // ParallelFor //
 
-ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules) 
-    : player_maps(player_maps), rules(rules) {
+ParallelFor::ParallelFor(std::shared_ptr<PlayerMap> player_maps, RuleVector rules, std::string element_name) 
+    : player_maps(player_maps), rules(rules), element_name(element_name) {
 }
 
-RuleStatus ParallelFor::execute(ElementSptr element) {
-    // initialize the player rule iterators to the first rule
+RuleStatus ParallelFor::execute(ElementMap& game_state) {
     LOG(INFO) << "* ParallelFor Rule *";
+
+    // initialize the player rule iterators to the first rule
     if (!initialized) {
-        for (auto& player_map: *player_maps) {
-            player_rule_it[player_map.first] = rules.begin();
+        for (auto& [player_connection, _]: *player_maps) {
+            player_rule_it[player_connection] = rules.begin();
         }
         initialized = true;
     }
@@ -57,9 +63,12 @@ RuleStatus ParallelFor::execute(ElementSptr element) {
     RuleStatus status = RuleStatus::Done;
     // for each player, start rule execution at their stored rule iterator
     //  and execute the rules until an Input rule is encountered
-    for(auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
-        for (auto& rule = player_rule_it[player_map->first]; rule != rules.end(); rule++) {
-            if ((*rule)->execute(player_map->second) == RuleStatus::InputRequired) {
+    for(auto& [player_connection, player]: *player_maps) {
+        // set map element "player" to current player list so that subrules can find it
+        game_state[element_name] = player;
+
+        for (auto& rule = player_rule_it[player_connection]; rule != rules.end(); rule++) {
+            if ((*rule)->execute(game_state) == RuleStatus::InputRequired) {
                 status = RuleStatus::InputRequired;
                 break;
             }
@@ -74,20 +83,28 @@ RuleStatus ParallelFor::execute(ElementSptr element) {
 
 // When //
 
-When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _case_rules)
-    : case_rules(_case_rules), case_rule_pair(case_rules.begin()),
-      rule(case_rule_pair->second.begin()) {
+When::When(Condition_Rules _conditionExpression_rule_pairs)
+    : conditionExpression_rule_pairs(_conditionExpression_rule_pairs), 
+    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
+    rule(conditionExpression_rule_pair->second.begin()) {
 }
 
-RuleStatus When::execute(ElementSptr element) {
-    // traverse the cases and execute the rules for the first case condition that returns true
-    // a case_rule_pair consists of a case condition (a lambda returning bool) and a rule vector
+RuleStatus When::execute(ElementMap& game_state) {
     LOG(INFO) << "* When Rule *";
-    for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
-        if (case_rule_pair->first(element)) {
+
+    // traverse the cases and execute the rules for the first case condition that returns true
+    // a conditionExpression_rule_pairs consists of a case condition (an expression tree root) and a rule vector
+    for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
+        auto& [condition_root, rules] = *conditionExpression_rule_pair;
+        rule = rules.begin();
+
+        condition_root->accept(resolver, game_state);
+        bool caseMatch = resolver.getResult()->getBool();    
+        if (caseMatch) {
             LOG(INFO) << "Case Match!" << std::endl << "Executing Case Rules";
-            for (; rule != case_rule_pair->second.end(); rule++) {
-                if ((*rule)->execute(element) == RuleStatus::InputRequired) {
+
+            for (; rule != rules.end(); rule++) {
+                if ((*rule)->execute(game_state) == RuleStatus::InputRequired) {
                     return RuleStatus::InputRequired;
                 }
             }
@@ -98,101 +115,135 @@ RuleStatus When::execute(ElementSptr element) {
     }
 
     // reset the rule state to be executed in a different context 
-    case_rule_pair = case_rules.begin();
-    rule = case_rule_pair->second.begin();
+    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
+    rule = conditionExpression_rule_pair->second.begin();
     return RuleStatus::Done;
 }
 
 // Extend //
 
-Extend::Extend(ElementSptr target, std::function<ElementSptr(ElementSptr)> extension)
-    : target(target), extension(extension) {
+Extend::Extend(std::shared_ptr<ASTNode> target_expression_root, std::shared_ptr<ASTNode> extension_expression_root)
+    : target_expression_root(target_expression_root), extension_expression_root(extension_expression_root) {
 }
 
-RuleStatus Extend::execute(ElementSptr element) {
+RuleStatus Extend::execute(ElementMap& game_state) {
     LOG(INFO) << "* Extend Rule *";
-    target->extend(extension(element));
+    target_expression_root->accept(resolver, game_state);
+    auto target = resolver.getResult();
+
+    extension_expression_root->accept(resolver, game_state);
+    auto extension = resolver.getResult();
+
+    target->extend(extension);
     return RuleStatus::Done;
 }
 
 // Discard //
 
-Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
-    : list(list), count(count) {
+Discard::Discard(std::shared_ptr<ASTNode> list_expression_root,  std::shared_ptr<ASTNode> count_expression_root)
+    : list_expression_root(list_expression_root), count_expression_root(count_expression_root) {
 }
 
-RuleStatus Discard::execute(ElementSptr element) {
+RuleStatus Discard::execute(ElementMap& game_state) {
     LOG(INFO) << "* Discard Rule *";
-    list->discard(count(element));
+    list_expression_root->accept(resolver, game_state);
+    auto list = resolver.getResult();
+
+    count_expression_root->accept(resolver, game_state);
+    auto count = resolver.getResult()->getInt();
+
+    list->discard(count);
     return RuleStatus::Done;
 }
 
 // Add //
 
-Add::Add(std::string to, ElementSptr value)
-    : to(to), value(value) {
+Add::Add(std::shared_ptr<ASTNode> element_expression_root,  std::shared_ptr<ASTNode> value_expression_root)
+    : element_expression_root(element_expression_root), value_expression_root(value_expression_root) {
 }
 
-RuleStatus Add::execute(ElementSptr element) {
+RuleStatus Add::execute(ElementMap& game_state) {
     LOG(INFO) << "* Add Rule *";
-    element->getMapElement(to)->addInt(value->getInt());
+    element_expression_root->accept(resolver, game_state);
+    auto element = resolver.getResult();
+
+    value_expression_root->accept(resolver, game_state);
+    auto value = resolver.getResult()->getInt();
+
+    element->addInt(value);
     return RuleStatus::Done;
 }
 
 // InputChoice //
 
-std::string formatString(std::string_view str, ElementSptr element) {
-    std::string res(str);
-    if (element) {
-        size_t open_brace = 0; 
-        while ((open_brace = res.find("{", open_brace)) != std::string::npos) {
-            size_t close_brace = res.find("}", open_brace);
+std::string formatString(std::string_view msgView, std::shared_ptr<ASTNode> elementToReplace, ExpressionResolver& resolver, ElementMap elementsMap) {
+    std::string msg(msgView);
+    size_t open_brace = 0; 
+    
+    if ((open_brace = msg.find("{", open_brace)) != std::string::npos) {
+        size_t close_brace = msg.find("}", open_brace);
+        elementToReplace->accept(resolver, elementsMap);
+        std::string resolvedString;
 
-            if (close_brace == open_brace+1) {
-                res.replace(open_brace, 2, element->getString());
-            } else {
-                std::string value_str = element->getMapElement(res.substr(open_brace+1, close_brace-open_brace-1))->getString();
-                res.replace(open_brace, close_brace-open_brace+1, value_str);
+        if(resolver.getResult()->type == VECTOR){
+            ElementVector resolvedStringVector = resolver.getResult()->getVector();
+            for(auto it = resolvedStringVector.begin(); it != resolvedStringVector.end(); it++){
+                if(it != resolvedStringVector.begin())
+                    resolvedString += ", ";
+                resolvedString += (*it)->getString();
             }
         }
+        else
+            resolvedString = resolver.getResult()->getString();
+
+        msg.replace(open_brace, close_brace - open_brace + 1, resolvedString);
     }
-    return res;
+    return msg;
 }
 
-InputChoice::InputChoice(std::string prompt, ElementVector choices, std::string result, 
-    std::shared_ptr<std::deque<InputRequest>> input_requests,
-    std::shared_ptr<std::map<Connection, InputResponse>> player_input,
-    unsigned timeout_s)
-    : prompt(prompt), choices(choices), result(result), 
-    input_requests(input_requests), player_input(player_input), timeout_s(timeout_s) {
+InputChoice::InputChoice(std::string prompt, 
+                        std::shared_ptr<ASTNode> element_to_replace_root,
+                        std::shared_ptr<ASTNode> choices_expression_root,
+                        std::shared_ptr<std::deque<InputRequest>> input_requests,
+                        std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                        std::string result, unsigned timeout_s)
+    : prompt(prompt), element_to_replace_root(element_to_replace_root),
+    choices_expression_root(choices_expression_root),
+    input_requests(input_requests), player_input(player_input), 
+    result(result), timeout_s(timeout_s) {
 }
 
-RuleStatus InputChoice::execute(ElementSptr player) {
+RuleStatus InputChoice::execute(ElementMap& game_state) {
     LOG(INFO) << "* InputChoiceRequest Rule *";
-    Connection player_connection = player->getMapElement("connection")->getConnection();
+    Connection player_connection = game_state["player"]->getMapElement("connection")->getConnection();
 
-    if (!awaitingInput[player_connection]) {
+    if (!awaiting_input[player_connection]) {
         // first execution of rule
-        // format the input prompt and flag that input is required
-        std::stringstream formatted_prompt(formatString(prompt, player));
-        formatted_prompt << "Enter an index to select:\n";
+
+        // resolve choices
+        /// TODO: for choices, weapons.name should resolve to weapons.sublist.name
+        choices_expression_root->accept(resolver, game_state);
+        choices = resolver.getResult()->getVector();
+
+        // format the input prompt
+        std::string formatted_msg = formatString(prompt, element_to_replace_root, resolver, game_state);
+        std::stringstream formatted_prompt(formatted_msg);
+        formatted_prompt << formatted_prompt.str() << std::endl << "Enter an index to select:\n";
         for (size_t i = 0; i < choices.size(); i++) {
             formatted_prompt << "["<<i<<"] " << choices[i]->getString() << "\n";
         }
         if (timeout_s) formatted_prompt << "Input will timeout in " << timeout_s << " seconds\n"; 
 
-        InputRequest request;
-        request.user = player_connection;
-        request.prompt = formatted_prompt.str();
-        request.num_choices = choices.size();
-        request.type = InputType::Choice;
-        if (timeout_s) {
-            request.hasTimeout = true;
-            request.timeout_ms = timeout_s*1000;
-        }
-        input_requests->push_back(request);
-
-        awaitingInput[player_connection] = true;
+        // create an input request and flag that input is required
+        input_requests->emplace_back(
+            player_connection,
+            formatted_prompt.str(),
+            InputType::Choice,
+            choices.size(),
+            timeout_s,
+            timeout_s*1000
+        );
+        awaiting_input[player_connection] = true;
         return RuleStatus::InputRequired;
     }
     // execution will continue from here after input is recieved
@@ -205,21 +256,24 @@ RuleStatus InputChoice::execute(ElementSptr player) {
     } else {
         chosen_index = std::stoi(input.response);
     }
-    player->setMapElement(result, choices[chosen_index]);
+    game_state["player"]->setMapElement(result, choices[chosen_index]);
 
-    awaitingInput[player_connection] = false;
+    awaiting_input[player_connection] = false;
     return RuleStatus::Done;
 }
 
+
 // GlobalMsg //
 
-GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<std::deque<std::string>> global_msgs)
-    : msg(msg), global_msgs(global_msgs) {
+GlobalMsg::GlobalMsg(std::string msg, std::shared_ptr<ASTNode> element_to_replace_root, 
+                    std::shared_ptr<std::deque<std::string>> global_msgs)
+    : msg(msg), element_to_replace_root(element_to_replace_root), global_msgs(global_msgs) {
 }
 
-RuleStatus GlobalMsg::execute(ElementSptr element) {
+RuleStatus GlobalMsg::execute(ElementMap& game_state) {
     LOG(INFO) << "* GlobalMsg Rule *";
-    global_msgs->push_back(formatString(msg, element));
+    std::string formatted_msg = formatString(msg, element_to_replace_root, resolver, game_state) + "\n";
+    global_msgs->push_back(formatted_msg);
     return RuleStatus::Done;
 }
 
@@ -231,22 +285,22 @@ Scores::Scores(std::shared_ptr<PlayerMap> player_maps, std::string attribute_key
       ascending(ascending), global_msgs(global_msgs) {
 }
 
-RuleStatus Scores::execute(ElementSptr element) {
+RuleStatus Scores::execute(ElementMap& game_state) {
     LOG(INFO) << "* Scores Rule *";
     std::stringstream msg;
     msg << "\nScores are " << (ascending? "(in ascending order)\n" : "(in descending order)\n");
 
     std::vector<std::pair<int, uintptr_t>> scores;
-    for (auto player_map = player_maps->begin(); player_map != player_maps->end(); player_map++) {
-        scores.push_back({
-            player_map->second->getMapElement(attribute_key)->getInt(), 
-            player_map->first.id
-        });
+    for (auto& [player_connection, player_list]: *player_maps) {
+        scores.emplace_back(
+            player_list->getMapElement(attribute_key)->getInt(), 
+            player_connection.id
+        );
     }
     
     std::sort(scores.begin(), scores.end(), [=](auto a, auto b){ return (a.first<b.first && ascending); });
-    for (auto score: scores) {
-        msg << "player " << score.second << ": " << score.first << "\n";
+    for (auto& [score, player_id]: scores) {
+        msg << "player " << player_id << ": " << score << "\n";
     }
 
     global_msgs->push_back(msg.str());
