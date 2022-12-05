@@ -35,11 +35,11 @@ void GlobalServerState::removeClientFromGame(User user) {
 }
 
 ///////////////////     GAME-RELATED FUNCTIONS     ///////////////////
-void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, User owner);
-
-uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
+void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner);
+uintptr_t GlobalServerState::createGame(int gameIndex, Connection connection) {
     /// TODO: use interpreter to retrieve the appropriate game object corresponding to the game name
-    TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], user);
+    
+    TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], connection);
 
     removeClientFromList(clients_in_lobby, user);
     clients_in_games[user] = game_instances.back().id();
@@ -79,17 +79,17 @@ std::deque<Message> GlobalServerState::processGames() {
 
     auto game = game_instances.begin();
     while (game != game_instances.end()) {
-        LOG(INFO) << "Game Check";
+        // LOG(INFO) << "Game Check";
         switch (game->status()) {
             case GameStatus::AwaitingOutput: {
-                LOG(INFO) << "AwaitingOutput";
+                LOG(INFO) << "game " << game->id() << ": AwaitingOutput";
                 processGameMsgs(*game, outgoing);
                 game->outputSent(); // changes the status to AwaitingInput
                 game++;
             }
             break;
             case GameStatus::AwaitingInput: {
-                LOG(INFO) << "AwaitingInput";
+                LOG(INFO) << "game " << game->id() << ": AwaitingInput";
                 std::deque<InputRequest> input_requests = game->inputRequests();
                 for (auto input_request: input_requests) {
                     User user = input_request.user;
@@ -112,7 +112,7 @@ std::deque<Message> GlobalServerState::processGames() {
                             "Input Received, you entered: " + input + "\n"
                             "Waiting for other players...\n\n"
                         });
-                    } else if (input_request.hasTimeout) {
+                    } else if (input_request.has_timeout) {
                         user_game_input[user].time_remaining -= update_interval;
                         if (user_game_input[user].time_remaining <= 0) {
                             game->inputRequestTimedout(user);
@@ -132,7 +132,7 @@ std::deque<Message> GlobalServerState::processGames() {
             }
             break;
             case GameStatus::Finished: {
-                LOG(INFO) << "GameFinished";
+                LOG(INFO) << "game " << game->id() << ": GameFinished";
                 processGameMsgs(*game, outgoing);
                 outgoing.push_back({game->owner(), "\nThe game has finished!\nReturning to the lobby\n\n"});
                 std::deque<Message> finalMsgs = buildMsgsForOtherPlayers("\nGood game!\nYou are now back in the lobby\n\n", game->owner());
@@ -339,6 +339,7 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 // all games defined in ./gameconfigs can be "served" to users
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock Paper Scissors");
+    gameNameList[1] = std::string("TestGame");
 }
 
 
@@ -347,167 +348,10 @@ void GlobalServerState::populateGameList() {
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////// TEMPORARY: Manual Rock Paper Scissor Game Construction //////////////////////
 #include "InterpretJson.h"
-using json = nlohmann::json;
-
-void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, User owner) {
-    // TODO: use the interpreter to generate the game object from the json configurations
-    // Currently manually creating Rock Paper Scissors game object
-    
-    //---------------LISTS--------------//
-
-    // "constants": {
-    //     "weapons": [
-    //         { "name": "Rock",     "beats": "Scissors"},
-    //         { "name": "Paper",    "beats": "Rock"},
-    //         { "name": "Scissors", "beats": "Paper"}
-    //     ]
-    // },
 
 
-    //Interpretr maps json info to game fields and lists
-    Game g;
-    std::string path = PATH_TO_JSON;
-    InterpretJson j(path);
-    j.interpret(g);
-
-    //Manual
-    ElementSptr setup = g.setup();
-    ElementSptr constants = g.constants();
-    ElementSptr variables = g.variables();
-    ElementSptr per_player = g.per_player();
-    ElementSptr per_audience = g.per_audience();
-
-    std::shared_ptr<PlayerMap> players = std::make_shared<PlayerMap>(PlayerMap{});
-    std::shared_ptr<std::deque<std::string>> global_msgs = std::make_shared<std::deque<std::string>>();
-    std::shared_ptr<std::deque<InputRequest>> input_requests = std::make_shared<std::deque<InputRequest>>(); 
-    std::shared_ptr<std::map<User, InputResponse>> player_input = std::make_shared<std::map<User, InputResponse>>();
-    std::shared_ptr<PlayerMap> audience = std::make_shared<PlayerMap>(PlayerMap{});
-
-
-    //---------------RULES--------------//
-
-    RuleVector rules{
-        std::make_shared<Foreach>(
-            setup->getMapElement("Rounds")->upfrom(1),
-            RuleVector{
-                std::make_shared<GlobalMsg>(
-                    "Round {}. Choose your weapon!\n",
-                    global_msgs
-                ),
-                std::make_shared<ParallelFor>(
-                    players,
-                    RuleVector{ 
-                        std::make_shared<InputChoice>(
-                            "{name}, choose your weapon!\n",
-                            constants->getMapElement("weapons")->getSubList("name"),
-                            "weapon",
-                            input_requests,
-                            player_input,
-                            10
-                        ),
-                    }
-                ),
-                std::make_shared<Discard>(
-                    variables->getMapElement("winners"),
-                    [variables](ElementSptr element) {
-                        return variables->getMapElement("winners")->getSize();
-                    }
-                ),
-                std::make_shared<Foreach>(
-                    constants->getMapElement("weapons"),
-                    RuleVector{
-                        std::make_shared<When>(
-                            std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>{
-                                std::pair<std::function<bool(ElementSptr)>,RuleVector>{
-                                    [players](ElementSptr element){
-                                        ElementVector player_weapons;
-                                        for (auto player = players->begin(); player != players->end(); player++) {
-                                            player_weapons.push_back(player->second->getMapElement("weapon"));
-                                        }
-
-                                        return player_weapons.end() == std::find_if(player_weapons.begin(), player_weapons.end(), 
-                                            [element](auto player_weapon){
-                                                return player_weapon->getString() == element->getMapElement("name")->getString();
-                                            }
-                                        );
-                                    },
-                                    RuleVector{
-                                        std::make_shared<Extend>(
-                                            variables->getMapElement("winners"),
-                                            [players](ElementSptr element){
-                                                ElementVector round_winners;
-                                                for (auto player = players->begin(); player != players->end(); player++) {
-                                                    if (player->second->getMapElement("weapon")->getString()
-                                                            == element->getMapElement("beats")->getString()){
-                                                        round_winners.push_back(player->second);
-                                                    }
-                                                }
-                                                return std::make_shared<Element<ElementVector>>(round_winners);
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
-                ),
-                std::make_shared<When>(
-                    std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>>{
-                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
-                            [variables, players](ElementSptr element){ 
-                                return variables->getMapElement("winners")->getSize() == players->size(); 
-                            },
-                            RuleVector{
-                                std::make_shared<GlobalMsg>("Tie game!\n", global_msgs)
-                            }
-                        ),
-                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
-                            [variables](ElementSptr element){ 
-                                return variables->getMapElement("winners")->getSize() == 0; 
-                            },
-                            RuleVector{
-                                std::make_shared<GlobalMsg>("Tie game!\n", global_msgs)
-                            }
-                        ),
-                        std::pair<std::function<bool(ElementSptr)>,RuleVector>(
-                            [](ElementSptr element){ 
-                                return true; 
-                            },
-                            RuleVector{
-                                std::make_shared<GlobalMsg>("Winners:\nTODO: print winner names\n", global_msgs),
-                                std::make_shared<Foreach>(
-                                    variables->getMapElement("winners"),
-                                    RuleVector{
-                                        std::make_shared<Add>(
-                                            "wins", 
-                                            std::make_shared<Element<int>>(1)
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                )
-            }
-        ),
-        std::make_shared<Scores>(
-            players,
-            "wins",
-            false,
-            global_msgs
-        )
-    };
-
-
-    game_instances.emplace_back(
-        game_name, owner,
-        /*min_players*/ 2, /*max_players*/ 4, /*audience*/ false,
-        setup,
-        constants, variables,
-        per_player, per_audience,
-        players, audience,
-        rules, 
-        global_msgs,
-        input_requests, player_input
-    );
+void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner) {    
+    //Interpreter maps json info to game 
+    InterpretJson j("rock_paper_scissors", owner);
+    game_instances.emplace_back(j.interpret());
 }

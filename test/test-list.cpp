@@ -18,12 +18,12 @@ TEST (ElementTest, getMapTest) {
 
 TEST (ElementTest, getMapTypeErrorTest) {
     ElementMap my_map;
-    ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     EXPECT_EQ(test_element_string->getMap(), my_map);
 }
 
 TEST (ElementTest, getMapElementTest) {
-    ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     map<string, shared_ptr<ListElement>> map_sample {{"first", test_element_string}};
     ElementMap temp_map = map_sample;
     ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
@@ -31,23 +31,23 @@ TEST (ElementTest, getMapElementTest) {
 }
 
 TEST (ElementTest, getMapElementErrorTest) {
-    ElementSptr test_element_string = make_shared<Element<std::string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     EXPECT_EQ(test_element_string->getMapElement("first"), nullptr);
 }
 
 TEST (ElementTest, setMapElementTest) {
-    ElementSptr test_element_string = make_shared<Element<string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     map<string, shared_ptr<ListElement>> map_sample {{"first", test_element_string}};
     ElementMap temp_map = map_sample;
     ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
     test_map->setMapElement(
-        "first", make_shared<Element<string>>("after_set")
+        "first", make_shared<Element<std::string>>(std::string("after_set"))
     );
     EXPECT_EQ(test_map->getMapElement("first")->getString(), "after_set");
 }
 
 TEST (ElementTest, removeMapElementTest) {
-    ElementSptr test_element_string = make_shared<Element<string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     map<string, shared_ptr<ListElement>> map_sample {{"first", test_element_string}};
     ElementMap temp_map = map_sample;
     ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
@@ -56,9 +56,9 @@ TEST (ElementTest, removeMapElementTest) {
 }
 
 TEST (ElementTest, getSizeMapTest) {
-    ElementSptr test_element_string_1 = make_shared<Element<string>>("This is a test 1");
-    ElementSptr test_element_string_2 = make_shared<Element<string>>("This is a test 2");
-    ElementSptr test_element_string_3 = make_shared<Element<string>>("This is a test 3");
+    ElementSptr test_element_string_1 = make_shared<Element<std::string>>(std::string("This is a test 1"));
+    ElementSptr test_element_string_2 = make_shared<Element<std::string>>(std::string("This is a test 2"));
+    ElementSptr test_element_string_3 = make_shared<Element<std::string>>(std::string("This is a test 3"));
     map<string, shared_ptr<ListElement>> map_sample {{"first", test_element_string_1},{"second",test_element_string_2 },{"third",test_element_string_3 }};
     ElementMap temp_map = map_sample;
     ElementSptr test_map = make_shared<Element<ElementMap>>(temp_map);
@@ -87,7 +87,7 @@ TEST (ElementTest, getIntTest) {
 }
 
 TEST (ElementTest, getIntTypeErrorTest) {
-    ElementSptr test_element_string = make_shared<Element<string>>("This is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("This is a test"));
     EXPECT_EQ(test_element_string->getInt(), 0);
 }
 
@@ -180,11 +180,11 @@ TEST(ElementTest, getSizeVectorTest) {
 TEST(ElementTest, getSubListTest) {
     ElementVector vector_of_maps;
 
-    ElementSptr first_string = make_shared<Element<std::string>>("First string");
+    ElementSptr first_string = make_shared<Element<std::string>>(std::string("First string"));
     map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
     ElementSptr first_map_ptr = make_shared<Element<ElementMap>>(first_map);
     
-    ElementSptr second_string = make_shared<Element<std::string>>("Second string");
+    ElementSptr second_string = make_shared<Element<std::string>>(std::string("Second string"));
     map<string, shared_ptr<ListElement>> second_map {{"test", second_string}};
     ElementSptr second_map_ptr = make_shared<Element<ElementMap>>(second_map);
 
@@ -202,11 +202,11 @@ TEST(ElementTest, getSubListTest) {
 TEST(ElementTest, getSubListDataErrorTest) {
     ElementVector vector_of_maps;
 
-    ElementSptr first_string = make_shared<Element<std::string>>("First string");
+    ElementSptr first_string = make_shared<Element<std::string>>(std::string("First string"));
     map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
     ElementSptr first_map_ptr = make_shared<Element<ElementMap>>(first_map);
 
-    ElementSptr second_string = make_shared<Element<std::string>>("Second string");
+    ElementSptr second_string = make_shared<Element<std::string>>(std::string("Second string"));
     map<string, shared_ptr<ListElement>> second_map {{"test", second_string}};
     ElementSptr second_map_ptr = make_shared<Element<ElementMap>>(second_map);
 
@@ -218,7 +218,7 @@ TEST(ElementTest, getSubListDataErrorTest) {
 }
 
 TEST(ElementTest, getSubListTypeErrorTest) {
-    ElementSptr first_string = make_shared<Element<std::string>>("First string");
+    ElementSptr first_string = make_shared<Element<std::string>>(std::string("First string"));
     map<string, shared_ptr<ListElement>> first_map {{"test", first_string}};
     ElementSptr first_map_ptr = make_shared<Element<ElementMap>>(first_map);
 
@@ -307,7 +307,7 @@ TEST (ElementTest, getStringTypeErrorTest) {
     Connection test_connection;
     test_connection.id = test_id;
     ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
-    EXPECT_EQ(test_element_connection->getString(), "{}");
+    EXPECT_EQ(test_element_connection->getString(), "");
 }
 
 TEST(ElementTest, stringCloneTest) {
@@ -337,7 +337,7 @@ TEST (ElementTest, getConnectionTest) {
 }
 
 TEST (ElementTest, getConnectionTypeErrorTest) {
-    ElementSptr test_element_string = make_shared<Element<string>>("this is a test");
+    ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("this is a test"));
     uintptr_t test_id = 0;
     Connection test_connection;
     test_connection.id = test_id;

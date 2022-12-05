@@ -1,9 +1,7 @@
 #include "commandHandler.h"
-#include "game.h"
 #include "globalState.h"
 #include "messageProcessor.h"
 #include "server.h"
-#include "list.h"
 #include <glog/logging.h>
 
 #include <unistd.h>
@@ -53,7 +51,7 @@ int main(int argc, char *argv[]) {
     FLAGS_logtostderr = true;
     
     if (argc < 3) {
-        LOG(ERROR) << "Usage:\n  " << argv[0] << " <port> <html response>\n"
+        LOG(ERROR) << "Usage:\n  " << argv[0] << " port html_response\n"
                    << "  e.g. " << argv[0] << " 4040 ./webchat.html\n";
         return 1;
     }

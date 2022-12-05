@@ -3,7 +3,7 @@ add_library(game
     src/rules.cpp
     src/list.cpp
 )
-find_package(nlohmann_json 3.2.0 REQUIRED)
+
 find_package(glog 0.4.0 REQUIRED)
 
 target_include_directories(game
@@ -21,7 +21,8 @@ set_target_properties(game
 )
 
 target_link_libraries(game
-        nlohmann_json::nlohmann_json
+        AST
+        interpreter
         glog::glog
         networking
 )
