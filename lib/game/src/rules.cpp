@@ -83,9 +83,10 @@ RuleStatus ParallelFor::execute(ElementMap& game_state) {
 
 // When //
 
-void When::set(){
-    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
-    rule = conditionExpression_rule_pair->second.begin(); 
+When::When(Condition_Rules _conditionExpression_rule_pairs)
+    : conditionExpression_rule_pairs(_conditionExpression_rule_pairs), 
+    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
+    rule(conditionExpression_rule_pair->second.begin()) {
 }
 
 RuleStatus When::execute(ElementMap& game_state) {

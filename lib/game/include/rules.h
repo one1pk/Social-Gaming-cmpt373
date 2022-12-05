@@ -90,14 +90,12 @@ class When : public Rule {
     // a vector of case-rules pairs
     // containes a rule list for every case
     // a case is a function (lambda) that returns a bool
+    Condition_Rules conditionExpression_rule_pairs;
     Condition_Rules::iterator conditionExpression_rule_pair;
     RuleVector::iterator rule;
 public: 
-    When() = default;
-    void set();
-    Condition_Rules conditionExpression_rule_pairs;
-
-    RuleStatus execute(ElementMap& game_state) final; 
+    When(Condition_Rules conditonExpression_rule_pairs);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 // List Operations //

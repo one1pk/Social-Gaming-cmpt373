@@ -38,9 +38,9 @@ inline void from_json(const Json& j,  Game& g){
     j.at("configuration").at("audience").get_to(g._has_audience);
     j.at("configuration").at("player count").at("min").get_to(g._player_count.min);
     j.at("configuration").at("player count").at("max").get_to(g._player_count.max);
-    j.at("configuration").at("setup").get_to(g._setup);
-    j.at("constants").get_to(g._constants);
-    j.at("variables").get_to(g._variables);
+    j.at("configuration").at("setup").get_to(g._game_state["setup"]);
+    j.at("constants").get_to(g._game_state["constants"]);
+    j.at("variables").get_to(g._game_state["variables"]);
     j.at("per-player").get_to(g._per_player);
     j.at("per-audience").get_to(g._per_audience);
 }
@@ -74,9 +74,9 @@ inline void from_json(const Json& j,  Game& g){
      j["configuration"]["audience"] = g._has_audience;
      j["configuration"]["player count"]["min"] = g._player_count.min;
      j["configuration"]["player count"]["max"] = g._player_count.max;
-     j["configuration"]["setup"] = g._setup;
-     j["variables"] = g._variables;
-     j["constants"] = g._constants;
+    //  j["configuration"]["setup"] = g._game_state["setup"];
+    //  j["variables"] = g._game_state["variables"];
+    //  j["constants"] = g._game_state["constants"];
      j["per-player"] = g._per_player;
      j["per-audience"] = g._per_audience;
  }

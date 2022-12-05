@@ -160,9 +160,8 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             ruleObject = std::make_shared<Discard>(fromExpressionRoot, countExpressionRoot);
         }
 
-        else if(ruleName == "when"){
-            std::shared_ptr<When> when = std::make_shared<When>();
-            
+        else if(ruleName == "when"){            
+            std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pairs;
             ElementVector cases = rule->getMapElement("cases")->getVector();
             for(auto& caseRulePair : cases){
                 auto conditionString = caseRulePair->getMapElement("condition")->getString();
@@ -171,10 +170,9 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
 
                 RuleVector caseRules;
                 toRuleVec(game, caseRulePair->getMapElement("rules"), caseRules);
-                when->conditionExpression_rule_pairs.push_back({conditionExpressionRoot, caseRules});
+                conditionExpression_rule_pairs.push_back({conditionExpressionRoot, caseRules});
             }
-            when->set();
-            ruleObject = when;
+            ruleObject = std::make_shared<When>(conditionExpression_rule_pairs);
         }
 
         rule_vec.push_back(ruleObject);

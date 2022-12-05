@@ -79,11 +79,6 @@ public:
 
     bool _has_audience;
 
-    ElementSptr _setup;
-
-    ElementSptr _constants;
-    ElementSptr _variables;
-
     ElementMap _game_state;
 
     ElementSptr _per_player; // a map template for players

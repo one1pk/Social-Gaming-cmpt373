@@ -147,13 +147,13 @@ void Game::inputRequestTimedout(Connection player) {
 }
 
 ElementSptr Game::setup(){
-        return _setup;
+        return _game_state["setup"];
     }
 ElementSptr Game::constants(){
-    return _constants;
+    return _game_state["constants"];
 }
 ElementSptr Game::variables(){
-    return _variables;
+    return _game_state["variables"];
 }
 ElementSptr Game::per_player(){
     return _per_player;
