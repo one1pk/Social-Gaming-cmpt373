@@ -36,13 +36,12 @@ void GlobalServerState::removeClientFromGame(User user) {
 ///////////////////     GAME-RELATED FUNCTIONS     ///////////////////
 
 void GlobalServerState::constructGame(std::vector<Game>& game_instances, std::string game_name, User owner) {    
-    //Interpreter maps json info to game and returns it
+    //Interpreter maps json info into game object and then returns the game 
     InterpretJson interpreter(game_name, owner);
     game_instances.emplace_back(interpreter.interpret());
 }
 
 uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
-    /// TODO: use interpreter to retrieve the appropriate game object corresponding to the game name
     
     constructGame(game_instances, gameNameList[gameIndex], user);
 

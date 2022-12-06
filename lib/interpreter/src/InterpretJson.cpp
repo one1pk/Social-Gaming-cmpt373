@@ -17,18 +17,6 @@ InterpretJson::InterpretJson(std::string game_name, User owner)
     }
 }
 
-InterpretJson::InterpretJson(std::string path) 
-    {
-    try {
-        ifstream f(path);
-        Json jData = Json::parse(f);
-        f.close();
-        data = jData;
-    } catch (std::exception& e){
-        LOG(ERROR) << "error reading file" << e.what() << endl;
-    }
-}
-
 Game InterpretJson::interpret() {
     Game game = data.get<Game>();
     game.setID();

@@ -44,7 +44,7 @@ inline void from_json(const Json& j,  Game& g){
     j.at("per-audience").get_to(g._per_audience);
 }
 
- inline void to_json(Json& j, const ElementSptr& e){
+inline void to_json(Json& j, const ElementSptr& e){
      switch(e->type) {
  		case Type::STRING:
  			j = e->getString();

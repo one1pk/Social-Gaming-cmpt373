@@ -14,8 +14,8 @@
 class ASTTest : public ::testing::Test{
 protected:
     void SetUp() override{
-        std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
-        InterpretJson j(path);
+        User owner;
+        InterpretJson j("Rock_Paper_Scissors", owner);
         game = j.interpret();
         User c1;
         User c2;
