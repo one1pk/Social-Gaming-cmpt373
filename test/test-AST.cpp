@@ -23,9 +23,9 @@ protected:
         c1.id = 1;
         c2.id = 2;
         c3.id = 3;
-        game.addPlayer(c1);
-        game.addPlayer(c2);
-        game.addPlayer(c3);
+        game.addPlayer(c1, "1");
+        game.addPlayer(c2, "2");
+        game.addPlayer(c3, "3");
     }
 
 public:

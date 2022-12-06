@@ -85,7 +85,7 @@ public:
     std::deque<Message> processGames();
 
     // GAME SPECIFIC METHODS
-
+    void constructGame(std::vector<Game>& game_instances, std::string game_name, User owner); 
     std::string getGameNamesAsString();
     User getGameOwner(User user);
     int getPlayerCount(User user);

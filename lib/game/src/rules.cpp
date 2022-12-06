@@ -292,17 +292,17 @@ RuleStatus Scores::execute(ElementMap& game_state) {
     std::stringstream msg;
     msg << "\nScores are " << (ascending? "(in ascending order)\n" : "(in descending order)\n");
 
-    std::vector<std::pair<int, uintptr_t>> scores;
+    std::vector<std::pair<std::string, int>> scores;
     for (auto& [player_connection, player_list]: *player_maps) {
         scores.emplace_back(
-            player_list->getMapElement(attribute_key)->getInt(), 
-            player_connection.id
+            player_list->getMapElement("name")->getString(),
+            player_list->getMapElement(attribute_key)->getInt()
         );
     }
     
-    std::sort(scores.begin(), scores.end(), [=](auto a, auto b){ return (a.first<b.first && ascending); });
-    for (auto& [score, player_id]: scores) {
-        msg << "player " << player_id << ": " << score << "\n";
+    std::sort(scores.begin(), scores.end(), [=](auto a, auto b){ return (a.second<b.second && ascending); });
+    for (auto& [player_name, score]: scores) {
+        msg << "player " << player_name << ": " << score << "\n";
     }
 
     global_msgs->push_back(msg.str());

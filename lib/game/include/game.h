@@ -39,7 +39,7 @@ public:
     ElementSptr per_audience();
     RuleVector& rules();
 
-    bool addPlayer(User playerID);
+    bool addPlayer(User playerID, std::string userName);
     bool removePlayer(User playerID);
     bool hasPlayer(User playerID);
     std::vector<User> players();

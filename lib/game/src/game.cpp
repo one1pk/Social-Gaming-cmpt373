@@ -54,14 +54,14 @@ GameStatus Game::status() {
     return _status;
 }
 
-bool Game::addPlayer(User player_connection) {
+bool Game::addPlayer(User player_connection, std::string userName) {
     if (_players->size() < _player_count.max) {
         _players->insert({ player_connection,  _per_player->clone() });
         _players->at(player_connection)->setMapElement(
             "user", std::make_shared<Element<User>>(player_connection)
         );
         _players->at(player_connection)->setMapElement(
-            "name", std::make_shared<Element<std::string>>(std::to_string(player_connection.id))
+            "name", std::make_shared<Element<std::string>>(userName)
         );
         return true;
     } else {
