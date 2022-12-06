@@ -18,12 +18,6 @@ If they wish to play the game, they must also join.
 */
 std::string WELCOME_MESSAGE = (
     "                          Welcome to Social Gaming!\n\n"
-        "You are now in the main lobby, here you can chat with other players in the lobby\n"   
-        "  * To view the available games enter: games\n" 
-        "  * To create a new game from the options enter: create <game_index>\n"
-        "  * To join a game with an invitation code enter: join <invitation_code>\n"
-        "  * To exit the server enter: exit\n"
-        "  * To display help information again enter: help\n\n"
         "  * Please enter a name to proceed: name <your game name>\n\n");
 
 int main(int argc, char* argv[]) {

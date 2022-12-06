@@ -12,13 +12,13 @@ using Json = nlohmann::json;
 
 class InterpretJson{
     public:
-        InterpretJson(string game_name, Connection owner);
+        InterpretJson(string game_name, User owner);
         InterpretJson(std::string path);
         Game interpret();
     
         Json data;
         std::string game_name;
-        Connection owner;
+        User owner;
         ExpressionTree expressionTree;
         void toRuleVec(Game& game, const ElementSptr& rules_from_json, RuleVector& rule_vec);
 };

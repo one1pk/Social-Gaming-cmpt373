@@ -304,9 +304,9 @@ TEST (ElementTest, getStringIntegralTest) {
 
 TEST (ElementTest, getStringTypeErrorTest) {
     uintptr_t test_id = 100000;
-    Connection test_connection;
+    User test_connection;
     test_connection.id = test_id;
-    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    ElementSptr test_element_connection = make_shared<Element<User>>(test_connection);
     EXPECT_EQ(test_element_connection->getString(), "");
 }
 
@@ -330,33 +330,33 @@ TEST(ElementTest, getSizeStringTest) {
 
 TEST (ElementTest, getConnectionTest) {
     uintptr_t test_id = 100000;
-    Connection test_connection;
+    User test_connection;
     test_connection.id = test_id;
-    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    ElementSptr test_element_connection = make_shared<Element<User>>(test_connection);
     EXPECT_EQ(test_element_connection->getConnection(), test_connection);
 }
 
 TEST (ElementTest, getConnectionTypeErrorTest) {
     ElementSptr test_element_string = make_shared<Element<std::string>>(std::string("this is a test"));
     uintptr_t test_id = 0;
-    Connection test_connection;
+    User test_connection;
     test_connection.id = test_id;
     EXPECT_EQ(test_element_string->getConnection(), test_connection);
 }
 
 TEST(ElementTest, getSizeConnectionTest) {
     uintptr_t test_id = 10;
-    Connection test_connection;
+    User test_connection;
     test_connection.id = test_id;
-    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    ElementSptr test_element_connection = make_shared<Element<User>>(test_connection);
     EXPECT_EQ(test_element_connection->getSize(), 0);
 }
 
 TEST(ElementTest, ConnectionCloneTest) {
     uintptr_t test_id = 100000;
-    Connection test_connection;
+    User test_connection;
     test_connection.id = test_id;
-    ElementSptr test_element_connection = make_shared<Element<Connection>>(test_connection);
+    ElementSptr test_element_connection = make_shared<Element<User>>(test_connection);
     ElementSptr cloned_element_connection = test_element_connection->clone();
     EXPECT_EQ(test_element_connection->getConnection(), cloned_element_connection->getConnection());
 }

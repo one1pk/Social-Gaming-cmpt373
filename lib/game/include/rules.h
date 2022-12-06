@@ -23,12 +23,12 @@ enum InputType {
 };
 
 struct InputRequest {
-    InputRequest(Connection user, std::string prompt, InputType type,
+    InputRequest(User user, std::string prompt, InputType type,
                  unsigned num_choices, bool has_timeout = false, unsigned timeout_ms = 0)
         : user(user), prompt(prompt), type(type), 
         num_choices(num_choices), has_timeout(has_timeout), timeout_ms(timeout_ms) {
     }
-    Connection user;
+    User user;
     std::string prompt;
     InputType type;
     unsigned num_choices; // doesn't apply for InputType::Text
@@ -77,7 +77,7 @@ class ParallelFor : public Rule {
     RuleVector rules;
     std::string element_name;
 
-    std::map<Connection, RuleVector::iterator> player_rule_it;
+    std::map<User, RuleVector::iterator> player_rule_it;
     bool initialized = false;
 
 public:
@@ -136,18 +136,18 @@ class InputChoice : public Rule {
     ElementVector choices;
 
     std::shared_ptr<std::deque<InputRequest>> input_requests;
-    std::shared_ptr<std::map<Connection, InputResponse>> player_input;
+    std::shared_ptr<std::map<User, InputResponse>> player_input;
     
     std::string result;
     unsigned timeout_s; // in seconds
 
-    std::map<Connection, bool> awaiting_input;
+    std::map<User, bool> awaiting_input;
 public:
     InputChoice(std::string prompt, 
                 std::shared_ptr<ASTNode> element_to_replace_root,
                 std::shared_ptr<ASTNode> choices_expression_root,
                 std::shared_ptr<std::deque<InputRequest>> input_requests,
-                std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                std::shared_ptr<std::map<User, InputResponse>> player_input,
                 std::string result, unsigned timeout_s = 0);
     RuleStatus execute(ElementMap& game_state) final;
 };

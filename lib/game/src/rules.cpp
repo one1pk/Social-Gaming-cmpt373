@@ -204,7 +204,7 @@ InputChoice::InputChoice(std::string prompt,
                         std::shared_ptr<ASTNode> element_to_replace_root,
                         std::shared_ptr<ASTNode> choices_expression_root,
                         std::shared_ptr<std::deque<InputRequest>> input_requests,
-                        std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                        std::shared_ptr<std::map<User, InputResponse>> player_input,
                         std::string result, unsigned timeout_s)
     : prompt(prompt), element_to_replace_root(element_to_replace_root),
     choices_expression_root(choices_expression_root),
@@ -214,7 +214,7 @@ InputChoice::InputChoice(std::string prompt,
 
 RuleStatus InputChoice::execute(ElementMap& game_state) {
     LOG(INFO) << "* InputChoiceRequest Rule *";
-    Connection player_connection = game_state["player"]->getMapElement("connection")->getConnection();
+    User player_connection = game_state["player"]->getMapElement("user")->getConnection();
 
     if (!awaiting_input[player_connection]) {
         // first execution of rule

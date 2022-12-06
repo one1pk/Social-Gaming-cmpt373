@@ -8,14 +8,14 @@ Game::Game()
     std::cout<< "GAME CONSTRUCTOR 1\n"; 
 }
 
-Game::Game(std::string name, Connection owner)
+Game::Game(std::string name, User owner)
     : _name(name), _owner(owner), _status(GameStatus::Created) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
     std::cout<< "GAME CONSTRUCTOR 2\n"; 
 }
 
-// Game::Game( std::string name, Connection owner, 
+// Game::Game( std::string name, User owner, 
 //             unsigned min_players, unsigned max_players, bool has_audience,
 //             ElementSptr setup,
 //             ElementSptr constants, ElementSptr variables,
@@ -24,7 +24,7 @@ Game::Game(std::string name, Connection owner)
 //             std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
 //             std::shared_ptr<std::deque<std::string>> global_msgs,
 //             std::shared_ptr<std::deque<InputRequest>> input_requests,
-//             std::shared_ptr<std::map<Connection, InputResponse>> player_input
+//             std::shared_ptr<std::map<User, InputResponse>> player_input
 // ) : _name(name), _owner(owner), _status(GameStatus::Created),
 //     _player_count{ min_players, max_players }, _has_audience(has_audience),
 //     _setup(setup),

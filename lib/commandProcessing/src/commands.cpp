@@ -12,7 +12,11 @@ void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outg
     }
     
     User owner = globalState.getGameOwner(user);
+    int playerCount = globalState.getPlayerCount(user);
+
     globalState.removeClientFromGame(user);
+
+    
 
     if (globalState.isOngoingGame(owner) && !globalState.gameHasEnoughPlayers(owner)) {
         std::deque<Message> messages = globalState.buildMsgsForAllPlayersAndOwner("\nNot enough players left, ending game.\n\n", owner);
@@ -20,6 +24,9 @@ void handlePlayerLeave(GlobalServerState& globalState, std::deque<Message>& outg
             outgoing.push_back(message);
         }
         globalState.endGame(owner);
+    } else {
+        notification << "Player Count : " << playerCount - 1 << "\n\n";
+        outgoing.push_back({owner, notification.str()});
     }
 }
 
@@ -110,7 +117,6 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
     }
 
     notification << "Player Count : " << playerCount << "\n\n";
-    // FIX: Establish owner as user in game rather than uintptr_t
     outgoing.push_back({globalState.getGameOwner(processedMessage.user), notification.str()});
 
     return CommandResult::SUCCESS_GAME_JOIN;
@@ -232,5 +238,11 @@ CommandResult UserNameCommand::execute(ProcessedMessage &processedMessage) {
     }
     globalState.setName(processedMessage.user, processedMessage.arguments[0]);
 
-    return CommandResult::SUCCESS_USERNAME;
+    std::stringstream notification;
+    notification << "\n" << "Hello, "<<processedMessage.arguments[0] << "!\n";
+    notification << "You are now in the main lobby, here you can chat with other players in the lobby\n";
+
+    outgoing.push_back({processedMessage.user, notification.str()});
+    
+    return CommandResult::STRING_SERVER_HELP;
 }

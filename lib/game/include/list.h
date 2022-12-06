@@ -217,7 +217,7 @@ public:
 
 
     size_t getSize() final {        
-        if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection> || std::is_same_v<T, bool>) {
+        if constexpr (std::is_integral_v<T> || std::is_same_v<T, User> || std::is_same_v<T, bool>) {
             // throw error //
             return 0;
         } else {
@@ -226,7 +226,7 @@ public:
     }
 
     int getSizeAsInt() final {        
-        if constexpr (std::is_integral_v<T> || std::is_same_v<T, Connection> || std::is_same_v<T, bool>) {
+        if constexpr (std::is_integral_v<T> || std::is_same_v<T, User> || std::is_same_v<T, bool>) {
             // throw error //
             return 0;
         } else {
@@ -234,8 +234,8 @@ public:
         }
     }
 
-    Connection getConnection() final {
-        if constexpr (std::is_same_v<T, Connection>) {
+    User getConnection() final {
+        if constexpr (std::is_same_v<T, User>) {
             return _data;
         } else {
             // throw error //

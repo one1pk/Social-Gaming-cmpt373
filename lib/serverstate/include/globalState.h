@@ -2,11 +2,13 @@
 
 #include "game.h"
 #include "server.h"
+#include "InterpretJson.h"
 
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <glog/logging.h>
 
 /**
  * This interface represents the global state of the game server. It manages

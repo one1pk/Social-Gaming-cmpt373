@@ -1,5 +1,4 @@
 #include "globalState.h"
-#include <glog/logging.h>
 
 void GlobalServerState::addNewUsers(std::vector<User>& users) {
     clients.insert(clients.end(), users.begin(), users.end());
@@ -35,11 +34,17 @@ void GlobalServerState::removeClientFromGame(User user) {
 }
 
 ///////////////////     GAME-RELATED FUNCTIONS     ///////////////////
-void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner);
-uintptr_t GlobalServerState::createGame(int gameIndex, Connection connection) {
+
+void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, User owner) {    
+    //Interpreter maps json info to game 
+    InterpretJson j("rock_paper_scissors", owner);
+    game_instances.emplace_back(j.interpret());
+}
+
+uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
     /// TODO: use interpreter to retrieve the appropriate game object corresponding to the game name
     
-    TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], connection);
+    TEMP_ManualRpsGameConstruction(game_instances, gameNameList[gameIndex], user);
 
     removeClientFromList(clients_in_lobby, user);
     clients_in_games[user] = game_instances.back().id();
@@ -337,21 +342,8 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 
 // compiles all the game names in ./gameconfigs into a list
 // all games defined in ./gameconfigs can be "served" to users
+// TODO: MAKE IT AUTO
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock Paper Scissors");
     gameNameList[1] = std::string("TestGame");
-}
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////
-////////////// TEMPORARY: Manual Rock Paper Scissor Game Construction //////////////////////
-#include "InterpretJson.h"
-
-
-void TEMP_ManualRpsGameConstruction(std::vector<Game>& game_instances, std::string game_name, Connection owner) {    
-    //Interpreter maps json info to game 
-    InterpretJson j("rock_paper_scissors", owner);
-    game_instances.emplace_back(j.interpret());
 }
