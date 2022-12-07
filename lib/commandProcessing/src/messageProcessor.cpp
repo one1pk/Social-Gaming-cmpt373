@@ -57,4 +57,5 @@ void MessageProcessor::initializeCommandStringMap() {
     CommandStringMap["leave"] = UserCommand::LEAVE;
     CommandStringMap["end"] = UserCommand::END;
     CommandStringMap["name"] = UserCommand::USERNAME;
+    CommandStringMap["setup"] = UserCommand::GAMESETUP;
 }

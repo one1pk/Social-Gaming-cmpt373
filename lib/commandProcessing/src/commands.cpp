@@ -54,19 +54,13 @@ CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_GAME_INDEX;
     }
 
-    std::pair<uintptr_t, ElementSptr> invitationCode_setup_pair = globalState.createGame(gameIndex, processedMessage.user);
-
-    std::stringstream notification;
-    notification << "Configure setup\n";
-    outgoing.push_back({processedMessage.user, notification.str()});
-    for(auto& [elementName, element] : invitationCode_setup_pair.second->getMap()){
-        notification.str("");
-        notification << "Enter " << elementName << "\n";
-        outgoing.push_back({processedMessage.user, notification.str()});
-    }
+    // std::pair<uintptr_t, ElementSptr> invitationCode_setup_pair = 
+    uintptr_t invitation_code = globalState.createGame(gameIndex, processedMessage.user);
     
-    notification.str("");
-    notification << "\nGame Successfully Created! \nInvitationCode = " << invitationCode_setup_pair.first << "\n\n";
+    std::stringstream notification;
+    notification << "\nGame Successfully Created! \nInvitationCode = " << invitation_code << "\n";
+    notification << "\nYou may configure the following before starting the game. Use \"setup <index> <value>\" to set the option at index.\n";
+    notification << globalState.getSetup(processedMessage.user);
     outgoing.push_back({processedMessage.user, notification.str()});
 
     return CommandResult::SUCCESS;
@@ -106,7 +100,13 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
 
-    int invitationCode = stoi(processedMessage.arguments[0]);
+    int invitationCode;
+    try {
+        invitationCode = stoi(processedMessage.arguments[0]);
+    } catch (std::exception &e) {
+        return CommandResult::ERROR_INVALID_GAME_INDEX;
+    }
+
     if (!globalState.isValidGameInvitation(invitationCode)) {
         return CommandResult::ERROR_INVALID_INVITATION_CODE;
     }
@@ -254,4 +254,28 @@ CommandResult UserNameCommand::execute(ProcessedMessage &processedMessage) {
     outgoing.push_back({processedMessage.user, notification.str()});
     
     return CommandResult::STRING_SERVER_HELP;
+}
+
+//////////////////////////      EDIT GAME CONFIGURATION      //////////////////////////
+
+CommandResult
+GameSetUpCommand::execute(ProcessedMessage &processedMessage) {
+
+    if (globalState.isOwner(processedMessage.user) && !globalState.isOngoingGame(processedMessage.user)) {
+        if(processedMessage.arguments.size() < 2){
+            return CommandResult::ERROR_INCORRECT_COMMAND_FORMAT;
+        }
+
+        int index, value;
+        try {
+            index = stoi(processedMessage.arguments[0]);
+            value = stoi(processedMessage.arguments[1]);
+        } catch (std::exception &e) {
+            return CommandResult::ERROR_INVALID_GAME_INDEX;
+        }
+        globalState.setSetupValue(processedMessage.user, index, value);
+        return CommandResult::SUCCESS;
+    }
+
+    return CommandResult::ERROR_INVALID_COMMAND;
 }

@@ -62,7 +62,7 @@ public:
      *  adds them to the game lobby
      *  returns invitation code, setup pair to configure setup
      */
-    std::pair<uintptr_t, ElementSptr> createGame(int gameIndex, User user);
+    uintptr_t createGame(int gameIndex, User user);
 
     /**
      * Helps execution of START command.
@@ -90,6 +90,7 @@ public:
     std::string getGameNamesAsString();
     User getGameOwner(User user);
     int getPlayerCount(User user);
+    std::string getSetup(User user);
     void setName(User user, std::string name);
     std::string getName(User user);
     bool isInLobby(User user);
@@ -101,6 +102,8 @@ public:
     bool isOngoingGame(uintptr_t invitation_code);
     bool isValidGameInvitation(uintptr_t invitation_code);
     void registerUserGameInput(User user, std::string input);
+
+    void ConfigureSetupValue(User user, int index, int value);
 
     // BROADCASTING METHODS
 

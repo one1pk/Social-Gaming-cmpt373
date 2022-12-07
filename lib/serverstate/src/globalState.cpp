@@ -41,8 +41,7 @@ void GlobalServerState::constructGame(std::vector<Game>& game_instances, std::st
     game_instances.emplace_back(interpreter.interpret());
 }
 
-#include "list.h"
-std::pair<uintptr_t, ElementSptr> GlobalServerState::createGame(int gameIndex, User user) {
+uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
     
     constructGame(game_instances, gameNameList[gameIndex], user);
 
@@ -50,9 +49,7 @@ std::pair<uintptr_t, ElementSptr> GlobalServerState::createGame(int gameIndex, U
     clients_in_games[user] = game_instances.back().id();
     gameOwnerMap[user] = game_instances.back().id();
 
-    std::pair<uintptr_t, ElementSptr> id_setup_pair = {game_instances.back().id(), game_instances.back().setup()};
-
-    return id_setup_pair;
+    return game_instances.back().id();
 }
 
 void GlobalServerState::startGame(User user) {
@@ -176,6 +173,19 @@ GlobalServerState::getGameOwner(User user){
 int GlobalServerState::getPlayerCount(User user) {
     uintptr_t gameID = clients_in_games[user];
     return getGameInstancebyId(gameID)->numPlayers();
+}
+
+std::string GlobalServerState::getSetup(User user) {
+    auto gameInstance = getGameInstancebyOwner(user);
+    ElementSptr setup = gameInstance->setup();
+    std::stringstream setupString;
+    setupString << "Setup Configuration:\n";
+    int index = 0;
+    for(auto& [elementName, element] : setup->getMap()){
+        setupString << "[" << index++ << "] " << elementName << " : " << "\n";
+    }
+
+    return setupString.str();
 }
 
 void GlobalServerState::setName(User user, std::string name) {
@@ -347,4 +357,19 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 // TODO: MAKE IT AUTO
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock_Paper_Scissors");
+}
+
+
+void GlobalServerState::ConfigureSetupValue(User user, int index, int value){
+    std::cout << "Reached setup value" << std::endl;
+        // auto gameInstance = getGameInstancebyOwner(user);
+        // auto setUp = gameInstance->setUp();
+        // auto setUpMap = setUp.getMap();
+
+        // if(index < setUpMap.size()){
+        //     auto keyIterator = setUpMap.begin() + index;
+        //     setUp.setMapElement(keyIterator->first, value);
+        // }
+        
+         
 }

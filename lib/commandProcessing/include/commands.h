@@ -211,3 +211,17 @@ class UserNameCommand : public Command {
     : Command(globalState, outgoing) {}
     CommandResult execute(ProcessedMessage &) override;
 };
+
+
+/**
+ * Enables a game owner to configure some of game Setup options
+ * 
+*/
+
+class GameSetUpCommand : public Command {
+    public:
+    GameSetUpCommand(GlobalServerState &globalState,
+    std::deque<Message> &outgoing)
+    : Command(globalState, outgoing) {}
+    CommandResult execute(ProcessedMessage &) override;
+};
