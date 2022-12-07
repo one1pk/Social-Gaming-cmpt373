@@ -6,11 +6,6 @@
 * Any json file which uses the rules used in Rock, Paper, Scissors, can be interpreted and turned into a playable game without having to do anything extra
 * Trivia game was done towards the end and has new rules so it is a bit flaky, but it demonstrates that interpretation, adding rules and game running is trivial at this point since we have a solid base structure.
 
-
-## Iteration 2 - Notes
-
-* Multiple instances of the Rock, Paper, Scissors game can now be played on the server in parallel (there still remains many unhandled cases/errors but the basic functionality should be correct)
-
 # Social Gaming
 
 #### Install Dependecies
