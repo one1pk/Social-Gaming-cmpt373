@@ -1,0 +1,5 @@
+
+////////////// These are specifications for the json files. Subject to change. ///////////////
+
+
+

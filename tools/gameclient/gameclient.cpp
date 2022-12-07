@@ -1,5 +1,6 @@
 #include "client.h"
 #include "ChatWindow.h"
+#include <glog/logging.h>
 
 #include <iostream>
 
@@ -25,13 +26,15 @@ std::string WELCOME_MESSAGE = (
         "  * To display help information again enter: help\n\n");
 
 int main(int argc, char* argv[]) {
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
     
     // verify that the cmdline arguments provided describe a game server
     // and connect to the server
 
     if (argc < 3) {
-        std::cerr << "Usage: \n  " << argv[0] << " <ip address> <port> <your game name>\n"
-                << "  e.g. " << argv[0] << " localhost 4002 John\n";
+        LOG(ERROR) << "Usage: \n  " << argv[0] << " <ip address> <port> <your game name>\n"
+                   << "  e.g. " << argv[0] << " localhost 4002 John\n";
         return 1;
     }
     Client client{argv[1], argv[2]};

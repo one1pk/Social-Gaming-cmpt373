@@ -1,10 +1,10 @@
-add_library(serverstate
-    src/globalState.cpp
+add_library(AST
+    src/ExpressionResolver.cpp
+    src/ExpressionTree.cpp
+    src/TreePrinter.cpp
 )
 
-find_package(glog 0.4.0 REQUIRED)
-
-target_include_directories(serverstate
+target_include_directories(AST
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -12,20 +12,17 @@ target_include_directories(serverstate
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(serverstate
-  PUBLIC
-    networking
-    game
-    interpreter
-    glog::glog
+target_link_libraries(AST
+    PRIVATE
+        game
 )
 
-set_target_properties(serverstate
+set_target_properties(AST
                     PROPERTIES
                     LINKER_LANGUAGE CXX
                     CXX_STANDARD 17
 )
 
-install(TARGETS serverstate
+install(TARGETS AST
     ARCHIVE DESTINATION lib
 )
