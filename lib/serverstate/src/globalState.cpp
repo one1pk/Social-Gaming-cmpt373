@@ -344,4 +344,5 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 // TODO: MAKE IT AUTO
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock_Paper_Scissors");
+    gameNameList[1] = std::string("triviaGame");
 }

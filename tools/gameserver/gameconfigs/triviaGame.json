@@ -1,0 +1,122 @@
+{
+    "configuration": {
+        "name": "Trivia!",
+        "player count": {"min": 1, "max": 6},
+        "audience": true,
+        "setup": {
+            "qa": {
+              "kind": "questionAnswer",
+              "prompt": "Please load the trivia questions and answers"
+            }
+        }
+    },
+        "constants": {
+            "qabank": [
+              { "question": "What is the capital of BC?",     
+              "answer": "Victoria" },
+              { "question": "What is the capital of Canada?",     
+              "answer": "Ottawa" },
+              { "question": "In what city is SFU's main campus?",     
+              "answer": "Burnaby" },
+              { "question": "What game is this?",     
+              "answer": "Trivia!" }
+            ],
+            "peekUsed": [false, true]
+          },
+        
+          "variables": {
+            "currentQuestion": {"question": "What is the capital of BC?",     
+            "answer": "Victoria" }
+          },
+        
+          "per-player": {
+            "rightAnswer": 0,
+            "answerInput": "",
+            "peek": false
+          },
+        
+          "per-audience": {
+            "guess": ""
+          },
+
+          "rules": [
+            {
+              "rule": "sort",
+              "list": "qabank",
+              "key": "question"
+            },
+            { "rule": "foreach",
+              "list": "qabank.size.upfrom(1)",
+              "element": "round",
+              "rules": [
+                { "rule": "global-message",
+                  "value": "Round {round}."
+                },
+                { "rule": "global-message",
+                  "value": "Here is your question: {variables.currentQuestion.question}"
+                },
+                { "rule": "parallelfor",
+                  "list": "players",
+                  "element": "player",
+                  "rules": [
+                    {
+                      "rule": "switch",
+                      "value": "player.peek",
+                      "list": "peekUsed",
+                      "cases": [
+                        { "case": false,
+                          "rules": [
+                            { "rule": "input-choice",
+                              "to": "player",
+                              "prompt": "{player.name}, do you want to peek from audience?",
+                              "choices": "peekUsed",
+                              "result": "peek",
+                              "timeout": 10
+                            },
+                            { "rule": "switch",
+                              "value": "player.peek",
+                              "list": "peekUsed",
+                              "cases": [
+                                { "case": true,
+                                  "rules": [
+                                    { "rule": "global-message",
+                                      "value": "One player member guessed: {players.answerInput.first}"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "rule": "input-text",
+                      "to": "player",
+                      "prompt": "Please enter your final answer",
+                      "result": "answerInput",
+                      "timeout": 15
+                    },
+                    { "rule": "when",
+                      "cases": [
+                        { "condition": "player.answerInput == variables.currentQuestion.answer",
+                          "rules": [
+                            { "rule": "add",
+                              "to": "player.rightAnswer",
+                              "value": 1
+                            }
+                          ]  
+                        }
+                      ]
+                    }
+                  ]
+                }
+
+              ]
+            },
+            { "rule": "scores",
+              "score": "rightAnswer",
+              "ascending": false
+            }
+          ]
+}

@@ -93,13 +93,13 @@ RuleStatus Switch::execute(ElementMap& game_state) {
     LOG(INFO) << "* Switch Rule *";
 
     value_expression_root->accept(resolver, game_state);
-    auto value = resolver.getResult();
+    auto value = resolver.getResult()->getBool();
     for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
         auto& [condition_root, rules] = *conditionExpression_rule_pair;
         rule = rules.begin();
 
         condition_root->accept(resolver, game_state);
-        auto switch_case = resolver.getResult();    
+        auto switch_case = resolver.getResult()->getBool(); 
         if (switch_case == value) {
             LOG(INFO) << "Case Match!" << std::endl << "Executing Case Rules";
 
@@ -366,8 +366,8 @@ RuleStatus InputText::execute(ElementMap& game_state) {
 
     if (!awaiting_input[player_connection]) {
         std::stringstream formatted_prompt = std::stringstream(formatString(prompt, resolver));
-        if (timeout_s) formatted_prompt << "Input will timeout in " << timeout_s << " seconds\n"; 
-LOG(INFO) << "Formatted prompt *";
+        if (timeout_s) formatted_prompt << formatted_prompt.str() << "Input will timeout in " << timeout_s << " seconds\n"; 
+        LOG(INFO) << "Formatted prompt *";
         // create an input request and flag that input is required
         input_requests->emplace_back(
             player_connection,
