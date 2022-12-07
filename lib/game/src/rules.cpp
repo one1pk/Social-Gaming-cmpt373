@@ -81,6 +81,44 @@ RuleStatus ParallelFor::execute(ElementMap& game_state) {
     return status;
 }
 
+// Switch //
+
+Switch::Switch(std::shared_ptr<ASTNode> value_expression_root, std::shared_ptr<ASTNode> list_expression_root, Condition_Rules _conditionExpression_rule_pairs)
+    : value_expression_root(value_expression_root), list_expression_root(list_expression_root), conditionExpression_rule_pairs(_conditionExpression_rule_pairs), 
+    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
+    rule(conditionExpression_rule_pair->second.begin()) {
+}
+
+RuleStatus Switch::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Switch Rule *";
+
+    value_expression_root->accept(resolver, game_state);
+    auto value = resolver.getResult()->getBool();
+    for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
+        auto& [condition_root, rules] = *conditionExpression_rule_pair;
+        rule = rules.begin();
+
+        condition_root->accept(resolver, game_state);
+        auto switch_case = resolver.getResult()->getBool(); 
+        if (switch_case == value) {
+            LOG(INFO) << "Case Match!" << std::endl << "Executing Case Rules";
+
+            for (; rule != rules.end(); rule++) {
+                if ((*rule)->execute(game_state) == RuleStatus::InputRequired) {
+                    return RuleStatus::InputRequired;
+                }
+            }
+            break;
+        } else {
+            LOG(INFO) << "Case Fail, testing next case";
+        }
+    }
+
+    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
+    rule = conditionExpression_rule_pair->second.begin();
+    return RuleStatus::Done;
+}
+
 // When //
 
 When::When(Condition_Rules _conditionExpression_rule_pairs)
@@ -153,6 +191,57 @@ RuleStatus Discard::execute(ElementMap& game_state) {
     auto count = resolver.getResult()->getInt();
 
     list->discard(count);
+    return RuleStatus::Done;
+}
+
+// Shuffle //
+
+Shuffle::Shuffle(std::shared_ptr<ASTNode> list_expression_root)
+    : list_expression_root(list_expression_root){   
+}
+
+RuleStatus Shuffle::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Shuffle Rule *";
+
+    list_expression_root->accept(resolver, game_state);
+    auto list = resolver.getResult();
+
+    list->shuffle();
+    return RuleStatus::Done;
+}
+
+// Sort //
+
+Sort::Sort(std::shared_ptr<ASTNode> list_expression_root, std::optional<std::string> key)
+    : list_expression_root(list_expression_root), key(key) {   
+}
+
+RuleStatus Sort::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Sort Rule *";
+
+    list_expression_root->accept(resolver, game_state);
+    auto list = resolver.getResult();
+
+    list->sortList(key);
+    return RuleStatus::Done;
+}
+
+// Deal //
+
+Deal::Deal(std::shared_ptr<ASTNode> from_expression_root, std::shared_ptr<ASTNode> to_expression_root, int count)
+    : from_expression_root(from_expression_root), to_expression_root(to_expression_root), count(count) {
+}
+
+RuleStatus Deal::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Deal Rule *";
+
+    from_expression_root->accept(resolver, game_state);
+    auto from = resolver.getResult();
+
+    to_expression_root->accept(resolver, game_state);
+    auto to = resolver.getResult();
+
+    from->deal(to, count);
     return RuleStatus::Done;
 }
 
@@ -262,6 +351,48 @@ RuleStatus InputChoice::execute(ElementMap& game_state) {
     return RuleStatus::Done;
 }
 
+InputText::InputText(std::string prompt, 
+                        std::shared_ptr<std::deque<InputRequest>> input_requests,
+                        std::shared_ptr<std::map<User, InputResponse>> player_input,
+                        std::string result, unsigned timeout_s)
+    : prompt(prompt),
+    input_requests(input_requests), player_input(player_input), 
+    result(result), timeout_s(timeout_s) {
+}
+
+RuleStatus InputText::execute(ElementMap& game_state) {
+    LOG(INFO) << "* InputTextRequest Rule *";
+    User player_connection = game_state["player"]->getMapElement("user")->getConnection();
+
+    if (!awaiting_input[player_connection]) {
+        std::stringstream formatted_prompt = std::stringstream(formatString(prompt, resolver));
+        if (timeout_s) formatted_prompt << formatted_prompt.str() << "Input will timeout in " << timeout_s << " seconds\n"; 
+        LOG(INFO) << "Formatted prompt *";
+        // create an input request and flag that input is required
+        input_requests->emplace_back(
+            player_connection,
+            formatted_prompt.str(),
+            InputType::Text,
+            0,
+            timeout_s,
+            timeout_s*1000
+        );
+        awaiting_input[player_connection] = true;
+        return RuleStatus::InputRequired;
+    }
+    // execution will continue from here after input is recieved
+    std::string answer;
+    InputResponse input = player_input->at(player_connection);
+    if (input.timedout) {
+        answer = "";
+    } else {
+        answer = input.response;
+    }
+    game_state["player"]->setMapElement(result, std::make_shared<Element<std::string>>(answer));
+
+    awaiting_input[player_connection] = false;
+    return RuleStatus::Done;
+}
 
 // GlobalMsg //
 

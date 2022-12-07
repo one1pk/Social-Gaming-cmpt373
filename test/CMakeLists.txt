@@ -4,6 +4,7 @@ enable_testing()
 add_definitions(-DPATH_TO_JSON_TEST="${CMAKE_CURRENT_SOURCE_DIR}/test_files")
 
 add_executable(runAllTests
+  #test-new-rules.cpp
   test-interpreter.cpp
   test-AST.cpp
   test-list.cpp

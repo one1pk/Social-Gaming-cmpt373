@@ -31,7 +31,6 @@ Game InterpretJson::interpret() {
     // then convert ElementSptr to rule vector containing rule objects
     RuleVector rules;
     toRuleVec(game, rule_structure, rules);
-
     game._rules = rules;
     return game;
 }
@@ -96,6 +95,15 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
                  game._input_requests, game._player_input, result, timeout);
         }
 
+        else if(ruleName == "input-text"){
+            auto prompt = rule->getMapElement("prompt")->getString();
+ 
+            auto result = rule->getMapElement("result")->getString();
+            auto timeout = rule->getMapElement("timeout")->getInt();
+            ruleObject = std::make_shared<InputText>(prompt,
+                 game._input_requests, game._player_input, result, timeout);
+        }
+
         else if (ruleName == "add"){
             auto to = rule->getMapElement("to")->getString();
             expressionTree.build(to);
@@ -135,6 +143,36 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             ruleObject = std::make_shared<Discard>(fromExpressionRoot, countExpressionRoot);
         }
 
+        else if (ruleName == "sort"){
+            auto listString = rule->getMapElement("list")->getString();
+            expressionTree.build(listString);
+            auto listExpressionRoot = expressionTree.getRoot();
+            auto key = rule->getMapElement("key");
+            if (key != nullptr)
+                ruleObject = std::make_shared<Sort>(listExpressionRoot, key->getString());
+            else
+                ruleObject = std::make_shared<Sort>(listExpressionRoot);
+        }
+
+        else if (ruleName == "shuffle"){
+            auto listString = rule->getMapElement("list")->getString();
+            expressionTree.build(listString);
+            auto listExpressionRoot = expressionTree.getRoot();
+
+            ruleObject = std::make_shared<Shuffle>(listExpressionRoot);
+        }
+
+        else if (ruleName == "deal"){
+            auto fromString = rule->getMapElement("from")->getString();
+            expressionTree.build(fromString);
+            auto fromExpressionRoot = expressionTree.getRoot();
+            auto toString = rule->getMapElement("to")->getString();
+            expressionTree.build(toString);
+            auto toExpressionRoot = expressionTree.getRoot();
+            auto count = rule->getMapElement("count")->getInt();
+            ruleObject = std::make_shared<Deal>(fromExpressionRoot, toExpressionRoot, count);
+        }
+
         else if(ruleName == "when"){            
             std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pairs;
             ElementVector cases = rule->getMapElement("cases")->getVector();
@@ -150,6 +188,28 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             ruleObject = std::make_shared<When>(conditionExpression_rule_pairs);
         }
 
+        else if(ruleName == "switch"){       
+            auto listString = rule->getMapElement("list")->getString();
+            expressionTree.build(listString);
+            auto listExpressionRoot = expressionTree.getRoot();
+
+            auto valueString = rule->getMapElement("value")->getString();
+            expressionTree.build(valueString);
+            auto valueExpressionRoot = expressionTree.getRoot();
+
+            std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>> conditionExpression_rule_pairs;
+            ElementVector cases = rule->getMapElement("cases")->getVector();
+            for(auto& caseRulePair : cases){
+                auto conditionString = caseRulePair->getMapElement("case")->getString();
+                expressionTree.build(conditionString);
+                auto conditionExpressionRoot = expressionTree.getRoot();
+
+                RuleVector caseRules;
+                toRuleVec(game, caseRulePair->getMapElement("rules"), caseRules);
+                conditionExpression_rule_pairs.push_back({conditionExpressionRoot, caseRules});
+            }
+            ruleObject = std::make_shared<Switch>(valueExpressionRoot, listExpressionRoot, conditionExpression_rule_pairs);
+        }
         rule_vec.push_back(ruleObject);
     }
 }

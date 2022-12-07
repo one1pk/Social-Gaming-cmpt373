@@ -1,0 +1,42 @@
+{
+    "configuration": {
+        "name": "Trivia!",
+        "player count": {"min": 1, "max": 6},
+        "audience": true,
+        "setup": {
+            "qa": {
+              "kind": "question-answer",
+              "prompt": "Please load the trivia questions and answers"
+            }
+        }
+    },
+    "constants": {
+        "qa-bank": [
+            { "question": "What is the capital of BC?",     
+            "answer": "Victoria" },
+            { "question": "What is the capital of Canada?",     
+            "answer": "Ottawa" },
+            { "question": "In what city is SFU's main campus?",     
+            "answer": "Burnaby" },
+            { "question": "What game is this?",     
+            "answer": "Trivia!" }
+        ],
+        "peek-used": [true, false],
+        "answer-or-peek": ["Answer", "Hint"]
+        },
+    
+    "variables": {
+        "current-question": ""
+    },
+
+    "per-player": {
+        "right-answer": 0,
+        "answer-input": "",
+        "peek-choice": "",
+        "peek": false
+    },
+
+    "per-audience": {
+        "guess": ""
+    }
+}

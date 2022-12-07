@@ -62,6 +62,9 @@ public:
     // List Operations //
     virtual void extend(ElementSptr element) = 0;
     virtual void discard(unsigned count) = 0;
+    virtual void sortList(std::optional<std::string> key) = 0;
+    virtual void deal(ElementSptr to, int count) = 0;
+    virtual void shuffle() = 0;
 
     virtual ElementSptr upfrom(int start) = 0;
     virtual bool contains(ElementSptr element) = 0;
@@ -276,6 +279,59 @@ public:
             for (unsigned i = 0; i < count; i++) _data.pop_back();
         } else {
             // throw error //
+        }
+    }
+
+    void sortList(std::optional<std::string> key) final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            if (key.has_value()) {
+                struct by_key {
+                    by_key(std::string key) { this->key = key; }
+                    bool operator()(ElementSptr const &a, ElementSptr const &b) const {
+                        return a->getMapElement(key)->getString() < b->getMapElement(key)->getString();
+                    }
+                std::string key;
+                };
+            // sort //
+            std::sort(_data.begin(), _data.end(), by_key(key.value()));
+            }
+            else {
+                struct by_type {
+                    bool operator()(ElementSptr const &a, ElementSptr const &b) const {
+                        if (a->type == Type::INT) {
+                            return a->getInt() < b->getInt();
+                        }
+                        else {
+                            return a->getString() < b->getString();
+                        }
+                    }
+                };
+                std::sort(_data.begin(), _data.end(), by_type());
+            }
+            
+        } else {
+            throw std::invalid_argument("You can only sort an ElementVector");
+        }
+    }
+
+    void deal(ElementSptr to, int count) final { 
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            // deal <count> elements//
+            for (int i = 0; i < count; i++) {
+                to = _data.back();
+                _data.pop_back();
+
+            }
+        } else {
+            throw std::invalid_argument("You can only deal from an ElementVector");
+        }
+    }
+
+    void shuffle() final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            std::random_shuffle(_data.begin(), _data.end());
+        } else {
+             throw std::invalid_argument("You can only shuffle an ElementVector");
         }
     }
 
