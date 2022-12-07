@@ -20,6 +20,7 @@ enum UserCommand {
     LEAVE,
     END,
     USERNAME,
+    GAMESETUP,
 };
 
 /**

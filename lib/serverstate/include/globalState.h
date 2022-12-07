@@ -60,6 +60,7 @@ public:
      *  with name == gameNameList[gameIndex] (found at ./gameconfigs/<name>.json)
      *  removes the client(user) from server lobby and makes them the owner of game instance
      *  adds them to the game lobby
+     *  returns invitation code, setup pair to configure setup
      */
     uintptr_t createGame(int gameIndex, User user);
 
@@ -89,6 +90,7 @@ public:
     std::string getGameNamesAsString();
     User getGameOwner(User user);
     int getPlayerCount(User user);
+    std::string getSetup(User user);
     void setName(User user, std::string name);
     std::string getName(User user);
     bool isInLobby(User user);
@@ -100,6 +102,8 @@ public:
     bool isOngoingGame(uintptr_t invitation_code);
     bool isValidGameInvitation(uintptr_t invitation_code);
     void registerUserGameInput(User user, std::string input);
+
+    void ConfigureSetupValue(User user, std::string index, int value);
 
     // BROADCASTING METHODS
 

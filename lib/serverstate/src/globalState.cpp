@@ -175,6 +175,19 @@ int GlobalServerState::getPlayerCount(User user) {
     return getGameInstancebyId(gameID)->numPlayers();
 }
 
+std::string GlobalServerState::getSetup(User user) {
+    auto gameInstance = getGameInstancebyOwner(user);
+    ElementSptr setup = gameInstance->setup();
+    std::stringstream setupString;
+    setupString << "Setup Variables:\n";
+    //int index = 0;
+    for(auto& [elementName, element] : setup->getMap()){
+        setupString << elementName << "\n";
+    }
+
+    return setupString.str();
+}
+
 void GlobalServerState::setName(User user, std::string name) {
     userNames[user] = name;
 }
@@ -341,8 +354,14 @@ GlobalServerState::getGameInstancebyId(uintptr_t gameID) {
 
 // compiles all the game names in ./gameconfigs into a list
 // all games defined in ./gameconfigs can be "served" to users
-// TODO: MAKE IT AUTO
 void GlobalServerState::populateGameList() {
     gameNameList[0] = std::string("Rock_Paper_Scissors");
     gameNameList[1] = std::string("triviaGame");
+}
+
+
+void GlobalServerState::ConfigureSetupValue(User user, std::string key, int value){
+        auto gameInstance = getGameInstancebyOwner(user);
+        auto element = std::make_shared<Element<int>>(value);
+        gameInstance->setup()->changeMapElement(key, element);
 }

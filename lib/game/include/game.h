@@ -58,12 +58,8 @@ public:
     void setOwner(User owner){ _owner = owner; }
     bool audience(){ return _has_audience; }
     void setName(std::string name) { _name = name; }
-    void setStatusCreated() { _status = GameStatus::Created; }
     void setRules(RuleVector rules) { _rules = rules; }
-    void setID(){
-         static uintptr_t shared_id_counter = 1; // gameIDs start at 1
-        _id = shared_id_counter++;
-    }
+    void setID();
 
 // private:
     uintptr_t _id; // unique id can act as an invitation code

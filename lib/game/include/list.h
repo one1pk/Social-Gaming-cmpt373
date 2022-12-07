@@ -8,6 +8,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
+#include <glog/logging.h>
 
 
 enum Type { // doesn't seem useful, might remove later 
@@ -41,6 +42,7 @@ public:
     virtual void setMapElement(std::string key, ElementSptr element) = 0;
     virtual ElementSptr getMapElement(std::string key) = 0;
     virtual void removeMapElement(std::string key) = 0;
+    virtual void changeMapElement(std::string key, ElementSptr element) = 0;
     
     virtual ElementVector getSubList(std::string key) = 0;
     virtual ElementVector getVector() = 0;
@@ -66,6 +68,8 @@ public:
 
     virtual ElementSptr upfrom(int start) = 0;
     virtual bool contains(ElementSptr element) = 0;
+
+    //virtual ElementSptr getElementOfType(Type type) = 0;
 };
 
 template <typename T>
@@ -104,6 +108,17 @@ public:
             _data[key] = element;
         } else {
             // throw error //
+        }
+    }
+
+    void changeMapElement(std::string key, ElementSptr element) final {
+        if constexpr (std::is_same_v<T, ElementMap>) {
+                if (_data.find(key) != _data.end())
+                    _data[key] = element;
+                else 
+                    LOG(INFO) << "Could not find" << std::endl;
+        } else {
+            return;
         }
     }
 

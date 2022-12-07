@@ -4,15 +4,13 @@
 #include <algorithm>
 
 Game::Game()
-    : _status(GameStatus::Created){
-    std::cout<< "GAME CONSTRUCTOR 1\n"; 
+    : _status(GameStatus::Created){ 
 }
 
 Game::Game(std::string name, User owner)
     : _name(name), _owner(owner), _status(GameStatus::Created) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
-    std::cout<< "GAME CONSTRUCTOR 2\n"; 
 }
 
 // Game::Game( std::string name, User owner, 
@@ -40,7 +38,6 @@ Game::Game(std::string name, User owner)
 // starts the game execution
 void Game::run() {
     _status = GameStatus::Running;
-
     for (auto rule: _rules) {
         if (rule->execute(_game_state) == RuleStatus::InputRequired) {
             _status = GameStatus::AwaitingOutput;
@@ -163,4 +160,9 @@ ElementSptr Game::per_audience(){
 }
 RuleVector& Game::rules(){
     return _rules;
+}
+
+void Game::setID(){
+    static uintptr_t shared_id_counter = 1; // gameIDs start at 1
+    _id = shared_id_counter++;
 }

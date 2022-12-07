@@ -54,10 +54,13 @@ CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_GAME_INDEX;
     }
 
-    uintptr_t invitationCode = globalState.createGame(gameIndex, processedMessage.user);
-
+    // std::pair<uintptr_t, ElementSptr> invitationCode_setup_pair = 
+    uintptr_t invitation_code = globalState.createGame(gameIndex, processedMessage.user);
+    
     std::stringstream notification;
-    notification << "Game Successfully Created! \nInvitationCode = " << invitationCode << "\n\n";
+    notification << "\nGame Successfully Created! \nInvitationCode = " << invitation_code << "\n";
+    notification << "\nUse start to start game.\nYou may configure the following variables before starting the game.\nUse \"setup <variableName> <value>\" to set the option at the variable. Case sensitive.\n";
+    notification << globalState.getSetup(processedMessage.user);
     outgoing.push_back({processedMessage.user, notification.str()});
 
     return CommandResult::SUCCESS;
@@ -101,9 +104,9 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
     try {
         invitationCode = stoi(processedMessage.arguments[0]);
     } catch (std::exception &e) {
-        return CommandResult::ERROR_INVALID_INVITATION_CODE;
+        return CommandResult::ERROR_INVALID_GAME_INDEX;
     }
-    
+
     if (!globalState.isValidGameInvitation(invitationCode)) {
         return CommandResult::ERROR_INVALID_INVITATION_CODE;
     }
@@ -251,4 +254,31 @@ CommandResult UserNameCommand::execute(ProcessedMessage &processedMessage) {
     outgoing.push_back({processedMessage.user, notification.str()});
     
     return CommandResult::STRING_SERVER_HELP;
+}
+
+//////////////////////////      EDIT GAME CONFIGURATION      //////////////////////////
+
+CommandResult
+GameSetUpCommand::execute(ProcessedMessage &processedMessage) {
+
+    if (globalState.isOwner(processedMessage.user) && !globalState.isOngoingGame(processedMessage.user)) {
+        if(processedMessage.arguments.size() < 2){
+            return CommandResult::ERROR_INCORRECT_COMMAND_FORMAT;
+        }
+        std::string key = processedMessage.arguments[0];
+        int value;
+        try {
+            value = stoi(processedMessage.arguments[1]);
+        } catch (std::exception &e) {
+            return CommandResult::ERROR_INVALID_GAME_INDEX;
+        }
+        globalState.ConfigureSetupValue(processedMessage.user, key, value);
+        std::stringstream notification;
+        notification << key << ": " << value << "\n";
+        outgoing.push_back({processedMessage.user, notification.str()});
+
+        return CommandResult::SUCCESS;
+    }
+
+    return CommandResult::ERROR_INVALID_COMMAND;
 }

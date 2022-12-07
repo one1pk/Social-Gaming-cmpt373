@@ -27,7 +27,7 @@
   
     "rules": [
       { "rule": "foreach",
-        "list": "Rounds.upfrom(1)",
+        "list": "setup.Rounds.upfrom(1)",
         "element": "round",
         "rules": [
   
