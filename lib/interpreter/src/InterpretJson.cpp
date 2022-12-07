@@ -165,10 +165,10 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             auto fromString = rule->getMapElement("from")->getString();
             expressionTree.build(fromString);
             auto fromExpressionRoot = expressionTree.getRoot();
-            auto toString = rule->getMapElement("from")->getString();
+            auto toString = rule->getMapElement("to")->getString();
             expressionTree.build(toString);
             auto toExpressionRoot = expressionTree.getRoot();
-            auto count = rule->getMapElement("key")->getInt();
+            auto count = rule->getMapElement("count")->getInt();
             ruleObject = std::make_shared<Deal>(fromExpressionRoot, toExpressionRoot, count);
         }
 
