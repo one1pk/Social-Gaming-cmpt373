@@ -15,7 +15,7 @@ ProcessedMessage MessageProcessor::createProcessedMessage(const Message &message
 
     ProcessedMessage processedMessage;
     std::vector<std::string> messageTokens = tokenizeMessage(message.text);
-    processedMessage.connection = message.connection;
+    processedMessage.user = message.user;
 
     std::string commandString = messageTokens[0];
 
@@ -56,4 +56,5 @@ void MessageProcessor::initializeCommandStringMap() {
     CommandStringMap["start"] = UserCommand::START;
     CommandStringMap["leave"] = UserCommand::LEAVE;
     CommandStringMap["end"] = UserCommand::END;
+    CommandStringMap["name"] = UserCommand::USERNAME;
 }

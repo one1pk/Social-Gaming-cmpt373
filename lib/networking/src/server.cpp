@@ -31,7 +31,7 @@ public:
     void registerChannel(Channel& channel);
     void reportError(std::string_view message);
 
-    using ChannelMap = std::unordered_map<Connection, std::shared_ptr<Channel>, ConnectionHash>;
+    using ChannelMap = std::unordered_map<User, std::shared_ptr<Channel>, UserHash>;
 
     Server& server;
     const boost::asio::ip::tcp::endpoint endpoint;
@@ -53,7 +53,7 @@ class Channel : public std::enable_shared_from_this<Channel> {
 public:
     Channel(boost::asio::ip::tcp::socket socket, ServerImpl& serverImpl)
         : disconnected{false},
-        connection{reinterpret_cast<uintptr_t>(this)},
+        user{reinterpret_cast<uintptr_t>(this)},
         serverImpl{serverImpl},
         streamBuf{},
         websocket{std::move(socket)},
@@ -64,14 +64,14 @@ public:
     void send(std::string outgoing);
     void disconnect();
 
-    [[nodiscard]] Connection getConnection() const noexcept { return connection; }
+    [[nodiscard]] User getConnection() const noexcept { return user; }
 
 private:
     void readMessage();
     void afterWrite(std::error_code errorCode, std::size_t size);
 
     bool disconnected;
-    Connection connection;
+    User user;
     ServerImpl &serverImpl;
 
     boost::beast::flat_buffer streamBuf;
@@ -90,7 +90,7 @@ void Channel::start(boost::beast::http::request<boost::beast::http::string_body>
                 serverImpl.registerChannel(*this);
                 self->readMessage();
             } else {
-                serverImpl.server.disconnect(connection);
+                serverImpl.server.disconnect(user);
             }
         }
     );
@@ -128,7 +128,7 @@ void Channel::send(std::string outgoing) {
 void Channel::afterWrite(std::error_code errorCode, std::size_t size) {
     if (errorCode) {
         if (!disconnected) {
-            serverImpl.server.disconnect(connection);
+            serverImpl.server.disconnect(user);
         }
         return;
     }
@@ -152,11 +152,11 @@ void Channel::readMessage() {
         [this, self] (auto errorCode, std::size_t size) {
             if (!errorCode) {
                 auto message = boost::beast::buffers_to_string(streamBuf.data());
-                readBuffer.push_back({connection, std::move(message)});
+                readBuffer.push_back({user, std::move(message)});
                 streamBuf.consume(streamBuf.size());
                 this->readMessage();
             } else if (!disconnected) {
-                serverImpl.server.disconnect(connection);
+                serverImpl.server.disconnect(user);
             }
         }
     );
@@ -319,9 +319,9 @@ void ServerImpl::listenForConnections() {
 
 
 void ServerImpl::registerChannel(Channel& channel) {
-    auto connection = channel.getConnection();
-    channels[connection] = channel.shared_from_this();
-    server.connectionHandler->handleConnect(connection);
+    auto user = channel.getConnection();
+    channels[user] = channel.shared_from_this();
+    server.connectionHandler->handleConnect(user);
 }
 
 
@@ -355,7 +355,7 @@ std::deque<Message> Server::receive() {
 
 void Server::send(const std::deque<Message>& messages) {
     for (auto& message : messages) {
-        auto found = impl->channels.find(message.connection);
+        auto found = impl->channels.find(message.user);
         if (impl->channels.end() != found) {
             found->second->send(message.text);
         }
@@ -363,10 +363,10 @@ void Server::send(const std::deque<Message>& messages) {
 }
 
 
-void Server::disconnect(Connection connection) {
-    auto found = impl->channels.find(connection);
+void Server::disconnect(User user) {
+    auto found = impl->channels.find(user);
     if (impl->channels.end() != found) {
-        connectionHandler->handleDisconnect(connection);
+        connectionHandler->handleDisconnect(user);
         found->second->disconnect();
         impl->channels.erase(found);
     }

@@ -12,11 +12,8 @@ int ExpressionTree::getPrecedence(std::string key){
 }
 
 bool isNum(std::string value){
-    for(int i = 0; i < value.length(); i++){
-        if(!isdigit(value[i]))
-            return false;
-    }
-    return true;
+    return std::find_if(value.begin(), value.end(), 
+        [](unsigned char c) { return !std::isdigit(c); }) == value.end();
 }
 
 ElementSptr inGameState(std::string token, ElementMap& gameState){

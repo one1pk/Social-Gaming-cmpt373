@@ -293,7 +293,7 @@ InputChoice::InputChoice(std::string prompt,
                         std::shared_ptr<ASTNode> element_to_replace_root,
                         std::shared_ptr<ASTNode> choices_expression_root,
                         std::shared_ptr<std::deque<InputRequest>> input_requests,
-                        std::shared_ptr<std::map<Connection, InputResponse>> player_input,
+                        std::shared_ptr<std::map<User, InputResponse>> player_input,
                         std::string result, unsigned timeout_s)
     : prompt(prompt), element_to_replace_root(element_to_replace_root),
     choices_expression_root(choices_expression_root),
@@ -303,7 +303,7 @@ InputChoice::InputChoice(std::string prompt,
 
 RuleStatus InputChoice::execute(ElementMap& game_state) {
     LOG(INFO) << "* InputChoiceRequest Rule *";
-    Connection player_connection = game_state["player"]->getMapElement("connection")->getConnection();
+    User player_connection = game_state["player"]->getMapElement("user")->getConnection();
 
     if (!awaiting_input[player_connection]) {
         // first execution of rule
@@ -381,17 +381,17 @@ RuleStatus Scores::execute(ElementMap& game_state) {
     std::stringstream msg;
     msg << "\nScores are " << (ascending? "(in ascending order)\n" : "(in descending order)\n");
 
-    std::vector<std::pair<int, uintptr_t>> scores;
+    std::vector<std::pair<std::string, int>> scores;
     for (auto& [player_connection, player_list]: *player_maps) {
         scores.emplace_back(
-            player_list->getMapElement(attribute_key)->getInt(), 
-            player_connection.id
+            player_list->getMapElement("name")->getString(),
+            player_list->getMapElement(attribute_key)->getInt()
         );
     }
     
-    std::sort(scores.begin(), scores.end(), [=](auto a, auto b){ return (a.first<b.first && ascending); });
-    for (auto& [score, player_id]: scores) {
-        msg << "player " << player_id << ": " << score << "\n";
+    std::sort(scores.begin(), scores.end(), [=](auto a, auto b){ return (a.second<b.second && ascending); });
+    for (auto& [player_name, score]: scores) {
+        msg << "player " << player_name << ": " << score << "\n";
     }
 
     global_msgs->push_back(msg.str());

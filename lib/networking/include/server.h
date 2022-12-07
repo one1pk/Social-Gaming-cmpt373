@@ -5,23 +5,23 @@
 #include <memory>
 
 /**
- *  An identifier for a Client connected to a Server. The ID of a Connection is
+ *  An identifier for a Client connected to a Server. The ID of a User is
  *  guaranteed to be unique across all actively connected Client instances.
  */
-struct Connection {
+struct User {
     uintptr_t id;
 
-    bool operator==(Connection other) const {
+    bool operator==(User other) const {
         return id == other.id;
     }
-    bool operator<(Connection other) const {
+    bool operator<(User other) const {
         return id < other.id;
     }
 };
 
-struct ConnectionHash {
+struct UserHash {
   size_t
-  operator()(Connection c) const {
+  operator()(User c) const {
     return std::hash<decltype(c.id)>{}(c.id);
   }
 };
@@ -29,10 +29,10 @@ struct ConnectionHash {
 
 /**
  *  A Message containing text that can be sent to or was recieved from a given
- *  Connection.
+ *  User.
  */
 struct Message {
-    Connection connection;
+    User user;
     std::string text;
 };
 
@@ -68,9 +68,9 @@ public:
    *
    *  The callbacks can be functions, function pointers, lambdas, or any other
    *  callable construct. They should support the signature:
-   *      void onConnect(Connection c);
-   *      void onDisconnect(Connection c);
-   *  The Connection class is an identifier for each connected Client. It
+   *      void onConnect(User c);
+   *      void onDisconnect(User c);
+   *  The User class is an identifier for each connected Client. It
    *  contains an ID that is guaranteed to be unique across all active
    *  connections.
    *
@@ -101,9 +101,9 @@ public:
     [[nodiscard]] std::deque<Message> receive();
 
     /**
-     *  Disconnect the Client specified by the given Connection.
+     *  Disconnect the Client specified by the given User.
      */
-    void disconnect(Connection connection);
+    void disconnect(User user);
 
 private:
     friend class ServerImpl;
@@ -115,8 +115,8 @@ private:
     class ConnectionHandler {
     public:
         virtual ~ConnectionHandler() = default;
-        virtual void handleConnect(Connection) = 0;
-        virtual void handleDisconnect(Connection) = 0;
+        virtual void handleConnect(User) = 0;
+        virtual void handleDisconnect(User) = 0;
     };
 
     template <typename C, typename D>
@@ -127,8 +127,8 @@ private:
             onDisconnect{std::move(onDisconnect)}
             { }
         ~ConnectionHandlerImpl() override = default;
-        void handleConnect(Connection c)    override { onConnect(c);    }
-        void handleDisconnect(Connection c) override { onDisconnect(c); }
+        void handleConnect(User c)    override { onConnect(c);    }
+        void handleDisconnect(User c) override { onDisconnect(c); }
     private:
         C onConnect;
         D onDisconnect;

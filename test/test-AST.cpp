@@ -14,18 +14,18 @@
 class ASTTest : public ::testing::Test{
 protected:
     void SetUp() override{
-        std::string path = PATH_TO_JSON_TEST"/rock_paper_scissors.json";
-        InterpretJson j(path);
+        User owner;
+        InterpretJson j("Rock_Paper_Scissors", owner);
         game = j.interpret();
-        Connection c1;
-        Connection c2;
-        Connection c3;
+        User c1;
+        User c2;
+        User c3;
         c1.id = 1;
         c2.id = 2;
         c3.id = 3;
-        game.addPlayer(c1);
-        game.addPlayer(c2);
-        game.addPlayer(c3);
+        game.addPlayer(c1, "1");
+        game.addPlayer(c2, "2");
+        game.addPlayer(c3, "3");
     }
 
 public:

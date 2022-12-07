@@ -10,18 +10,20 @@ CommandHandler::getOutgoingMessages(const std::deque<ProcessedMessage> &incoming
     outgoing.clear();
 
     for (auto processedMessage : incomingProcessedMessages) {
-        Connection connection = processedMessage.connection;
+        User user = processedMessage.user;
 
         if (processedMessage.isCommand) {
             CommandResult commandResult = executeCommand(processedMessage);
             if (commandResult != CommandResult::SUCCESS) {
-                outgoing.push_back({connection, commandResultMap[commandResult]});
+                outgoing.push_back({user, commandResultMap[commandResult]});
             }
         } else {
-            if (globalState.isInGame(connection)) {
-                globalState.registerUserGameInput(connection, processedMessage.input);
-            } else {
+            if (globalState.isInGame(user)) {
+                globalState.registerUserGameInput(user, processedMessage.input);
+            } else if(globalState.isInLobby(user)) {
                 broadcastLobbyMessage(processedMessage);
+            } else {
+                outgoing.push_back({user, commandResultMap[CommandResult::ERROR_NO_USERNAME]});
             }
         }
     }
@@ -29,24 +31,29 @@ CommandHandler::getOutgoingMessages(const std::deque<ProcessedMessage> &incoming
 }
 
 std::deque<Message> 
-CommandHandler::handleLostConnections(std::vector<Connection> &connections) {
+CommandHandler::handleLostUsers(std::vector<User> &users) {
     outgoing.clear();
-    for (auto connection: connections) {
-        ProcessedMessage processedMessage{true, connection, UserCommand::EXIT, std::vector<std::string>{}, ""};
+    for (auto user: users) {
+        ProcessedMessage processedMessage{true, user, UserCommand::EXIT, std::vector<std::string>{}, ""};
         executeCommand(processedMessage);
     }
-    connections.clear();
+    users.clear();
     return outgoing;
 }
 
 CommandResult
 CommandHandler::executeCommand(ProcessedMessage &processedMessage) {
+
+    if (processedMessage.commandType != UserCommand::USERNAME && globalState.getName(processedMessage.user) == "error") {
+        return CommandResult::ERROR_NO_USERNAME;    // TODO: Fix this into more informative message
+    }
+
     return commandMap[processedMessage.commandType]->execute(processedMessage);
 }
 
 void CommandHandler::broadcastLobbyMessage(ProcessedMessage &processedMessage) {
     std::stringstream outgoingText;
-    outgoingText << processedMessage.connection.id << " : " << processedMessage.input << "\n";
+    outgoingText << globalState.getName(processedMessage.user) << " : " << processedMessage.input << "\n";
 
     std::deque<Message> messages = globalState.buildMessagesForServerLobby(outgoingText.str());
     outgoing.insert(outgoing.end(), messages.begin(), messages.end());
@@ -65,6 +72,7 @@ void CommandHandler::initializeCommandMap() {
     registerCommand(UserCommand::HELP, std::make_unique<ListHelpCommand>(globalState, outgoing));
     registerCommand(UserCommand::GAMES, std::make_unique<ListGamesCommand>(globalState, outgoing));
     registerCommand(UserCommand::EXIT, std::make_unique<ExitServerCommand>(globalState, outgoing));
+    registerCommand(UserCommand::USERNAME, std::make_unique<UserNameCommand>(globalState, outgoing));
 }
 
 void CommandHandler::initializeCommandResultMap() {
@@ -78,12 +86,14 @@ void CommandHandler::initializeCommandResultMap() {
     commandResultMap[CommandResult::ERROR_INVALID_COMMAND] = "Invalid Command!\n\n";
     commandResultMap[CommandResult::ERROR_GAME_NOT_STARTED] = "The game has not been started yet!\n\n";
     commandResultMap[CommandResult::ERROR_NOT_ENOUGH_PLAYERS] = "Game cannot be started, more players needed!\n\n";
+    commandResultMap[CommandResult::ERROR_NO_USERNAME] = "To proceed, enter: name <your game name>\n\n";
 
     commandResultMap[CommandResult::SUCCESS_GAME_CREATION] = "Game Successfully Created with invitation Code : \nPlease enter \"start\" to start the game.\n\n";
     commandResultMap[CommandResult::SUCCESS_GAME_JOIN] = "Game successfully joined. Waiting for the owner to start\n\n";
     commandResultMap[CommandResult::SUCCESS_GAME_START] = "Game Started!\n\n";
     commandResultMap[CommandResult::SUCCESS_GAME_END] = "Game Ended. All players have been moved to server lobby.\n\n";
     commandResultMap[CommandResult::SUCCESS_GAME_LEAVE] = "Game Successfully left.\n\n";
+    commandResultMap[CommandResult::SUCCESS_USERNAME] = "Name Successfully assigned.\n\n";
 
     commandResultMap[CommandResult::STRING_SERVER_HELP] =
         "\n"
