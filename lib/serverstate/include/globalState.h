@@ -103,7 +103,7 @@ public:
     bool isValidGameInvitation(uintptr_t invitation_code);
     void registerUserGameInput(User user, std::string input);
 
-    void ConfigureSetupValue(User user, int index, int value);
+    void ConfigureSetupValue(User user, std::string index, int value);
 
     // BROADCASTING METHODS
 
