@@ -1,7 +1,10 @@
 ## Iteration 3 - Notes
 * The game config and rules are now fully interpreted from json into a game object
-* Any game which uses the rules supported currently (rules used in Rock, Paper, Scissors), can be created and run
 * Complex strings from json such as 'when conditions' and deep lists (eg.- variables.winners, players.weapon, etc) are built into an expression tree in the interpreter and resolved dynamically, using a visitor, when the rule executes
+* Owner can now conifgure setup
+* Rock, Paper, Scissors works perfectly
+* Any json file which uses the rules used in Rock, Paper, Scissors, can be interpreted and turned into a playable game without having to do anything extra
+* Trivia game was done towards the end and has new rules so it is a bit flaky, but it demonstrates that interpretation, adding rules and game running is trivial at this point since we have a solid base structure.
 
 
 ## Iteration 2 - Notes

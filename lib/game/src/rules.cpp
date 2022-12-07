@@ -206,7 +206,7 @@ RuleStatus Shuffle::execute(ElementMap& game_state) {
     list_expression_root->accept(resolver, game_state);
     auto list = resolver.getResult();
 
-    list->shuffle();
+    //list->shuffle();
     return RuleStatus::Done;
 }
 

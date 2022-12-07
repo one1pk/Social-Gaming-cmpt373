@@ -329,7 +329,7 @@ public:
 
     void shuffle() final {
         if constexpr (std::is_same_v<T, ElementVector>) {
-            std::random_shuffle(_data.begin(), _data.end());
+            //std::random_shuffle(_data.begin(), _data.end());
         } else {
              throw std::invalid_argument("You can only shuffle an ElementVector");
         }
