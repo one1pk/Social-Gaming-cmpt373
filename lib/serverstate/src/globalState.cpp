@@ -179,7 +179,7 @@ std::string GlobalServerState::getSetup(User user) {
     auto gameInstance = getGameInstancebyOwner(user);
     ElementSptr setup = gameInstance->setup();
     std::stringstream setupString;
-    setupString << "Setup Configuration:\n";
+    setupString << "Setup Variables:\n";
     //int index = 0;
     for(auto& [elementName, element] : setup->getMap()){
         setupString << elementName << "\n";
@@ -361,15 +361,6 @@ void GlobalServerState::populateGameList() {
 
 void GlobalServerState::ConfigureSetupValue(User user, std::string key, int value){
         auto gameInstance = getGameInstancebyOwner(user);
-        //Type existingElementType = setup->getMapElement(key)->type;
-        //if(existingElementType)
         auto element = std::make_shared<Element<int>>(value);
         gameInstance->setup()->changeMapElement(key, element);
-
-        // if(index < setUpMap.size()){
-        //     auto keyIterator = setUpMap.begin() + index;
-        //     setUp.setMapElement(keyIterator->first, value);
-        // }
-        
-         
 }
