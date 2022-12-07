@@ -1,0 +1,142 @@
+{
+    "configuration": {
+        "name": "Trivia!",
+        "player count": {"min": 1, "max": 6},
+        "audience": true,
+        "setup": {
+            "qa": {
+              "kind": "question-answer",
+              "prompt": "Please load the trivia questions and answers"
+            }
+        }
+    },
+        "constants": {
+            "qa-bank": [
+              { "question": "What is the capital of BC?",     
+              "answer": "Victoria" },
+              { "question": "What is the capital of Canada?",     
+              "answer": "Ottawa" },
+              { "question": "In what city is SFU's main campus?",     
+              "answer": "Burnaby" },
+              { "question": "What game is this?",     
+              "answer": "Trivia!" }
+            ],
+            "peek-used": [true, false],
+            "answer-or-peek": ["Answer", "Hint"]
+          },
+        
+          "variables": {
+            "current-question": ""
+          },
+        
+          "per-player": {
+            "right-answer": 0,
+            "answer-input": "",
+            "peek-choice": "",
+            "peek": false
+          },
+        
+          "per-audience": {
+            "guess": ""
+          },
+
+          "rules": [
+            {
+              "rule": "sort",
+              "list": "constants.qa-bank",
+              "key": "question"
+            },
+            { "rule": "foreach",
+              "list": "constants.qa-bank.size.upfrom(1)",
+              "element": "round",
+              "rules": [
+                { "rule": "deal",
+                  "from": "constants.qa-bank.question",
+                  "to": "current-question",
+                  "count": 1
+                },
+                { "rule": "global-message",
+                  "value": "Round {round}. Here is your question: {current-question}"
+                },
+                { "rule": "parallelfor",
+                  "list": "players",
+                  "element": "player",
+                  "rules": [
+                    {
+                      "rule": "switch",
+                      "value": "player.peek",
+                      "list": "peek-used",
+                      "cases": [
+                        { "case": false,
+                          "rules": [
+                            { "rule": "input-choice",
+                              "to": "player",
+                              "prompt": "{player.name}, enter your answer or choose to peek from audience",
+                              "choices": "answer-or-peek",
+                              "result": "player.peek-choice",
+                              "timeout": 10
+                            },
+                            { "rule": "switch",
+                              "value": "player.peek-choice",
+                              "list": "answer-or-peek",
+                              "cases": [
+                                { "case": "Peek",
+                                  "rules": [
+                                    { "rule": "message",
+                                      "to": "player",
+                                      "value": "One audience member guesssed: {audience.elements.guess.first}"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "rule": "input-text",
+                      "to": "player",
+                      "prompt": "Please enter your final answer",
+                      "result": "player.answer-input",
+                      "timeout": 15
+                    },
+                    { "rule": "when",
+                      "cases": [
+                        { "condition": "player.answer-input == round.answer",
+                          "rules": [
+                            { "rule": "add",
+                              "target": "player.right-answer",
+                              "value": 1
+                            }
+                          ]  
+                        }
+                      ]
+                    }
+                  ]
+                },
+                { "rule": "parallelfor",
+                  "list": "audience",
+                  "element": "aud",
+                  "rules": [
+                    {
+                      "rule": "input-text",
+                      "to": "aud",
+                      "prompt": "Please enter your final answer",
+                      "result": "aud.guess",
+                      "timeout": 15
+                    }
+                  ]
+                },
+                {
+                  "rule": "shuffle",
+                  "list": "audience"
+                }
+              ]
+            },
+            { "rule": "scores",
+              "score": "right-answer",
+              "ascending": false
+            }
+          ]
+}
