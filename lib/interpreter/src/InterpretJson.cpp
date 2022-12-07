@@ -29,7 +29,6 @@ Game InterpretJson::interpret() {
         {"per-player", game.per_player()},
         {"per-audience", game.per_audience()}
     };
-
     expressionTree = ExpressionTree(game._game_state, game._players);
 
     // This stores all the content of the rules as strings
@@ -38,7 +37,6 @@ Game InterpretJson::interpret() {
     // then convert ElementSptr to rule vector containing rule objects
     RuleVector rules;
     toRuleVec(game, rule_structure, rules);
-
     game._rules = rules;
     return game;
 }
@@ -100,6 +98,15 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             auto result = rule->getMapElement("result")->getString();
             auto timeout = rule->getMapElement("timeout")->getInt();
             ruleObject = std::make_shared<InputChoice>(prompt, elementToReplace, choicesExpressionRoot,
+                 game._input_requests, game._player_input, result, timeout);
+        }
+
+        else if(ruleName == "input-text"){
+            auto prompt = rule->getMapElement("prompt")->getString();
+ 
+            auto result = rule->getMapElement("result")->getString();
+            auto timeout = rule->getMapElement("timeout")->getInt();
+            ruleObject = std::make_shared<InputText>(prompt,
                  game._input_requests, game._player_input, result, timeout);
         }
 
@@ -209,7 +216,6 @@ void InterpretJson::toRuleVec(Game& game, const ElementSptr& rules_from_json, Ru
             }
             ruleObject = std::make_shared<Switch>(valueExpressionRoot, listExpressionRoot, conditionExpression_rule_pairs);
         }
-
         rule_vec.push_back(ruleObject);
     }
 }

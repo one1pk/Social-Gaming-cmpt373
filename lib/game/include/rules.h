@@ -188,6 +188,23 @@ public:
     RuleStatus execute(ElementMap& game_state) final;
 };
 
+class InputText : public Rule {
+    std::string prompt;
+    std::shared_ptr<std::deque<InputRequest>> input_requests;
+    std::shared_ptr<std::map<User, InputResponse>> player_input;
+    
+    std::string result;
+    unsigned timeout_s; // in seconds
+
+    std::map<User, bool> awaiting_input;
+public:
+    InputText(std::string prompt,
+                std::shared_ptr<std::deque<InputRequest>> input_requests,
+                std::shared_ptr<std::map<User, InputResponse>> player_input,
+                std::string result, unsigned timeout_s = 0);
+    RuleStatus execute(ElementMap& game_state) final;
+};
+
 class GlobalMsg : public Rule {
     std::string msg;
     std::shared_ptr<ASTNode> element_to_replace_root;

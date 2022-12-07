@@ -351,6 +351,48 @@ RuleStatus InputChoice::execute(ElementMap& game_state) {
     return RuleStatus::Done;
 }
 
+InputText::InputText(std::string prompt, 
+                        std::shared_ptr<std::deque<InputRequest>> input_requests,
+                        std::shared_ptr<std::map<User, InputResponse>> player_input,
+                        std::string result, unsigned timeout_s)
+    : prompt(prompt),
+    input_requests(input_requests), player_input(player_input), 
+    result(result), timeout_s(timeout_s) {
+}
+
+RuleStatus InputText::execute(ElementMap& game_state) {
+    LOG(INFO) << "* InputTextRequest Rule *";
+    User player_connection = game_state["player"]->getMapElement("user")->getConnection();
+
+    if (!awaiting_input[player_connection]) {
+        std::stringstream formatted_prompt = std::stringstream(formatString(prompt, resolver));
+        if (timeout_s) formatted_prompt << "Input will timeout in " << timeout_s << " seconds\n"; 
+LOG(INFO) << "Formatted prompt *";
+        // create an input request and flag that input is required
+        input_requests->emplace_back(
+            player_connection,
+            formatted_prompt.str(),
+            InputType::Text,
+            0,
+            timeout_s,
+            timeout_s*1000
+        );
+        awaiting_input[player_connection] = true;
+        return RuleStatus::InputRequired;
+    }
+    // execution will continue from here after input is recieved
+    std::string answer;
+    InputResponse input = player_input->at(player_connection);
+    if (input.timedout) {
+        answer = "";
+    } else {
+        answer = input.response;
+    }
+    game_state["player"]->setMapElement(result, std::make_shared<Element<std::string>>(answer));
+
+    awaiting_input[player_connection] = false;
+    return RuleStatus::Done;
+}
 
 // GlobalMsg //
 
