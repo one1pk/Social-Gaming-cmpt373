@@ -5,22 +5,10 @@
 
 using Json = nlohmann::json;
 
-InterpretJson::InterpretJson(std::string game_name, Connection owner) 
+InterpretJson::InterpretJson(std::string game_name, User owner) 
     : game_name(game_name), owner(owner) {
     try {
         ifstream f(PATH_TO_JSON + game_name + ".json");
-        Json jData = Json::parse(f);
-        f.close();
-        data = jData;
-    } catch (std::exception& e){
-        LOG(ERROR) << "error reading file" << e.what() << endl;
-    }
-}
-
-InterpretJson::InterpretJson(std::string path) 
-    {
-    try {
-        ifstream f(path);
         Json jData = Json::parse(f);
         f.close();
         data = jData;

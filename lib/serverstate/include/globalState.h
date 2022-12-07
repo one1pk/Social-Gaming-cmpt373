@@ -2,11 +2,13 @@
 
 #include "game.h"
 #include "server.h"
+#include "InterpretJson.h"
 
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <glog/logging.h>
 
 /**
  * This interface represents the global state of the game server. It manages
@@ -25,15 +27,15 @@ public:
 
     /**
      * Connects new users to the server for the very first time and adds them to  the respective lists.
-     * NOTE: clears the connections vector after adding all users
+     * NOTE: clears the users vector after adding all users
      */
-    void addNewConnections(std::vector<Connection>&);
+    void addNewUsers(std::vector<User>&);
 
     /**
      * This methods is called when users disconnect from the server
      * (voluntarily byt entering exit or involuntarily by force closing the terminal)
      */
-    void disconnectConnection(Connection);
+    void disconnectUser(User);
 
     /**
      * This method is called to help execution of JOIN command. It
@@ -41,14 +43,16 @@ public:
      *   adds the client(user) to the game with invitationCode
      *
      */
-    void addClientToGame(Connection, uintptr_t invitationCode);
+    void addClientToGame(User, uintptr_t invitationCode);
+
+    void addClientToLobby(User);
 
     /**
      * This method is called to help execution of LEAVE command. It
      *  removes the client from the game they are currently playing and
      *  adds them to the server lobby.
      */
-    void removeClientFromGame(Connection);
+    void removeClientFromGame(User);
 
     /**
      * This methods helps execution of CREATE command. It
@@ -57,18 +61,18 @@ public:
      *  removes the client(user) from server lobby and makes them the owner of game instance
      *  adds them to the game lobby
      */
-    uintptr_t createGame(int gameIndex, Connection connection);
+    uintptr_t createGame(int gameIndex, User user);
 
     /**
      * Helps execution of START command.
      */
-    void startGame(Connection connection);
+    void startGame(User user);
 
     /**
      * Helps execution of END command.
      * Deletes the game instance where user is the owner. Move all players from game to server lobby
      */
-    void endGame(Connection connection);
+    void endGame(User user);
 
     /**
      * Processes all running games
@@ -81,18 +85,21 @@ public:
     std::deque<Message> processGames();
 
     // GAME SPECIFIC METHODS
-
+    void constructGame(std::vector<Game>& game_instances, std::string game_name, User owner); 
     std::string getGameNamesAsString();
-    Connection getGameOwner(Connection connection);
-    int getPlayerCount(Connection connection);
-    bool isInGame(Connection connection);
+    User getGameOwner(User user);
+    int getPlayerCount(User user);
+    void setName(User user, std::string name);
+    std::string getName(User user);
+    bool isInLobby(User user);
+    bool isInGame(User user);
     bool isGameIndex(int index);
-    bool isOwner(Connection connection);
-    bool gameHasEnoughPlayers(Connection connection);
-    bool isOngoingGame(Connection connection);
+    bool isOwner(User user);
+    bool gameHasEnoughPlayers(User user);
+    bool isOngoingGame(User user);
     bool isOngoingGame(uintptr_t invitation_code);
     bool isValidGameInvitation(uintptr_t invitation_code);
-    void registerUserGameInput(Connection connection, std::string input);
+    void registerUserGameInput(User user, std::string input);
 
     // BROADCASTING METHODS
 
@@ -103,24 +110,24 @@ public:
     std::deque<Message> buildMessagesForServerLobby(std::string);
 
     /**
-     * Builds messages for the game (that has user with passed in connection).
+     * Builds messages for the game (that has user with passed in user).
      * Used to broadcast passed in text to all other players.
-     * NOTE: Doesn't send to owner or to current player <connection>
+     * NOTE: Doesn't send to owner or to current player <user>
      */
-    std::deque<Message> buildMsgsForOtherPlayers(std::string, Connection);
+    std::deque<Message> buildMsgsForOtherPlayers(std::string, User);
 
     /**
-     * Builds messages for the game (that has user with passed in connection).
+     * Builds messages for the game (that has user with passed in user).
      * Used to broadcast passed in text to all the players.
      * NOTE: Doesn't send to owner
      */
-    std::deque<Message> buildMsgsForAllPlayers(std::string, Connection);
+    std::deque<Message> buildMsgsForAllPlayers(std::string, User);
 
     /**
-     * Builds messages for the game (that has user with passed in connection).
+     * Builds messages for the game (that has user with passed in user).
      * Used to broadcast passed in text to all the players. and the game owner (main screen)
      */
-    std::deque<Message> buildMsgsForAllPlayersAndOwner(std::string, Connection);
+    std::deque<Message> buildMsgsForAllPlayersAndOwner(std::string, User);
 
 private:
     struct GameInput {
@@ -128,13 +135,14 @@ private:
         bool new_input;
         int time_remaining;
     };
-    std::map<Connection, GameInput> user_game_input;
+    std::map<User, GameInput> user_game_input;
 
     unsigned update_interval;
-    std::unordered_map<Connection, uintptr_t, ConnectionHash> clients_in_games;
-    std::unordered_map<Connection, uintptr_t, ConnectionHash> gameOwnerMap;
-    std::vector<Connection> clients;
-    std::vector<Connection> clients_in_lobby;
+    std::unordered_map<User, uintptr_t, UserHash> clients_in_games;
+    std::unordered_map<User, uintptr_t, UserHash> gameOwnerMap;
+    std::unordered_map<User, std::string, UserHash> userNames;
+    std::vector<User> clients;
+    std::vector<User> clients_in_lobby;
     std::vector<Game> game_instances;
 
     std::unordered_map<int, std::string> gameNameList;
@@ -147,14 +155,14 @@ private:
 
 
     /**
-     *  A general function that can be used on any vector of Connections to ease removing
+     *  A general function that can be used on any vector of Users to ease removing
      */
-    void removeClientFromList(std::vector<Connection> &list, Connection connection);
+    void removeClientFromList(std::vector<User> &list, User user);
 
     // GAME INSTANCE METHODS
 
-    Game *getGameInstancebyUser(Connection connection);
-    // Game *getGameInstancebyOwner(Connection connection);
+    Game *getGameInstancebyUser(User user);
+    Game *getGameInstancebyOwner(User user);
     Game *getGameInstancebyInvitation(uintptr_t invitationCode); // TODO: FIX Invitation code in game
     Game *getGameInstancebyId(uintptr_t gameID);
 };

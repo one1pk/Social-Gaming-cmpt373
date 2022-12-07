@@ -191,11 +191,11 @@ TEST_F(InterpreterTestWithInput, InputRuleTest){
     
 }
 TEST_F(InterpreterTestWithInput, RunGameWithInputRule){
-    Connection c;
+    User c;
     c.id = 1;
-    Connection c2;
+    User c2;
     c2.id = 2;
-    Connection c3;
+    User c3;
     c3.id = 3;
     g.addPlayer(c);
     g.addPlayer(c2);

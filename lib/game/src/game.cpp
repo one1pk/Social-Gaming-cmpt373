@@ -8,14 +8,14 @@ Game::Game()
     std::cout<< "GAME CONSTRUCTOR 1\n"; 
 }
 
-Game::Game(std::string name, Connection owner)
+Game::Game(std::string name, User owner)
     : _name(name), _owner(owner), _status(GameStatus::Created) {
     static uintptr_t shared_id_counter = 1; // gameIDs start at 1
     _id = shared_id_counter++;
     std::cout<< "GAME CONSTRUCTOR 2\n"; 
 }
 
-// Game::Game( std::string name, Connection owner, 
+// Game::Game( std::string name, User owner, 
 //             unsigned min_players, unsigned max_players, bool has_audience,
 //             ElementSptr setup,
 //             ElementSptr constants, ElementSptr variables,
@@ -24,7 +24,7 @@ Game::Game(std::string name, Connection owner)
 //             std::shared_ptr<PlayerMap> players, std::shared_ptr<PlayerMap> audience,
 //             std::shared_ptr<std::deque<std::string>> global_msgs,
 //             std::shared_ptr<std::deque<InputRequest>> input_requests,
-//             std::shared_ptr<std::map<Connection, InputResponse>> player_input
+//             std::shared_ptr<std::map<User, InputResponse>> player_input
 // ) : _name(name), _owner(owner), _status(GameStatus::Created),
 //     _player_count{ min_players, max_players }, _has_audience(has_audience),
 //     _setup(setup),
@@ -54,14 +54,14 @@ GameStatus Game::status() {
     return _status;
 }
 
-bool Game::addPlayer(Connection player_connection) {
+bool Game::addPlayer(User player_connection, std::string userName) {
     if (_players->size() < _player_count.max) {
         _players->insert({ player_connection,  _per_player->clone() });
         _players->at(player_connection)->setMapElement(
-            "connection", std::make_shared<Element<Connection>>(player_connection)
+            "user", std::make_shared<Element<User>>(player_connection)
         );
         _players->at(player_connection)->setMapElement(
-            "name", std::make_shared<Element<std::string>>(std::to_string(player_connection.id))
+            "name", std::make_shared<Element<std::string>>(userName)
         );
         return true;
     } else {
@@ -70,7 +70,7 @@ bool Game::addPlayer(Connection player_connection) {
     }
 }
 
-bool Game::removePlayer(Connection player_connection) {
+bool Game::removePlayer(User player_connection) {
     if (_players->erase(player_connection)) {
         return true;
     } else {
@@ -79,13 +79,13 @@ bool Game::removePlayer(Connection player_connection) {
     }
 }
 
-bool Game::hasPlayer(Connection player_connection) {
+bool Game::hasPlayer(User player_connection) {
     return _players->count(player_connection);
 }
 
 // return the list of player connections
-std::vector<Connection> Game::players() {
-    std::vector<Connection> connections;
+std::vector<User> Game::players() {
+    std::vector<User> connections;
     for(auto it = _players->begin(); it != _players->end(); it++) {
         connections.push_back(it->first);
     }
@@ -106,7 +106,7 @@ std::string Game::name() {
     return _name;
 }
 
-Connection Game::owner() {
+User Game::owner() {
     return _owner;
 }
 
@@ -128,7 +128,7 @@ void Game::outputSent() {
     _status = GameStatus::AwaitingInput;
 }
 
-void eraseRequest(std::shared_ptr<std::deque<InputRequest>>& input_requests, Connection player) {
+void eraseRequest(std::shared_ptr<std::deque<InputRequest>>& input_requests, User player) {
     input_requests->erase(std::remove_if(input_requests->begin(), input_requests->end(),
         [player](InputRequest input_request) {
             return input_request.user == player;
@@ -136,12 +136,12 @@ void eraseRequest(std::shared_ptr<std::deque<InputRequest>>& input_requests, Con
     ));
 }
 
-void Game::registerPlayerInput(Connection player, std::string input) {
+void Game::registerPlayerInput(User player, std::string input) {
     _player_input->insert_or_assign(player, InputResponse{input});
     eraseRequest(_input_requests, player);
 }
 
-void Game::inputRequestTimedout(Connection player) {
+void Game::inputRequestTimedout(User player) {
     _player_input->insert_or_assign(player, InputResponse{"0", true});
     eraseRequest(_input_requests, player);
 }

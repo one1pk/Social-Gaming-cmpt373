@@ -22,14 +22,14 @@ class Game {
 public:
     Game();
     Game(
-        std::string name, Connection owner
+        std::string name, User owner
     );
 
     void run();
     GameStatus status();
 
     std::string name();
-    Connection owner();
+    User owner();
     uintptr_t id();
 
     ElementSptr setup();
@@ -39,10 +39,10 @@ public:
     ElementSptr per_audience();
     RuleVector& rules();
 
-    bool addPlayer(Connection playerID);
-    bool removePlayer(Connection playerID);
-    bool hasPlayer(Connection playerID);
-    std::vector<Connection> players();
+    bool addPlayer(User playerID, std::string userName);
+    bool removePlayer(User playerID);
+    bool hasPlayer(User playerID);
+    std::vector<User> players();
     unsigned numPlayers();
     bool hasEnoughPlayers();
 
@@ -50,12 +50,12 @@ public:
     std::deque<InputRequest> inputRequests();
 
     void outputSent();
-    void registerPlayerInput(Connection player, std::string input);
-    void inputRequestTimedout(Connection player);
+    void registerPlayerInput(User player, std::string input);
+    void inputRequestTimedout(User player);
 
 
     ///TEMP: for interpreter
-    void setOwner(Connection owner){ _owner = owner; }
+    void setOwner(User owner){ _owner = owner; }
     bool audience(){ return _has_audience; }
     void setName(std::string name) { _name = name; }
     void setStatusCreated() { _status = GameStatus::Created; }
@@ -68,7 +68,7 @@ public:
 // private:
     uintptr_t _id; // unique id can act as an invitation code
     std::string _name;
-    Connection _owner;
+    User _owner;
     GameStatus _status;
 
     //Bounds of player given in json file
@@ -89,5 +89,5 @@ public:
     std::shared_ptr<PlayerMap> _audience = std::make_shared<PlayerMap>(PlayerMap{}); // maps each audience to their game map
     std::shared_ptr<std::deque<std::string>> _global_msgs = std::make_shared<std::deque<std::string>>();
     std::shared_ptr<std::deque<InputRequest>> _input_requests = std::make_shared<std::deque<InputRequest>>();
-    std::shared_ptr<std::map<Connection, InputResponse>> _player_input = std::make_shared<std::map<Connection, InputResponse>>();
+    std::shared_ptr<std::map<User, InputResponse>> _player_input = std::make_shared<std::map<User, InputResponse>>();
 };
