@@ -182,7 +182,7 @@ std::string GlobalServerState::getSetup(User user) {
     setupString << "Setup Configuration:\n";
     int index = 0;
     for(auto& [elementName, element] : setup->getMap()){
-        setupString << "[" << index++ << "] " << elementName << " : " << "\n";
+        setupString << elementName << "\n";
     }
 
     return setupString.str();
@@ -360,16 +360,8 @@ void GlobalServerState::populateGameList() {
 }
 
 
-void GlobalServerState::ConfigureSetupValue(User user, int index, int value){
-    std::cout << "Reached setup value" << std::endl;
-        // auto gameInstance = getGameInstancebyOwner(user);
-        // auto setUp = gameInstance->setUp();
-        // auto setUpMap = setUp.getMap();
-
-        // if(index < setUpMap.size()){
-        //     auto keyIterator = setUpMap.begin() + index;
-        //     setUp.setMapElement(keyIterator->first, value);
-        // }
-        
-         
+void GlobalServerState::ConfigureSetupValue(User user, std::string key, int value){
+    auto gameInstance = getGameInstancebyOwner(user);
+    auto setUp = gameInstance->setUp()->getMapElement(key);
+    gameInstance->setUp
 }

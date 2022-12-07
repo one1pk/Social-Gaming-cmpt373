@@ -265,15 +265,14 @@ GameSetUpCommand::execute(ProcessedMessage &processedMessage) {
         if(processedMessage.arguments.size() < 2){
             return CommandResult::ERROR_INCORRECT_COMMAND_FORMAT;
         }
-
-        int index, value;
+        std::string key = processedMessage.arguments[0];
+        int value;
         try {
-            index = stoi(processedMessage.arguments[0]);
             value = stoi(processedMessage.arguments[1]);
         } catch (std::exception &e) {
             return CommandResult::ERROR_INVALID_GAME_INDEX;
         }
-        globalState.setSetupValue(processedMessage.user, index, value);
+        globalState.ConfigureSetupValue(processedMessage.user, key, value);
         return CommandResult::SUCCESS;
     }
 
