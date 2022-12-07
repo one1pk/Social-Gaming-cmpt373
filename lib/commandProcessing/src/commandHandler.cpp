@@ -73,6 +73,7 @@ void CommandHandler::initializeCommandMap() {
     registerCommand(UserCommand::GAMES, std::make_unique<ListGamesCommand>(globalState, outgoing));
     registerCommand(UserCommand::EXIT, std::make_unique<ExitServerCommand>(globalState, outgoing));
     registerCommand(UserCommand::USERNAME, std::make_unique<UserNameCommand>(globalState, outgoing));
+    registerCommand(UserCommand::GAMESETUP, std::make_unique<GameSetUpCommand>(globalState, outgoing));
 }
 
 void CommandHandler::initializeCommandResultMap() {

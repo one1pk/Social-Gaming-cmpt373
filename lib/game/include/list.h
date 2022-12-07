@@ -8,6 +8,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
+#include <glog/logging.h>
 
 
 enum Type { // doesn't seem useful, might remove later 
@@ -109,12 +110,12 @@ public:
 
     void changeMapElement(std::string key, ElementSptr element) final {
         if constexpr (std::is_same_v<T, ElementMap>) {
-            for(auto& [name, value] : _data){
-                if(key == name)
+                if (_data.find(key) != _data.end())
                     _data[key] = element;
-            }
+                else 
+                    LOG(INFO) << "Could not find" << std::endl;
         } else {
-            // throw error //
+            return;
         }
     }
 

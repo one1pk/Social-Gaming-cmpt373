@@ -59,7 +59,7 @@ CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
     
     std::stringstream notification;
     notification << "\nGame Successfully Created! \nInvitationCode = " << invitation_code << "\n";
-    notification << "\nYou may configure the following before starting the game. Use \"setup <index> <value>\" to set the option at index.\n";
+    notification << "\nYou may configure the following before starting the game. Use \"setup <variableName> <value>\" to set the option at index. Case sensitive.\n";
     notification << globalState.getSetup(processedMessage.user);
     outgoing.push_back({processedMessage.user, notification.str()});
 

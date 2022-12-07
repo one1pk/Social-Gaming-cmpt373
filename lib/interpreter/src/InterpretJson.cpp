@@ -22,13 +22,6 @@ Game InterpretJson::interpret() {
     game.setID();
     game.setOwner(owner);
     game.setName(game_name);
-    game._game_state = {
-        {"constants", game.constants()},
-        {"variables", game.variables()},
-        {"setup", game.setup()},
-        {"per-player", game.per_player()},
-        {"per-audience", game.per_audience()}
-    };
 
     expressionTree = ExpressionTree(game._game_state, game._players);
 

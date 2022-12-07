@@ -23,7 +23,10 @@ ElementSptr inGameState(std::string token, ElementMap& gameState){
     }
     else{
         for(auto& [name, list] : gameState){
-            auto element = list->getMapElement(token);
+            ElementSptr element;
+            //if we stored value of anything in setup, it cannot be changed by owner after creation
+            if(name != "setup")
+                element = list->getMapElement(token);
             if( element != nullptr)
                 return element;
         }
