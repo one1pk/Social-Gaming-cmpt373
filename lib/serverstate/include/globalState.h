@@ -60,8 +60,9 @@ public:
      *  with name == gameNameList[gameIndex] (found at ./gameconfigs/<name>.json)
      *  removes the client(user) from server lobby and makes them the owner of game instance
      *  adds them to the game lobby
+     *  returns invitation code, setup pair to configure setup
      */
-    uintptr_t createGame(int gameIndex, User user);
+    std::pair<uintptr_t, ElementSptr> createGame(int gameIndex, User user);
 
     /**
      * Helps execution of START command.

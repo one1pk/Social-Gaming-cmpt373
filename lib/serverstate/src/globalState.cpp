@@ -41,7 +41,8 @@ void GlobalServerState::constructGame(std::vector<Game>& game_instances, std::st
     game_instances.emplace_back(interpreter.interpret());
 }
 
-uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
+#include "list.h"
+std::pair<uintptr_t, ElementSptr> GlobalServerState::createGame(int gameIndex, User user) {
     
     constructGame(game_instances, gameNameList[gameIndex], user);
 
@@ -49,7 +50,9 @@ uintptr_t GlobalServerState::createGame(int gameIndex, User user) {
     clients_in_games[user] = game_instances.back().id();
     gameOwnerMap[user] = game_instances.back().id();
 
-    return game_instances.back().id();
+    std::pair<uintptr_t, ElementSptr> id_setup_pair = {game_instances.back().id(), game_instances.back().setup()};
+
+    return id_setup_pair;
 }
 
 void GlobalServerState::startGame(User user) {

@@ -54,10 +54,19 @@ CommandResult CreateGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_GAME_INDEX;
     }
 
-    uintptr_t invitationCode = globalState.createGame(gameIndex, processedMessage.user);
+    std::pair<uintptr_t, ElementSptr> invitationCode_setup_pair = globalState.createGame(gameIndex, processedMessage.user);
 
     std::stringstream notification;
-    notification << "Game Successfully Created! \nInvitationCode = " << invitationCode << "\n\n";
+    notification << "Configure setup\n";
+    outgoing.push_back({processedMessage.user, notification.str()});
+    for(auto& [elementName, element] : invitationCode_setup_pair.second->getMap()){
+        notification.str("");
+        notification << "Enter " << elementName << "\n";
+        outgoing.push_back({processedMessage.user, notification.str()});
+    }
+    
+    notification.str("");
+    notification << "\nGame Successfully Created! \nInvitationCode = " << invitationCode_setup_pair.first << "\n\n";
     outgoing.push_back({processedMessage.user, notification.str()});
 
     return CommandResult::SUCCESS;
