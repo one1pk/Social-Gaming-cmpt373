@@ -87,7 +87,7 @@ void CommandHandler::initializeCommandResultMap() {
     commandResultMap[CommandResult::ERROR_INVALID_COMMAND] = "Invalid Command!\n\n";
     commandResultMap[CommandResult::ERROR_GAME_NOT_STARTED] = "The game has not been started yet!\n\n";
     commandResultMap[CommandResult::ERROR_NOT_ENOUGH_PLAYERS] = "Game cannot be started, more players needed!\n\n";
-    commandResultMap[CommandResult::ERROR_NO_USERNAME] = "To proceed, enter: name <your game name>\n\n";
+    commandResultMap[CommandResult::ERROR_NO_USERNAME] = "Invalid Format or Command\nTo proceed, enter: name <your game name>\n\n";
 
     commandResultMap[CommandResult::SUCCESS_GAME_CREATION] = "Game Successfully Created with invitation Code : \nPlease enter \"start\" to start the game.\n\n";
     commandResultMap[CommandResult::SUCCESS_GAME_JOIN] = "Game successfully joined. Waiting for the owner to start\n\n";
