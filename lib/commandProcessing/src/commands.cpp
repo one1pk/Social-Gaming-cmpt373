@@ -97,7 +97,13 @@ CommandResult JoinGameCommand::execute(ProcessedMessage &processedMessage) {
         return CommandResult::ERROR_INVALID_COMMAND;
     }
 
-    int invitationCode = stoi(processedMessage.arguments[0]);
+    int invitationCode;
+    try {
+        invitationCode = stoi(processedMessage.arguments[0]);
+    } catch (std::exception &e) {
+        return CommandResult::ERROR_INVALID_INVITATION_CODE;
+    }
+    
     if (!globalState.isValidGameInvitation(invitationCode)) {
         return CommandResult::ERROR_INVALID_INVITATION_CODE;
     }
