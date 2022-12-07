@@ -86,14 +86,15 @@ public:
 };
 
 class Switch : public Rule {
-    ElementSptr value;
-    ElementSptr list;
-    std::vector<std::pair<ElementSptr, RuleVector>> case_rules; 
-    std::vector<std::pair<ElementSptr, RuleVector>>::iterator case_rule_pair; 
+    using Condition_Rules = std::vector<std::pair<std::shared_ptr<ASTNode>, RuleVector>>;
+    std::shared_ptr<ASTNode> value_expression_root;
+    std::shared_ptr<ASTNode> list_expression_root;
+    Condition_Rules conditionExpression_rule_pairs;
+    Condition_Rules::iterator conditionExpression_rule_pair;
     RuleVector::iterator rule;
 public: 
-    Switch(ElementSptr value, ElementSptr list,std::vector<std::pair<ElementSptr, RuleVector>> case_rules);
-    RuleStatus execute(ElementSptr element) final;
+    Switch(std::shared_ptr<ASTNode> value_expression_root, std::shared_ptr<ASTNode> list_expression_root, Condition_Rules conditonExpression_rule_pairs);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class When : public Rule {
@@ -128,27 +129,27 @@ public:
 };
 
 class Sort : public Rule {
-    ElementSptr list;
+    std::shared_ptr<ASTNode> list_expression_root;
     std::optional<std::string> key;
 public:
-    Sort(ElementSptr list, std::optional<std::string> key = std::nullopt);
-    RuleStatus execute(ElementSptr element) final;
+    Sort(std::shared_ptr<ASTNode> list_expression_root, std::optional<std::string> key = std::nullopt);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class Shuffle : public Rule {
-    ElementSptr list;
+    std::shared_ptr<ASTNode> list_expression_root;
 public:
-    Shuffle(ElementSptr list);
-    RuleStatus execute(ElementSptr element) final;
+    Shuffle(std::shared_ptr<ASTNode> list_expression_root);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 class Deal : public Rule {
-    ElementSptr from;
-    ElementSptr to;
+    std::shared_ptr<ASTNode> from_expression_root;
+    std::shared_ptr<ASTNode> to_expression_root;
     int count;
 public:
-    Deal(ElementSptr from, ElementSptr to, int count);
-    RuleStatus execute(ElementSptr element) final;
+    Deal(std::shared_ptr<ASTNode> from_expression_root, std::shared_ptr<ASTNode> to_expression_root, int count);
+    RuleStatus execute(ElementMap& game_state) final;
 };
 
 // Arithmetic //

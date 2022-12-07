@@ -83,25 +83,39 @@ RuleStatus ParallelFor::execute(ElementMap& game_state) {
 
 // Switch //
 
-Switch::Switch(ElementSptr value, ElementSptr list,std::vector<std::pair<ElementSptr,RuleVector>> _case_rules)
-    : value(value), list(list), case_rules(_case_rules), case_rule_pair(case_rules.begin()),
-      rule(case_rule_pair->second.begin()) {
+Switch::Switch(std::shared_ptr<ASTNode> value_expression_root, std::shared_ptr<ASTNode> list_expression_root, Condition_Rules _conditionExpression_rule_pairs)
+    : value_expression_root(value_expression_root), list_expression_root(list_expression_root), conditionExpression_rule_pairs(_conditionExpression_rule_pairs), 
+    conditionExpression_rule_pair(conditionExpression_rule_pairs.begin()),
+    rule(conditionExpression_rule_pair->second.begin()) {
 }
 
-RuleStatus Switch::execute(ElementSptr element) {
-    for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
-        if (case_rule_pair->first == value) {
-            for (; rule != case_rule_pair->second.end(); rule++) {
-                if ((*rule)->execute(element) == RuleStatus::InputRequired) {
+RuleStatus Switch::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Switch Rule *";
+
+    value_expression_root->accept(resolver, game_state);
+    auto value = resolver.getResult();
+    for (; conditionExpression_rule_pair != conditionExpression_rule_pairs.end(); conditionExpression_rule_pair++) {
+        auto& [condition_root, rules] = *conditionExpression_rule_pair;
+        rule = rules.begin();
+
+        condition_root->accept(resolver, game_state);
+        auto switch_case = resolver.getResult();    
+        if (switch_case == value) {
+            LOG(INFO) << "Case Match!" << std::endl << "Executing Case Rules";
+
+            for (; rule != rules.end(); rule++) {
+                if ((*rule)->execute(game_state) == RuleStatus::InputRequired) {
                     return RuleStatus::InputRequired;
                 }
             }
             break;
-        } 
+        } else {
+            LOG(INFO) << "Case Fail, testing next case";
+        }
     }
 
-    case_rule_pair = case_rules.begin();
-    rule = case_rule_pair->second.begin();
+    conditionExpression_rule_pair = conditionExpression_rule_pairs.begin();
+    rule = conditionExpression_rule_pair->second.begin();
     return RuleStatus::Done;
 }
 
@@ -182,33 +196,51 @@ RuleStatus Discard::execute(ElementMap& game_state) {
 
 // Shuffle //
 
-Shuffle::Shuffle(ElementSptr list)
-    : list(list){   
+Shuffle::Shuffle(std::shared_ptr<ASTNode> list_expression_root)
+    : list_expression_root(list_expression_root){   
 }
 
-RuleStatus Shuffle::execute(ElementSptr element) {
+RuleStatus Shuffle::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Shuffle Rule *";
+
+    list_expression_root->accept(resolver, game_state);
+    auto list = resolver.getResult();
+
     list->shuffle();
     return RuleStatus::Done;
 }
 
 // Sort //
 
-Sort::Sort(ElementSptr list, std::optional<std::string> key)
-    : list(list), key(key) {   
+Sort::Sort(std::shared_ptr<ASTNode> list_expression_root, std::optional<std::string> key)
+    : list_expression_root(list_expression_root), key(key) {   
 }
 
-RuleStatus Sort::execute(ElementSptr element) {
+RuleStatus Sort::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Sort Rule *";
+
+    list_expression_root->accept(resolver, game_state);
+    auto list = resolver.getResult();
+
     list->sortList(key);
     return RuleStatus::Done;
 }
 
 // Deal //
 
-Deal::Deal(ElementSptr from, ElementSptr to, int count)
-    : from(from), to(to), count(count) {
+Deal::Deal(std::shared_ptr<ASTNode> from_expression_root, std::shared_ptr<ASTNode> to_expression_root, int count)
+    : from_expression_root(from_expression_root), to_expression_root(to_expression_root), count(count) {
 }
 
-RuleStatus Deal::execute(ElementSptr element) {
+RuleStatus Deal::execute(ElementMap& game_state) {
+    LOG(INFO) << "* Deal Rule *";
+
+    from_expression_root->accept(resolver, game_state);
+    auto from = resolver.getResult();
+
+    to_expression_root->accept(resolver, game_state);
+    auto to = resolver.getResult();
+
     from->deal(to, count);
     return RuleStatus::Done;
 }
