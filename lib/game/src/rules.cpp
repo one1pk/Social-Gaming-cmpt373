@@ -68,6 +68,30 @@ RuleStatus ParallelFor::execute(ElementSptr element) {
     return status;
 }
 
+// Switch //
+
+Switch::Switch(ElementSptr value, ElementSptr list,std::vector<std::pair<ElementSptr,RuleVector>> _case_rules)
+    : value(value), list(list), case_rules(_case_rules), case_rule_pair(case_rules.begin()),
+      rule(case_rule_pair->second.begin()) {
+}
+
+RuleStatus Switch::execute(ElementSptr element) {
+    for (; case_rule_pair != case_rules.end(); case_rule_pair++, rule = case_rule_pair->second.begin()) {
+        if (case_rule_pair->first == value) {
+            for (; rule != case_rule_pair->second.end(); rule++) {
+                if ((*rule)->execute(element) == RuleStatus::InputRequired) {
+                    return RuleStatus::InputRequired;
+                }
+            }
+            break;
+        } 
+    }
+
+    case_rule_pair = case_rules.begin();
+    rule = case_rule_pair->second.begin();
+    return RuleStatus::Done;
+}
+
 // When //
 
 When::When(std::vector<std::pair<std::function<bool(ElementSptr)>,RuleVector>> _case_rules)
@@ -114,6 +138,17 @@ Discard::Discard(ElementSptr list, std::function<size_t(ElementSptr)> count)
 
 RuleStatus Discard::execute(ElementSptr element) {
     list->discard(count(element));
+    return RuleStatus::Done;
+}
+
+// Shuffle //
+
+Shuffle::Shuffle(ElementSptr list)
+    : list(list){   
+}
+
+RuleStatus Shuffle::execute(ElementSptr element) {
+    list->shuffle();
     return RuleStatus::Done;
 }
 

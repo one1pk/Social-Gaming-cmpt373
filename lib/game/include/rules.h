@@ -67,6 +67,17 @@ public:
     RuleStatus execute(ElementSptr element) final;
 };
 
+class Switch : public Rule {
+    ElementSptr value;
+    ElementSptr list;
+    std::vector<std::pair<ElementSptr, RuleVector>> case_rules; 
+    std::vector<std::pair<ElementSptr, RuleVector>>::iterator case_rule_pair; 
+    RuleVector::iterator rule;
+public: 
+    Switch(ElementSptr value, ElementSptr list,std::vector<std::pair<ElementSptr, RuleVector>> case_rules);
+    RuleStatus execute(ElementSptr element) final;
+};
+
 class When : public Rule {
     // a vector of case-rules pairs
     // containes a rule list for every case
@@ -103,6 +114,13 @@ class Sort : public Rule {
     std::optional<std::string> key;
 public:
     Sort(ElementSptr list, std::optional<std::string> key = std::nullopt);
+    RuleStatus execute(ElementSptr element) final;
+};
+
+class Shuffle : public Rule {
+    ElementSptr list;
+public:
+    Shuffle(ElementSptr list);
     RuleStatus execute(ElementSptr element) final;
 };
 

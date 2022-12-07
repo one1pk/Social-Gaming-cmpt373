@@ -5,6 +5,7 @@
 #include "rules.h"
 #include "list.h"
 #include "game.h"
+#include <iostream>
 
 using json = nlohmann::json;
 
@@ -33,7 +34,7 @@ TEST_F(NewRulesTest, DealToAttribute){
     ElementSptr sfrom_list =  std::make_shared<Element<ElementVector>>(constants->getMapElement("qa-bank")->getSubList("question"));
 
     std::make_unique<Deal>(sfrom_list, variables->getMapElement("current-question"), 1)->execute(constants->getMapElement("qa-bank"));
-
+    std::cout << "To:" << variables->getMapElement("current-question")->getString() << std::endl;
     EXPECT_EQ(variables->getMapElement("current-question")->getString(), "What game is this?");
 }
 
@@ -66,3 +67,14 @@ TEST(RulesTest, SortWithoutKey_Int){
     EXPECT_EQ(stest_list->getVector()[3]->getInt(), 5);
 }
 
+TEST(RulesTest, ShuffleQs){
+    ElementVector test_list;
+    test_list.push_back(make_shared<Element<int>>(5));
+    test_list.push_back(make_shared<Element<int>>(1));
+    test_list.push_back(make_shared<Element<int>>(3));
+
+    ElementSptr stest_list =  std::make_shared<Element<ElementVector>>(test_list);
+    std::make_unique<Shuffle>(stest_list)->execute(stest_list);
+
+    EXPECT_NE(stest_list->getVector(), test_list);
+}

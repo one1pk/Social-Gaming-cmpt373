@@ -58,6 +58,7 @@ public:
     virtual void discard(unsigned count) = 0;
     virtual void sortList(std::optional<std::string> key) = 0;
     virtual void deal(ElementSptr to, int count) = 0;
+    virtual void shuffle() = 0;
 
     virtual ElementSptr upfrom(int start) = 0;
 };
@@ -286,15 +287,24 @@ public:
         }
     }
 
-    void deal(ElementSptr to, int count) final {
+    void deal(ElementSptr to, int count) final { 
         if constexpr (std::is_same_v<T, ElementVector>) {
             // deal <count> elements//
             for (int i = 0; i < count; i++) {
-                to = _data.back()->clone();
+                to = _data.back();
                 _data.pop_back();
+
             }
         } else {
             throw std::invalid_argument("You can only deal from an ElementVector");
+        }
+    }
+
+    void shuffle() final {
+        if constexpr (std::is_same_v<T, ElementVector>) {
+            std::random_shuffle(_data.begin(), _data.end());
+        } else {
+             throw std::invalid_argument("You can only shuffle an ElementVector");
         }
     }
 
